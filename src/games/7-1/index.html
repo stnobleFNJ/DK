@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 취향카드 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 카드 만나기: 어두운 브라운 배경 + 세로형 카드 */
+.app.dark{background:#3a2418;background-image:none;color:#f4ead2}
+.app.dark .hbar{border-color:rgba(244,234,210,.2)}
+.app.dark .hb,.app.dark .help{color:#f4ead2}
+.app.dark .help{background:transparent;border-color:rgba(244,234,210,.4)}
+.guide{text-align:center;font:var(--hw) 24px/1.4 var(--fh);margin:26px 0 18px}
+.deck{perspective:1200px;display:flex;justify-content:center}
+.card3d{position:relative;width:min(300px,78vw);aspect-ratio:3/4.3;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.3,.7,.3,1)}
+.card3d.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.back{border:6px solid #f7e3a8;background:#b9543c}
+.back img{width:100%;height:100%;object-fit:cover}
+.front{transform:rotateY(180deg);background:var(--paper);border:6px solid #f7e3a8;color:var(--ink);display:flex;flex-direction:column;padding:16px 14px 14px}
+.front h2{margin:0;text-align:center;font:var(--hw) 26px var(--fh)}
+.front .fp{display:block;margin-top:10px;flex:1 1 0;min-height:0;border-radius:10px;overflow:hidden}
+.front .fp img{width:100%;height:100%;object-fit:cover}
+.front .fs{display:block;flex:none;max-height:0;overflow:hidden;transition:max-height .5s ease}
+.front .fs.open{max-height:180px}
+.front .fs p{margin:12px 0 0;padding:12px;border-radius:10px;background:linear-gradient(90deg,#f1c96b,#f7e3a8);font:var(--lw) 18px/1.45 var(--fl);text-align:center;min-height:3.2em}
+.tapme{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.app.dark .btn.sec{background:rgba(244,234,210,.14);color:#f4ead2}
+.intro{margin:12px 0 0}
+.picks.acts8{grid-template-columns:1fr 1fr}
+.picks.acts8 .photo .ct{font-size:19px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>누구와, 어디서, 어떻게 시간을 보내고 싶은지 하나씩 골라요.</li><li>좋아하는 활동을 하나 골라요.</li><li>나의 취향카드를 눌러 뒤집어 보세요.</li></ol><p>정답은 없어요. 모든 취향이 다 좋아요. ‹ 이전 버튼으로 다시 고를 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'취',html:'나의 <b>취향카드</b>'};
+const STEPS=['누구와','어디서','어떻게','활동','취향카드'];
+// 1~3단계: 두 사진 중 하나 (요청서·hwpx 전7-1)
+const Q=[
+  {key:'who',q:'누구와 시간을 보내고 싶나요?',opts:[{v:'혼자',img:'img/alone.jpg'},{v:'같이',img:'img/together.jpg'}]},
+  {key:'where',q:'어디에서 시간을 보내고 싶나요?',opts:[{v:'실내',img:'img/indoor.jpg'},{v:'야외',img:'img/outdoor.jpg'}]},
+  {key:'how',q:'어떻게 시간을 보내고 싶나요?',opts:[{v:'편안하게',img:'img/calm.jpg'},{v:'활동적으로',img:'img/active.jpg'}]}
+];
+// 4단계: 활동 8가지. say = 활동을 소개하는 문장(hwpx에 문구가 없어 임시로 작성)
+const ACTS=[
+  {v:'영화 보기',img:'img/act-movie.jpg',say:'영화를 보며 이야기 속으로 들어가요.'},
+  {v:'그림 그리기',img:'img/act-draw.jpg',say:'그림을 그리며 내 마음을 색으로 표현해요.'},
+  {v:'산책하기',img:'img/act-walk.jpg',say:'천천히 걸으며 바람과 햇살을 느껴요.'},
+  {v:'요리하기',img:'img/act-cook.jpg',say:'맛있는 음식을 직접 만들어요.'},
+  {v:'친구와 대화하기',img:'img/act-talk.jpg',say:'친구와 이야기를 나누며 웃어요.'},
+  {v:'도서관 이용하기',img:'img/act-library.jpg',say:'도서관에서 좋아하는 책을 찾아 읽어요.'},
+  {v:'공연 보기',img:'img/act-show.jpg',say:'멋진 공연을 보며 박수를 쳐요.'},
+  {v:'수영하기',img:'img/act-swim.jpg',say:'물속에서 시원하게 몸을 움직여요.'}
+];
+// 최종 취향 문장 8가지 — hwpx 확정 문구, 바꾸지 않는다.
+const RESULT={
+  '혼자|실내|편안하게':'나는 나만의 시간을 즐기는 사람이에요.',
+  '혼자|실내|활동적으로':'나는 좋아하는 활동에 푹 빠지는 사람이에요.',
+  '혼자|야외|편안하게':'나는 일상 속 작은 즐거움을 발견하는 사람이에요.',
+  '혼자|야외|활동적으로':'나는 즐거움을 찾아 나서는 사람이에요.',
+  '같이|실내|편안하게':'나는 함께하는 시간을 따뜻하게 만드는 사람이에요.',
+  '같이|실내|활동적으로':'나는 함께할수록 에너지가 생기는 사람이에요.',
+  '같이|야외|편안하게':'나는 좋은 순간을 함께 나눌 줄 아는 사람이에요.',
+  '같이|야외|활동적으로':'나는 함께 즐거운 경험을 만드는 사람이에요.'
+};
+
+const root=document.getElementById('app');
+let sel={},timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const act=()=>ACTS.find(a=>a.v===sel.act);
+const sentence=()=>RESULT[[sel.who,sel.where,sel.how].join('|')];
+const dark=on=>root.classList.toggle('dark',on);
+
+function home(){
+  clear();dark(false);sel={};
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Find my taste</span><h1 class="h1">나의 취향카드를<br><em>만나 보세요!</em></h1><p>내가 좋아하는 것을 하나씩 고르면, 나를 소개하는 카드가 나와요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/main.jpg" alt="뒤집힌 취향카드 세 장"></span><span class="ct">나를 알아가는 즐거운 시간<small>4번 고르면 카드가 완성돼요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>step(0)});
+}
+
+function step(i){
+  clear();dark(false);
+  const s=Q[i];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(4,i)}
+  <p class="q">${s.q}</p><p class="qs">내가 좋아하는 것을 하나씩 골라 보세요.</p>
+  <div class="picks two">${s.opts.map((o,k)=>`<button class="pick photo${sel[s.key]===o.v?' on':''}" data-act="pick" data-v="${o.v}" aria-label="${o.v} 고르기"><i class="tp"></i><span class="cp"><img src="${o.img}" alt="${o.v}"></span><span class="ct">${o.v}</span></button>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${sel[s.key]?'':'disabled'}>다음 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>i?step(i-1):home(),next:()=>sel[s.key]&&(i<2?step(i+1):acts()),
+    pick:b=>{sel[s.key]=b.dataset.v;root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));root.querySelector('[data-act=next]').disabled=false;DK.speak(b.dataset.v);later(()=>i<2?step(i+1):acts(),650)}
+  });
+}
+
+function acts(){
+  clear();dark(false);
+  const a=act();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(4,3)}
+  <p class="q">하고 싶은 활동을 골라 보세요.</p><p class="qs">8가지 중 가장 해 보고 싶은 것 하나를 골라요.</p>
+  <div class="picks acts8">${ACTS.map(o=>`<button class="pick photo${sel.act===o.v?' on':''}" data-act="pick" data-v="${o.v}" aria-label="${o.v} 고르기"><span class="cp"><img src="${o.img}" alt="${o.v}"></span><span class="ct">${o.v}</span></button>`).join('')}</div>
+  <div id="say">${a?DK.sayBig(a.say):''}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="card" ${a?'':'disabled'}>나의 취향카드 만나기</button></div>${DK.DKU}`,{
+    home,prev:()=>step(2),card:()=>sel.act&&reveal(),
+    pick:b=>{sel.act=b.dataset.v;root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));const t=act().say;root.querySelector('#say').innerHTML=DK.sayBig(t);root.querySelector('#say [data-say]').onclick=()=>DK.speak(t);root.querySelector('[data-act=card]').disabled=false;DK.speak(t);root.querySelector('#say').scrollIntoView({behavior:'smooth',block:'nearest'})}
+  });
+}
+
+function reveal(){
+  clear();dark(true);
+  const a=act(),txt=sentence(),guide='나의 취향카드가 도착했어요! 카드를 눌러 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="guide" id="guide">${guide}</p>
+  <div class="deck"><button class="card3d tapme" id="card" aria-label="카드 뒤집기">
+    <span class="face back"><img src="img/card-back.jpg" alt=""></span>
+    <span class="face front"><h2>나는 어떤 사람일까요?</h2><span class="fp"><img src="${a.img}" alt="${a.v}"></span><span class="fs" id="fs"><p id="ftxt" aria-live="polite"></p></span></span>
+  </button></div>
+  <div class="acts" id="after" hidden><div class="acts two" style="margin:0"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn sec" data-act="again">↻ 다시 해보기</button></div><button class="btn pri" data-act="other">다른 취향으로 만들기</button></div>`,{
+    home,listen:()=>DK.speak(txt),again:home,other:()=>{sel={};step(0)}
+  });
+  DK.speak(guide);
+  const card=root.querySelector('#card');let flipped=false;
+  card.onclick=()=>{
+    if(flipped)return;flipped=true;               // 반복 클릭 무시
+    try{speechSynthesis.cancel()}catch(e){}
+    card.classList.remove('tapme');card.classList.add('flip');card.setAttribute('aria-label','나의 취향카드');
+    root.querySelector('#guide').textContent='나의 취향카드예요!';
+    later(()=>{
+      root.querySelector('#fs').classList.add('open');
+      const el=root.querySelector('#ftxt');let n=0;
+      const type=()=>{el.textContent='✦ '+txt.slice(0,++n);if(n<txt.length)later(type,55);else{DK.speak(txt);root.querySelector('#after').hidden=false}};
+      later(type,300);
+    },1500);                                       // 뒤집기 0.8초 + 약 0.7초
+  };
+}
+
+home();
+</script>
+</body>
+</html>

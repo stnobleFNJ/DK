@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>혼자 이동하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 보드판: 그림 위에 말 올리기 */
+.board{margin:14px 0 0;padding:6px;background:#fff;box-shadow:0 6px 14px rgba(60,40,20,.18)}
+.board .bi{position:relative}
+.board img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.board .tok{position:absolute;width:24px;height:24px;font-size:11px;margin:-12px 0 0 -12px;transition:left .6s ease,top .6s ease;z-index:2}
+.board .tok.me{width:30px;height:30px;margin:-15px 0 0 -15px;font-size:13px;box-shadow:0 0 0 3px #fff,0 0 0 6px var(--tape);z-index:3}
+.turn{display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:14px 16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;font:var(--hw) 22px/1.35 var(--fh)}
+.turn .tok{flex:none;width:40px;height:40px;font-size:16px}
+.turn small{display:block;font:500 13px var(--fb);color:var(--muted)}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.plist li:last-child{border:0}
+.plist .tok{flex:none}
+.plist b{font-size:15px}
+.plist p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.plist .rk{margin-left:auto;flex:none;font:var(--hw) 20px var(--fh);color:var(--ac)}
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.qn .tok{width:22px;height:22px;font-size:11px;border-width:1px}
+.photo.qp{margin:14px 6px 0}
+.photo.qp .cp{aspect-ratio:800/678}
+.opts .opt{width:100%;min-height:56px}
+.opt:disabled{opacity:1}
+.big{margin:22px 0 0;text-align:center;font:var(--hw) 28px/1.35 var(--fh)}
+.big em{font-style:normal;color:var(--ac)}
+.pc{margin:14px 0 0;text-align:center;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>함께 할 사람 수를 골라요. (1~4명)</li><li>내 차례가 되면 문제를 풀어요.</li><li>맞히면 내 말이 한 칸 앞으로 가요.</li><li>문제 6개를 모두 풀면 도착이에요!</li></ol><p>틀리면 설명을 보고 다시 풀어요. 여럿이 할 때는 다음 내 차례에 다시 풀어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'길',html:'혼자 <b>이동하기</b>'};
+// 문제 그림(q1~q6)의 제목·질문은 그림 글자 그대로. 보기와 설명은 그림에 없어 임시로 작성(정답은 a[0]).
+const Q=[
+  {t:'버스정류장 확인하기',img:'img/q1p.jpg',ask:'내가 가려는 방향의 버스정류장인가요?',
+   a:[['정류장 안내판에서 정류장 이름과 가는 방향을 확인해요.','안내판을 보면 내가 가려는 방향인지 알 수 있어요.'],
+      ['아무 정류장에서나 버스를 기다려요.','정류장마다 가는 방향이 달라요. 안내판을 먼저 확인해요.'],
+      ['길 건너편 정류장으로 그냥 가요.','길 건너편은 반대 방향일 수 있어요. 안내판을 먼저 확인해요.']]},
+  {t:'버스번호 확인하기',img:'img/q2p.jpg',ask:'내가 타려는 버스번호는 몇 번인가요?',
+   a:[['버스 앞의 번호가 내가 탈 번호와 같은지 확인하고 타요.','번호가 같아야 내가 가려는 곳에 가요.'],
+      ['가장 먼저 온 버스를 타요.','먼저 온 버스가 내가 탈 버스가 아닐 수 있어요. 번호를 확인해요.'],
+      ['버스 색깔이 같으면 번호는 보지 않고 타요.','색깔이 같아도 번호가 다르면 다른 곳으로 가요.']]},
+  {t:'내릴 곳 확인하기',img:'img/q3p.jpg',ask:'내릴 곳의 정류장 이름은 무엇인가요?',
+   a:[['안내 화면과 방송에서 정류장 이름을 확인하고, 미리 하차 벨을 눌러요.','내릴 정류장 이름을 확인하고 벨을 누르면 안전하게 내릴 수 있어요.'],
+      ['창밖만 보다가 내리고 싶을 때 내려요.','내릴 곳을 지나칠 수 있어요. 안내 화면을 확인해요.'],
+      ['다른 사람이 내릴 때 따라 내려요.','다른 사람은 가는 곳이 달라요. 내 정류장 이름을 확인해요.']]},
+  {t:'내 위치 확인하기',img:'img/q4p.jpg',ask:'지도 앱에서 내 위치를 확인할 수 있나요?',
+   a:[['지도 앱을 열고 파란 점(내 위치)을 찾아요.','파란 점이 지금 내가 있는 곳이에요.'],
+      ['지도는 보지 않고 아무 방향으로 걸어요.','길을 잃을 수 있어요. 지도 앱으로 내 위치를 먼저 봐요.'],
+      ['휴대폰을 끄고 가방에 넣어요.','휴대폰 지도 앱이 길 찾기를 도와줘요.']]},
+  {t:'목적지 근처 확인하기',img:'img/q5p.jpg',ask:'목적지 근처에 있는 큰 건물의 이름은 무엇인가요?',
+   a:[['건물 간판에서 이름을 읽고, 내가 찾는 곳과 같은지 확인해요.','큰 건물 이름을 알면 목적지를 쉽게 찾을 수 있어요.'],
+      ['건물 이름은 보지 않고 아무 건물에 들어가요.','다른 건물일 수 있어요. 간판의 이름을 먼저 확인해요.'],
+      ['큰 건물은 상관없으니 그냥 지나가요.','큰 건물은 길을 찾는 좋은 표시예요. 이름을 확인해요.']]},
+  {t:'길 물어보기',img:'img/q6p.jpg',ask:'건물에 들어가서 길을 물어볼 때 뭐라고 해야 하나요?',
+   a:[['“안녕하세요. OO에 가려면 어디로 가야 하나요?”라고 물어봐요.','인사를 하고 가고 싶은 곳을 말하면 친절하게 알려 줘요.'],
+      ['아무 말 없이 직원 앞에 서 있어요.','말을 하지 않으면 도와줄 수 없어요. 가고 싶은 곳을 말해요.'],
+      ['“빨리 알려 줘!”라고 크게 말해요.','반말로 크게 말하면 상대가 놀라요. 공손하게 물어봐요.']]}
+];
+// 보드판 칸 위치(%) — 0 START, 1~6 문제, 7 GOAL (board.jpg 기준)
+const SQ=[[12.5,27],[38.4,27],[62.2,27],[85.6,27],[85.6,71],[62.2,71],[38.4,71],[12.5,71]];
+const OFF=[[-4,-6],[4,-6],[-4,6],[4,6]];
+
+const root=document.getElementById('app');
+let n=1,P=[],cur=0,order=0,timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const name=i=>n===1?'내가':`${i+1}번 사람이`;
+const tok=(i,cls='')=>`<i class="tok t${i+1} ${cls}" aria-hidden="true">${i+1}</i>`;
+const sq=p=>p.k>=6?7:p.k;
+const left=()=>P.filter(p=>p.k<6).length;
+
+function board(me){
+  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="START 기관 앞, 문제1부터 문제6, GOAL 내가 원하는 장소로 가는 길">
+  ${P.map((p,i)=>{const [x,y]=SQ[sq(p)],[dx,dy]=n>1?OFF[i]:[0,0];return `<i class="tok t${i+1}${i===me?' me':''}" data-p="${i}" style="left:${x+dx}%;top:${y+dy}%">${i+1}</i>`}).join('')}</div></div>`;
+}
+
+function home(){
+  clear();
+  const say='혼자 이동하기 게임을 해 볼까요?';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Go on my own</span><h1 class="h1">혼자 이동하기 게임을<br><em>해 볼까요?</em></h1><p>기관 앞에서 출발해 내가 원하는 장소까지 가요. 가는 길에 생기는 문제 6개를 풀어 보세요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="혼자 이동하기 보드판"></span><span class="ct">START에서 GOAL까지<small>문제를 맞히면 한 칸씩 앞으로 가요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:people});
+  DK.speak(say);
+}
+
+function people(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">몇 명이 함께 할까요?</p><p class="qs">혼자 해도 되고, 친구와 같이 해도 돼요. (1~4명)</p>
+  <div class="people">${[1,2,3,4].map(k=>`<button class="${k===n?'on':''}" data-act="n" data-v="${k}" aria-label="${k}명">${k}명</button>`).join('')}</div>
+  <p class="pc" id="pc">${[0,1,2,3].slice(0,n).map(i=>tok(i)).join(' ')}</p>
+  <div class="acts"><button class="btn pri" data-act="go">게임 시작</button></div>${DK.DKU}`,{
+    home,go:newGame,
+    n:b=>{n=+b.dataset.v;root.querySelectorAll('[data-act=n]').forEach(x=>x.classList.toggle('on',x===b));root.querySelector('#pc').innerHTML=[0,1,2,3].slice(0,n).map(i=>tok(i)).join(' ');DK.speak(n+'명')}
+  });
+}
+
+function newGame(){P=Array.from({length:n},()=>({k:0,wrong:new Set(),rank:0}));cur=0;order=0;turn()}
+
+function turn(){
+  clear();
+  const p=P[cur],q=Q[p.k],who=n===1?'내 차례예요!':`${cur+1}번 사람 차례예요!`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${board(cur)}
+  <div class="turn">${tok(cur)}<span>${who}<small>다음 문제: 문제 ${p.k+1} · ${q.t}</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="go">문제 풀기</button></div>${DK.DKU}`,{home,go:()=>quiz(P[cur].wrong.has(P[cur].k))});
+  DK.speak(who+' 문제 '+(p.k+1)+', '+q.t);
+}
+
+function quiz(retry){
+  clear();
+  const p=P[cur],i=p.k,q=Q[i],opts=DK.shuffle(q.a.map((a,k)=>({t:a[0],why:a[1],ok:k===0})));
+  const lead='이럴 때 어떻게 하면 좋을까요? 알맞은 방법을 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(6,i)}
+  <span class="qn">${n>1?tok(cur)+' ':''}문제 ${i+1} · ${q.t}</span>
+  <div class="photo qp tilt-r"><i class="tp"></i><span class="cp"><img src="${q.img}" alt="${q.t} 장면"></span></div>
+  ${DK.sayBig(q.ask)}
+  <p class="q">이럴 때 어떻게 하면 좋을까요?</p><p class="qs">알맞은 방법을 골라 보세요.${retry?' 다시 풀어 봐요!':''}</p>
+  <div class="opts">${opts.map((o,k)=>`<button class="opt" data-act="pick" data-k="${k}"><span class="no">${k+1}</span><span>${o.t}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div><div class="acts" id="nx"></div>${DK.DKU}`,{
+    home,
+    pick:b=>{
+      const o=opts[+b.dataset.k],fb=root.querySelector('#fb'),nx=root.querySelector('#nx');
+      if(o.ok){
+        root.querySelectorAll('.opt').forEach(x=>x.disabled=true);b.classList.add('ok');
+        fb.innerHTML=`<p class="fb ok"><span>⭕</span><span>맞아요!<small>${o.why}</small></span></p>`;
+        nx.innerHTML=`<button class="btn pri" id="mv">한 칸 앞으로 가기 ›</button>`;
+        nx.querySelector('#mv').onclick=move;DK.speak('맞아요! '+o.why);
+      }else{
+        p.wrong.add(i);b.classList.add('wrong');b.disabled=true;
+        fb.innerHTML=`<p class="fb no"><span>🙂</span><span>아쉬워요!<small>${o.why}</small></span></p>`;
+        if(n===1||left()===1){DK.speak('아쉬워요! '+o.why+' 다시 골라 보세요.');fb.firstChild.lastChild.insertAdjacentHTML('beforeend','<small>다른 방법을 다시 골라 보세요.</small>')}
+        else{root.querySelectorAll('.opt').forEach(x=>x.disabled=true);nx.innerHTML=`<button class="btn pri" id="nt">다음 사람 차례 ›</button>`;nx.querySelector('#nt').onclick=next;DK.speak('아쉬워요! '+o.why+' 다음 차례에 다시 풀어요.')}
+      }
+      fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+  later(()=>DK.speak(q.ask+' '+lead),300);
+}
+
+function move(){
+  clear();
+  const p=P[cur],from=sq(p);p.k++;
+  const arrived=p.k>=6;if(arrived)p.rank=++order;
+  const msg=arrived?(n===1?'도착했어요! 승리!':p.rank===1?`${name(cur)} 1등으로 도착! 승리했어요!`:`${name(cur)} ${p.rank}등으로 도착했어요!`):`${name(cur)} 한 칸 앞으로 갔어요!`;
+  const btn=left()?(n===1?'다음 문제 ›':'다음 사람 차례 ›'):'결과 보기 ›';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${board(cur)}
+  <p class="big">${arrived?'🎉 ':''}<em>${msg}</em></p>
+  <p class="pc">${arrived?'내가 원하는 장소에 도착했어요.':`다음은 문제 ${p.k+1} · ${Q[p.k].t}`}</p>
+  <div class="acts"><button class="btn pri" data-act="go">${btn}</button></div>${DK.DKU}`,{home,go:()=>left()?next():result()});
+  // 이전 칸에서 출발해 미끄러지듯 이동
+  const t=root.querySelector(`.board .tok[data-p="${cur}"]`),[x,y]=SQ[from],[dx,dy]=n>1?OFF[cur]:[0,0],to=[t.style.left,t.style.top];
+  t.style.transition='none';t.style.left=x+dx+'%';t.style.top=y+dy+'%';t.offsetWidth;t.style.transition='';
+  later(()=>{t.style.left=to[0];t.style.top=to[1]},120);
+  DK.speak(msg);
+}
+
+function next(){
+  if(!left())return result();
+  do{cur=(cur+1)%n}while(P[cur].k>=6);
+  turn();
+}
+
+function result(){
+  clear();
+  const rk=P.map((p,i)=>({p,i})).sort((a,b)=>a.p.rank-b.p.rank);
+  const say=n===1?'도착했어요! 혼자서도 잘 이동할 수 있어요.':`모두 도착했어요! ${rk[0].i+1}번 사람이 승리했어요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="win"><span class="stamp">도착<br>승리!</span><span class="wp"><img src="img/board.jpg" alt="보드판"></span><div class="wc"><h2>${n===1?'도착했어요!':'모두 도착했어요!'}</h2><p>내가 원하는 장소까지 잘 갔어요.</p></div></div>
+  ${DK.sayBig(say)}
+  <div class="note"><h3>🗺️ 다시 살펴볼 문제</h3><ul class="plist">${rk.map(({p,i})=>`<li>${tok(i)}<div><b>${n===1?'나':`${i+1}번 사람`}</b><p>${p.wrong.size?[...p.wrong].sort().map(k=>`문제 ${k+1} · ${Q[k].t}`).join('<br>'):'모두 한 번에 맞혔어요! 👍'}</p></div>${n>1?`<span class="rk">${p.rank===1?'🏆 ':''}${p.rank}등</span>`:''}</li>`).join('')}</ul>
+  <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">틀린 문제는 다시 연습하고, 나의 이동 계획에 더해 보세요.</p></div>
+  <div class="acts"><button class="btn pri" data-act="again">↻ 다시 풀기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="reset">인원 재설정</button><button class="btn line" data-act="home">처음부터 다시 하기</button></div></div>${DK.DKU}`,{
+    home,again:newGame,reset:people
+  });
+  DK.speak(say);
+}
+
+home();
+</script>
+</body>
+</html>

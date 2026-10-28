@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 공간 아름답게 꾸미기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 방: 배경(1200x900) 위에 가구를 % 좌표로 올린다 */
+.room{position:relative;aspect-ratio:4/3;overflow:hidden;background:#f1e9dc;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.room img{position:absolute;pointer-events:none;-webkit-user-drag:none}
+.room .bg{inset:0;width:100%;height:100%}
+.room .cur{left:31.667%;top:6.667%;width:36.667%}
+.fu{position:absolute;transform:translateX(-50%);touch-action:none;filter:drop-shadow(0 3px 2px rgba(60,40,20,.28))}
+.fu img{position:static!important;width:100%;height:auto}
+.fu.on{outline:2.5px dashed var(--ac);outline-offset:3px;border-radius:4px}
+.fu.drag{filter:drop-shadow(0 10px 8px rgba(60,40,20,.35));cursor:grabbing}
+.room.frame{margin:0 -8px;border:6px solid #fff;box-shadow:0 6px 14px rgba(60,40,20,.18)}
+.room.still .fu{pointer-events:none}
+.room.still .fu.on{outline:0}
+
+/* 가구 보기 3개 */
+.picks.three{grid-template-columns:repeat(3,1fr);gap:16px 10px}
+.picks.three .photo{padding:6px 6px 10px}
+.picks.three .photo .cp{aspect-ratio:1;background:#f6efe2;padding:8px}
+.picks.three .photo .cp img{object-fit:contain}
+.picks.three .photo .cp.win{background:linear-gradient(#d6e6ee,#d6e6ee) 50% 60%/70% 72% no-repeat,#f6efe2}
+.picks.three .photo .ct{font-size:18px;text-align:center}
+.qrow{display:flex;align-items:center;gap:10px;margin:18px 0 4px}
+.qrow .q{margin:0;flex:1}
+.qrow.sm .q{font-size:22px}
+
+/* 배치: 가구 상자 */
+.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.ti{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;box-shadow:2px 2px 0 var(--line);touch-action:none;min-height:84px}
+.ti img{height:48px;width:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.ti span{font:700 14px var(--fb)}
+.ti.in{background:#f2f6ea;border-color:var(--ok)}
+.ti.in::after{content:'✓';position:absolute;top:4px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font:700 12px/20px var(--fb);text-align:center}
+.ti.on{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac)}
+.tip{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:var(--paper);border:1px solid var(--line);font:500 15px/1.45 var(--fb);min-height:48px}
+.tip b{color:var(--ac)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.tools .btn{padding:11px;font-size:15px}
+.cnt{font:700 13px var(--fb);color:var(--muted);text-align:right;margin:6px 0 0}
+.ghost{position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-50%);width:90px;opacity:.9;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3))}
+
+/* 완성 */
+.win .room{margin:0}
+.win h2{font-size:26px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>커튼과 가구를 하나씩 골라요. (7가지)</li><li>아래 가구를 누르면 방에 들어가요.</li><li>방의 다른 곳을 누르거나, 끌어서 옮겨요.</li><li>6개를 모두 놓으면 ‘완성!’을 눌러요.</li></ol><p>정답은 없어요. 내 마음에 드는 방을 만들어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'방',html:'나의 <b>공간 꾸미기</b>'};
+const STEPS=['가구 고르기','가구 놓기','완성'];
+const RW=1200,RH=900;               // 방 배경 크기(px). 가구 그림은 이 크기에 맞춰 그렸다.
+// 가구 7종(요청서 순서). size = 그림 크기(px), at = 처음 놓이는 자리 [가운데 x%, 바닥 y%]
+// 임시: 디자인 이름(원목·화이트 등)은 요청서에 없어 임시로 지었다. 그림도 모두 임시생성.
+const TYPES=[
+  {k:'curtain',n:'커튼',size:[440,380],opts:['베이지 커튼','체크무늬 커튼','꽃무늬 커튼']},
+  {k:'shelf',n:'책꽂이',size:[200,340],at:[28.5,63],opts:['원목 책꽂이','화이트 책꽂이','사다리 책꽂이']},
+  {k:'bed',n:'침대',size:[460,260],at:[58,90],opts:['원목 침대','네이비 침대','화이트 침대']},
+  {k:'desk',n:'책상',size:[300,210],at:[22,92],opts:['원목 책상','화이트 책상','민트 책상']},
+  {k:'closet',n:'옷장',size:[230,400],at:[11,64],opts:['원목 옷장','화이트 옷장','거울 옷장']},
+  {k:'table',n:'테이블',size:[210,130],at:[88,97],opts:['원목 테이블','화이트 테이블','노랑 테이블']},
+  {k:'chair',n:'의자',size:[150,190],at:[30,98],opts:['원목 의자','핑크 소파 의자','블루 의자']}
+];
+const FURN=TYPES.filter(t=>t.at);   // 방에 놓는 6개 (커튼은 창문에 바로 걸린다)
+const T=k=>TYPES.find(t=>t.k===k);
+const src=(k,d)=>`img/${k}-${d}.png`;
+const nameOf=k=>T(k).opts[pick[k]-1];
+const FLOOR=60;                     // 가구 바닥은 이 높이(%)보다 아래(마룻바닥)에
+
+const root=document.getElementById('app');
+let pick={},pos={},cur=null,timers=[],dragEnd={k:null,t:0};
+const dragged=k=>performance.now()-dragEnd.t<400&&(!k||dragEnd.k===k);   // 끌기 직후 따라오는 click 무시
+const dragOver=k=>dragEnd={k,t:performance.now()};
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const reset=()=>{pick={};pos={};cur=null};
+
+function home(){
+  clear();reset();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My beautiful room</span><h1 class="h1">나의 공간을<br><em>아름답게 꾸며요!</em></h1><p>마음에 드는 커튼과 가구를 골라, 내 방에 놓아 보세요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp" style="aspect-ratio:4/3"><img src="img/room.jpg" alt="창문과 문이 있는 빈 방"></span><span class="ct">아직 비어 있는 방<small>가구 7가지를 골라 꾸며요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>choose(0)});
+}
+
+/* 1단계: 종류마다 보기 3개 중 1개. back='place'면 고른 뒤 놓기 화면으로 돌아간다. */
+function choose(i,back){
+  clear();
+  const t=TYPES[i],q=`마음에 드는 ${t.n}${DK.eul(t.n)} 골라 보세요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,0)}${back?'':DK.seg(TYPES.length,i)}
+  <div class="qrow"><p class="q">${q}</p><button class="spk" data-say="${q}" aria-label="소리로 듣기">${DK.SPK}</button></div>
+  <p class="qs">${t.k==='curtain'?'커튼은 창문에 걸려요.':'3개 중 1개를 골라요.'}</p>
+  <div class="picks three">${t.opts.map((n,d)=>`<button class="pick photo${pick[t.k]===d+1?' on':''}" data-act="pick" data-d="${d+1}" aria-label="${n} 고르기"><span class="cp${t.k==='curtain'?' win':''}"><img src="${src(t.k,d+1)}" alt="${n}"></span><span class="ct">${n}</span></button>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ ${back?'돌아가기':'이전'}</button><button class="btn pri" data-act="next" ${pick[t.k]?'':'disabled'}>${back?'바꾸기 ›':'다음 ›'}</button></div>${DK.DKU}`,{
+    home,
+    prev:()=>back?place():i?choose(i-1):home(),
+    next:()=>pick[t.k]&&go(),
+    pick:b=>{pick[t.k]=+b.dataset.d;root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));root.querySelector('[data-act=next]').disabled=false;DK.speak(nameOf(t.k));later(go,800)}
+  });
+  if(!back&&i===0)DK.speak(q);
+  function go(){back?place():i<TYPES.length-1?choose(i+1):place()}
+}
+
+/* ---- 방 그리기 ---- */
+const wPct=t=>t.size[0]/RW*100, hPct=t=>t.size[1]/RH*100;
+function clamp(k,x,y){const t=T(k),w=wPct(t)/2;return {x:Math.min(100-w,Math.max(w,x)),y:Math.min(100,Math.max(FLOOR,hPct(t),y))}}
+function roomHTML(still){
+  const items=FURN.filter(t=>pos[t.k]).sort((a,b)=>pos[a.k].y-pos[b.k].y);
+  return `<div class="room${still?' still':''}" id="room">
+    <img class="bg" src="img/room.jpg" alt="">
+    ${pick.curtain?`<img class="cur" src="${src('curtain',pick.curtain)}" alt="">`:''}
+    ${items.map(t=>`<button class="fu${cur===t.k?' on':''}" data-k="${t.k}" style="left:${pos[t.k].x}%;bottom:${100-pos[t.k].y}%;width:${wPct(t)}%" aria-label="${nameOf(t.k)}${still?'':', 화살표 키로 옮겨요'}"><img src="${src(t.k,pick[t.k])}" alt=""></button>`).join('')}
+  </div>`;
+}
+const roomAlt=()=>{const c=nameOf('curtain'),n=FURN.filter(t=>pos[t.k]).length;return `${c}${DK.wa(c)} 가구 ${n}개가 있는 방`};
+
+/* 2단계: 놓기. 가구 누르기 → 정해진 자리에 놓임, 방 누르기 → 고른 가구 옮기기, 끌기 → 옮기기 */
+function place(){
+  clear();
+  const intro='가구를 원하는 곳에 놓아 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,1)}
+  <div class="qrow sm" style="margin:0 0 10px"><p class="q">${intro}</p><button class="spk" data-say="${intro}" aria-label="소리로 듣기">${DK.SPK}</button></div>
+  <div id="rw"></div>
+  <p class="tip" id="tip" aria-live="polite"></p>
+  <div class="tools" id="tools"></div>
+  <div class="tray" id="tray">${FURN.map(t=>`<button class="ti" data-k="${t.k}" aria-label="${nameOf(t.k)} 방에 놓기"><img src="${src(t.k,pick[t.k])}" alt=""><span>${t.n}</span></button>`).join('')}</div>
+  <p class="cnt" id="cnt"></p>
+  <div class="acts two"><button class="btn sec" data-act="curtain">커튼 바꾸기</button><button class="btn pri" data-act="done">완성!</button></div>${DK.DKU}`,{
+    home,curtain:()=>choose(0,'place'),done:()=>FURN.every(t=>pos[t.k])&&done()
+  });
+  DK.speak(intro);
+  root.querySelectorAll('.ti').forEach(b=>trayItem(b));
+  draw();
+}
+
+function draw(){
+  const rw=root.querySelector('#rw');if(!rw)return;
+  rw.innerHTML=roomHTML(false);
+  const room=rw.firstElementChild;room.setAttribute('role','group');room.setAttribute('aria-label',roomAlt());
+  room.classList.add('frame');
+  room.addEventListener('click',e=>{                 // 빈 곳 누르기 → 고른 가구를 그리로
+    if(e.target.closest('.fu')||dragged())return;
+    if(!cur){say('먼저 아래에서 가구를 눌러요.');return}
+    const p=toRoom(e);pos[cur]=clamp(cur,p.x,p.y+hPct(T(cur))/2);draw();
+  });
+  room.querySelectorAll('.fu').forEach(b=>roomItem(b,room));
+  root.querySelectorAll('.ti').forEach(b=>{b.classList.toggle('in',!!pos[b.dataset.k]);b.classList.toggle('on',cur===b.dataset.k)});
+  const n=FURN.filter(t=>pos[t.k]).length;
+  root.querySelector('#cnt').textContent=`놓은 가구 ${n} / ${FURN.length}`;
+  const d=root.querySelector('[data-act=done]');d.disabled=n<FURN.length;
+  const tip=root.querySelector('#tip'),tools=root.querySelector('#tools');
+  if(cur){
+    const nm=nameOf(cur);
+    tip.innerHTML=`<b>${DK.esc(nm)}</b>${DK.eul(nm)} 골랐어요. 방의 다른 곳을 누르거나 끌어서 옮겨요.`;
+    tools.innerHTML=`<button class="btn line" data-t="change">디자인 바꾸기</button><button class="btn sec" data-t="out">빼기</button>`;
+    tools.querySelector('[data-t=change]').onclick=()=>choose(TYPES.indexOf(T(cur)),'place');
+    tools.querySelector('[data-t=out]').onclick=()=>{delete pos[cur];cur=null;draw()};
+  }else{
+    tip.innerHTML=n<FURN.length?'아래 가구를 누르면 방에 들어가요.':'모두 놓았어요! <b>완성!</b>을 눌러요.';
+    tools.innerHTML='';
+  }
+}
+function say(t){const tip=root.querySelector('#tip');if(tip)tip.textContent=t;DK.speak(t)}
+function toRoom(e){const r=root.querySelector('#room').getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*100,y:(e.clientY-r.top)/r.height*100,inside:e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom}}
+
+/* 방 안의 가구: 누르면 고르기, 끌면 옮기기, 화살표 키로도 옮기기 */
+function roomItem(b,room){
+  const k=b.dataset.k;
+  b.onclick=e=>{e.stopPropagation();if(dragged(k))return;cur=cur===k?null:k;draw();if(cur)DK.speak(nameOf(k));refocus(k)};
+  b.onkeydown=e=>{const m={ArrowLeft:[-3,0],ArrowRight:[3,0],ArrowUp:[0,-3],ArrowDown:[0,3]}[e.key];if(!m)return;e.preventDefault();cur=k;pos[k]=clamp(k,pos[k].x+m[0],pos[k].y+m[1]);draw();refocus(k)};
+  b.onpointerdown=e=>{
+    if(e.button>0)return;
+    const p0=toRoom(e),start={...pos[k]};let moved=false;
+    b.setPointerCapture(e.pointerId);
+    b.onpointermove=ev=>{const p=toRoom(ev);if(!moved&&Math.hypot(p.x-p0.x,p.y-p0.y)<2)return;moved=true;b.classList.add('drag');
+      const q=clamp(k,start.x+p.x-p0.x,start.y+p.y-p0.y);pos[k]=q;b.style.left=q.x+'%';b.style.bottom=(100-q.y)+'%'};
+    b.onpointerup=b.onpointercancel=()=>{b.onpointermove=b.onpointerup=b.onpointercancel=null;if(moved){dragOver(k);cur=k;draw()}};
+  };
+}
+const refocus=k=>{const el=root.querySelector(`.fu[data-k="${k}"]`);el&&el.focus({preventScroll:true})};
+
+/* 아래 가구 상자: 누르면 정해진 자리에 놓기(이미 있으면 고르기), 방으로 끌어다 놓기 */
+function trayItem(b){
+  const k=b.dataset.k,t=T(k);
+  b.onclick=()=>{if(dragged(k))return;if(!pos[k])pos[k]=clamp(k,...t.at);cur=k;draw();DK.speak(nameOf(k))};
+  b.onpointerdown=e=>{
+    if(e.button>0)return;
+    const x0=e.clientX,y0=e.clientY;let g=null;
+    b.setPointerCapture(e.pointerId);
+    b.onpointermove=ev=>{if(!g){if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<8)return;g=document.createElement('img');g.className='ghost';g.src=src(k,pick[k]);g.alt='';document.body.appendChild(g)}
+      g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px'};
+    b.onpointerup=ev=>{end();if(!g)return;g.remove();dragOver(k);const p=toRoom(ev);if(p.inside){pos[k]=clamp(k,p.x,p.y+hPct(t)/2);cur=k;draw();DK.speak(nameOf(k))}};
+    b.onpointercancel=()=>{end();g&&g.remove()};
+    const end=()=>{b.onpointermove=b.onpointerup=b.onpointercancel=null};
+  };
+}
+
+/* 3단계: 완성한 방 */
+function done(){
+  clear();cur=null;
+  const msg='나만의 아름다운 공간이 완성되었어요!';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,2)}
+  <div class="win"><i class="tp"></i><span class="stamp">완성!</span>${roomHTML(true)}<div class="wc"><h2>${msg}</h2><p>${DK.esc(nameOf('curtain'))} · ${FURN.map(t=>DK.esc(nameOf(t.k))).join(' · ')}</p></div></div>
+  <div class="acts two"><button class="btn sec" data-say="${msg}">🔊 다시 듣기</button><button class="btn sec" data-act="move">가구 옮기기</button></div>
+  <div class="acts" style="margin-top:8px"><button class="btn pri" data-act="again">↻ 다시 꾸미기</button></div>${DK.DKU}`,{
+    home,move:place,again:()=>{reset();choose(0)}
+  });
+  const r=root.querySelector('#room');r.setAttribute('role','img');r.setAttribute('aria-label',roomAlt());
+  DK.speak(msg);
+}
+
+home();
+</script>
+</body>
+</html>

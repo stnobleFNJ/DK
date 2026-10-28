@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>연락처를 찾아주세요</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #d8dde3;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+  #app-outer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 12px;
+  }
+  #phone {
+    width: 100%;
+    max-width: 380px;
+    height: 100%;
+    max-height: 780px;
+    background: #fff;
+    border-radius: 34px;
+    border: 8px solid #1c1c1e;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    display: flex;
+    flex-direction: column;
+  }
+  .statusbar {
+    height: 30px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #111;
+    flex-shrink: 0;
+  }
+  .screen {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* ===== 레벨 선택 화면 ===== */
+  #screen-select {
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+    background: linear-gradient(180deg,#eef3ff,#ffffff);
+  }
+  #screen-select h1 {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  #screen-select p {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 26px;
+  }
+  .level-btn {
+    width: 100%;
+    padding: 18px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+    border: none;
+    font-size: 17px;
+    font-weight: bold;
+    color: #fff;
+    background: #4c8dff;
+  }
+  .level-btn.mid { background: #ff9f43; }
+  .level-btn.hard { background: #ff5c5c; }
+  .level-btn .sub {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    margin-top: 4px;
+    opacity: 0.9;
+  }
+
+  /* ===== 홈 화면 ===== */
+  #screen-home {
+    background: linear-gradient(180deg,#7ea9ff,#a3c4ff);
+    padding: 30px 22px;
+  }
+  .home-time {
+    color: #fff;
+    text-align: center;
+    font-size: 42px;
+    font-weight: 200;
+    margin-bottom: 40px;
+  }
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 14px;
+  }
+  .app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .app-icon .box {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  .app-icon.target .box {
+    background: #ffffff;
+    box-shadow: 0 0 0 3px #ffd23f, 0 4px 10px rgba(0,0,0,0.2);
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .app-icon span.name {
+    color: #fff;
+    font-size: 10px;
+  }
+  .home-hint {
+    margin-top: 30px;
+    text-align: center;
+    color: #fff;
+    font-size: 13px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 10px;
+    padding: 8px;
+  }
+
+  /* ===== 연락처 목록 화면 ===== */
+  #screen-contacts { background: #fff; }
+  .mission-bar {
+    background: #ffe9b3;
+    padding: 12px 16px;
+    text-align: center;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f0d488;
+  }
+  .mission-bar .m-title {
+    font-size: 11px;
+    color: #8a6d1f;
+    margin-bottom: 3px;
+  }
+  .mission-bar .m-target {
+    font-size: 17px;
+    font-weight: bold;
+    color: #6b4e00;
+  }
+  .contacts-header {
+    padding: 10px 16px 6px;
+    font-size: 20px;
+    font-weight: bold;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+  }
+  .contacts-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f2f2f2;
+  }
+  .contact-row .emoji {
+    font-size: 26px;
+    width: 34px;
+    text-align: center;
+  }
+  .contact-row .name {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .toast {
+    position: absolute;
+    left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ===== 통화 화면 ===== */
+  #screen-call {
+    background: linear-gradient(180deg,#232526,#1c1c1e);
+    color: #fff;
+    align-items: center;
+    justify-content: space-between;
+    padding: 60px 20px 40px;
+    text-align: center;
+  }
+  .call-emoji {
+    font-size: 90px;
+    margin-bottom: 18px;
+  }
+  .call-name {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .call-status {
+    font-size: 14px;
+    color: #b6b6b6;
+  }
+  .call-mid { display: flex; flex-direction: column; align-items: center; margin-top: 60px; }
+  .call-result {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .call-result.show { display: flex; }
+  .call-result .big {
+    font-size: 40px;
+  }
+  .call-result .txt {
+    font-size: 17px;
+    font-weight: bold;
+  }
+  .call-disconnect {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,59,48,0.15);
+    border: 2px solid #ff3b30;
+    border-radius: 16px;
+    padding: 20px 18px;
+    margin-top: 10px;
+  }
+  .call-disconnect.show {
+    display: flex;
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .call-disconnect .alert-icon {
+    font-size: 40px;
+  }
+  .call-disconnect .alert-txt {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ff3b30;
+    text-align: center;
+  }
+  .call-disconnect .alert-sub {
+    font-size: 12px;
+    color: #ddd;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .call-btn {
+    margin-top: 18px;
+    padding: 14px 30px;
+    border-radius: 26px;
+    border: none;
+    background: #4c8dff;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    display: none;
+  }
+  .call-btn.show { display: inline-block; }
+  .call-icon-row { display:flex; gap: 40px; margin-top: 10px; }
+  .call-hangup {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: #ff3b30;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app-outer">
+  <div id="phone">
+    <div class="statusbar">
+      <span id="status-time">9:41</span>
+      <span>🔋100%</span>
+    </div>
+
+    <!-- 1. 레벨 선택 -->
+    <div class="screen active" id="screen-select">
+      <h1>📱 연락처를 찾아주세요</h1>
+      <p>연락처 개수를 골라주세요<br>(숫자가 클수록 더 어려워요)</p>
+      <button class="level-btn" onclick="startGame(20)">쉬움 · 20개</button>
+      <button class="level-btn mid" onclick="startGame(40)">보통 · 40개</button>
+      <button class="level-btn hard" onclick="startGame(80)">어려움 · 80개</button>
+    </div>
+
+    <!-- 2. 홈 화면 -->
+    <div class="screen" id="screen-home">
+      <div class="home-time">9:41</div>
+      <div class="app-grid">
+        <div class="app-icon"><div class="box">📷</div><span class="name">카메라</span></div>
+        <div class="app-icon"><div class="box">💬</div><span class="name">문자</span></div>
+        <div class="app-icon"><div class="box">🎵</div><span class="name">음악</span></div>
+        <div class="app-icon"><div class="box">🗓️</div><span class="name">캘린더</span></div>
+        <div class="app-icon"><div class="box">🖼️</div><span class="name">사진</span></div>
+        <div class="app-icon"><div class="box">⚙️</div><span class="name">설정</span></div>
+        <div class="app-icon"><div class="box">🌤️</div><span class="name">날씨</span></div>
+        <div class="app-icon target" onclick="openContacts()"><div class="box">📒</div><span class="name">전화번호부</span></div>
+      </div>
+      <div class="home-hint">👆 반짝이는 '전화번호부'를 눌러보세요</div>
+    </div>
+
+    <!-- 3. 연락처 목록 -->
+    <div class="screen" id="screen-contacts">
+      <div class="mission-bar">
+        <div class="m-title">🎯 오늘의 미션</div>
+        <div class="m-target" id="mission-text">-</div>
+      </div>
+      <div class="contacts-header">전화번호부</div>
+      <div class="contacts-list" id="contacts-list"></div>
+      <div class="toast" id="toast">땡! 다시 찾아볼까요?</div>
+    </div>
+
+    <!-- 4. 통화 화면 -->
+    <div class="screen" id="screen-call">
+      <div class="call-mid">
+        <div class="call-emoji" id="call-emoji">👤</div>
+        <div class="call-name" id="call-name">이름</div>
+        <div class="call-status" id="call-status">연결 중...</div>
+      </div>
+      <div>
+        <div class="call-icon-row" id="call-icon-row">
+          <div class="call-hangup" onclick="disconnectCall()">📞</div>
+        </div>
+        <div class="call-result" id="call-result">
+          <div class="big">🎉</div>
+          <div class="txt">미션 성공!</div>
+        </div>
+        <div class="call-disconnect" id="call-disconnect">
+          <div class="alert-icon">🚫</div>
+          <div class="alert-txt">삐- "이 번호는 없는 번호입니다"</div>
+          <div class="alert-sub">오래된 연락처는 이렇게 연결되지 않기도 해요.<br>내 관계망을 한번 점검해볼까요?</div>
+        </div>
+        <button class="call-btn" id="call-btn" onclick="resetGame()">다시 해보기</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const targetContact = {label:"고등학교 3학년 담임 선생님", emoji:"🧑‍🏫"};
+
+  const pool = [
+    {label:"엄마", emoji:"👩"},
+    {label:"아빠", emoji:"👨"},
+    {label:"형", emoji:"👦"},
+    {label:"오빠", emoji:"👦"},
+    {label:"누나", emoji:"👧"},
+    {label:"언니", emoji:"👧"},
+    {label:"동생", emoji:"🧒"},
+    {label:"할머니", emoji:"👵"},
+    {label:"할아버지", emoji:"👴"},
+    {label:"이모", emoji:"👩"},
+    {label:"삼촌", emoji:"👨"},
+    {label:"고모", emoji:"👩"},
+    {label:"사촌 형", emoji:"👦"},
+    {label:"사촌 누나", emoji:"👧"},
+    {label:"고등학교 친구", emoji:"🧑"},
+    {label:"중학교 친구", emoji:"🧑"},
+    {label:"초등학교 친구", emoji:"🧑"},
+    {label:"동네 친구", emoji:"🧑"},
+    {label:"온라인 게임 친구", emoji:"🎮"},
+    {label:"교회 누나", emoji:"⛪"},
+    {label:"교회 형", emoji:"⛪"},
+    {label:"이웃집 아줌마", emoji:"🏠"},
+    {label:"이웃집 아저씨", emoji:"🏠"},
+    {label:"복지관 선생님", emoji:"🧑‍🏫"},
+    {label:"평생교육센터 선생님", emoji:"🧑‍🏫"},
+    {label:"활동지원사 선생님", emoji:"🤝"},
+    {label:"행정복지센터 선생님", emoji:"🏢"},
+    {label:"주치의 선생님", emoji:"🩺"},
+    {label:"치과 선생님", emoji:"🦷"},
+    {label:"체육관 코치", emoji:"🏋️"},
+    {label:"미술학원 선생님", emoji:"🎨"},
+    {label:"컴퓨터학원 친구", emoji:"💻"},
+    {label:"직장 동료", emoji:"💼"},
+    {label:"직장 상사", emoji:"💼"},
+    {label:"단골 카페 사장님", emoji:"☕"},
+    {label:"문구점 아저씨", emoji:"🏪"},
+    {label:"버스 기사님", emoji:"🚌"},
+    {label:"편의점 아저씨", emoji:"🏪"},
+    {label:"미용실 선생님", emoji:"💇"},
+    {label:"수영장 코치", emoji:"🏊"},
+    {label:"요리학원 선생님", emoji:"🍳"},
+  ];
+
+  let currentContacts = [];
+  let missionTarget = null;
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function generateContacts(n) {
+    let base = shuffle(pool);
+    let result = [];
+    if (n <= base.length) {
+      result = base.slice(0, n);
+    } else {
+      result = [...base];
+      let round = 2;
+      let idx = 0;
+      while (result.length < n) {
+        const item = base[idx % base.length];
+        result.push({label: item.label + " " + round, emoji: item.emoji});
+        idx++;
+        if (idx % base.length === 0) round++;
+      }
+      result = result.slice(0, n);
+    }
+    // 고3 담임 선생님 연락처는 항상 포함하되, 목록의 중간~하단 쪽에 배치
+    // 우선 나머지 항목만 무작위로 하나 골라 제거한 뒤 알파벳 정렬
+    const dropIdx = Math.floor(Math.random() * result.length);
+    result.splice(dropIdx, 1);
+    result.sort((a, b) => a.label.localeCompare(b.label, 'ko'));
+
+    // 정렬된 목록의 40%~95% 구간 중 한 자리에 담임 선생님 연락처를 삽입
+    const minPos = Math.floor(result.length * 0.4);
+    const maxPos = result.length; // 맨 끝 포함 가능
+    const insertPos = minPos + Math.floor(Math.random() * (maxPos - minPos + 1));
+    result.splice(insertPos, 0, targetContact);
+
+    return result;
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startGame(n) {
+    currentContacts = generateContacts(n);
+    showScreen('screen-home');
+  }
+
+  function openContacts() {
+    missionTarget = targetContact;
+    document.getElementById('mission-text').textContent = missionTarget.label + " 연락처를 찾아 전화를 걸어주세요";
+
+    const listEl = document.getElementById('contacts-list');
+    listEl.innerHTML = '';
+    currentContacts.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'contact-row';
+      row.innerHTML = '<span class="emoji">' + c.emoji + '</span><span class="name">' + c.label + '</span>';
+      row.onclick = () => selectContact(c);
+      listEl.appendChild(row);
+    });
+
+    showScreen('screen-contacts');
+  }
+
+  function selectContact(c) {
+    if (c.label === missionTarget.label) {
+      startCall(c);
+    } else {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+  }
+
+  let callTimer = null;
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, startDelay, volume) {
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = volume || 0.15;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const startTime = ctx.currentTime + (startDelay || 0) / 1000;
+      osc.start(startTime);
+      osc.stop(startTime + duration / 1000);
+    } catch (e) { /* 오디오 재생 불가 환경은 무시 */ }
+  }
+
+  function playRingSound() {
+    // 통화 신호음처럼 들리도록 약 1초간 두 번의 짧은 톤 재생
+    playTone(440, 400, 0);
+    playTone(440, 400, 550);
+  }
+
+  function playDisconnectBeep() {
+    playTone(950, 250, 0, 0.2);
+  }
+
+  function speakKorean(text) {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ko-KR';
+      u.rate = 0.95;
+      speechSynthesis.speak(u);
+    } catch (e) { /* 음성 합성 미지원 환경은 무시 */ }
+  }
+
+  function startCall(c) {
+    document.getElementById('call-emoji').textContent = c.emoji;
+    document.getElementById('call-name').textContent = c.label;
+    document.getElementById('call-status').textContent = '신호가 가고 있어요...';
+    document.getElementById('call-icon-row').style.display = 'flex';
+    document.getElementById('call-result').classList.remove('show');
+    document.getElementById('call-disconnect').classList.remove('show');
+    document.getElementById('call-btn').classList.remove('show');
+    showScreen('screen-call');
+
+    playRingSound();
+
+    // 신호음 1번 후 결번 알림
+    setTimeout(() => {
+      document.getElementById('call-status').textContent = '뚜르르...';
+    }, 900);
+
+    setTimeout(() => {
+      disconnectCall();
+    }, 1200);
+  }
+
+  function disconnectCall() {
+    clearInterval(callTimer);
+    document.getElementById('call-status').textContent = '통화 연결 실패';
+    document.getElementById('call-icon-row').style.display = 'none';
+    document.getElementById('call-disconnect').classList.add('show');
+    document.getElementById('call-btn').classList.add('show');
+
+    playDisconnectBeep();
+    setTimeout(() => {
+      speakKorean('삐- 이 번호는 없는 번호입니다');
+    }, 300);
+  }
+
+  function resetGame() {
+    showScreen('screen-select');
+  }
+</script>
+
+</body>
+</html>

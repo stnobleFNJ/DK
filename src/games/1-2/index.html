@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>다른 사람의 한 주 살펴보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 선 긋기: 왼쪽 사진 3장, 오른쪽 날짜 3개, 그 사이에 선 */
+.match{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:18px 38px;padding:12px 2px 4px}
+.match svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+.match line{stroke:var(--ac);stroke-width:4;stroke-linecap:round}
+.match line.ok{stroke:var(--ok)}
+.match line.no{stroke:var(--no);stroke-dasharray:8 7}
+.mp{position:relative;grid-column:1}
+.mp .pick{width:100%;padding:6px 6px 8px}
+.mp .pick .ct{font-size:18px;padding-top:6px}
+.zm{position:absolute;right:-6px;bottom:-8px;z-index:4;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--line);display:grid;place-items:center;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.dt{grid-column:2;align-self:center;text-align:center;min-height:56px;padding:10px 4px;border-radius:12px;background:var(--paper);border:1.5px solid var(--line);box-shadow:2px 2px 0 var(--line);font:var(--hw) 22px/1.15 var(--fh)}
+.dt.on{border-color:var(--ac);background:#fff;box-shadow:0 0 0 3px var(--ac)}
+.dt.ok{border-color:var(--ok);background:#f2f6ea;color:var(--ok);box-shadow:0 0 0 3px var(--ok)}
+.dt.wrong{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.pick.ok{box-shadow:0 0 0 4px var(--ok),0 10px 22px rgba(60,40,20,.24)}
+.done .pick:not(.ok),.done .dt:not(.ok){opacity:.4}
+.qn{display:inline-block;margin:16px 0 0;padding:2px 10px;border-radius:999px;background:var(--tape);font:700 13px var(--fb)}
+.q{margin-top:8px}
+.week{list-style:none;margin:0;padding:0}
+.week li{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.week li:last-child{border:0}
+.week b{flex:none;min-width:86px;font:var(--hw) 22px var(--fh);color:var(--ac)}
+dialog.zoom{width:min(980px,calc(100% - 16px));max-width:none;padding:10px 10px 12px;border-radius:14px}
+dialog.zoom img{width:100%;border-radius:8px}
+dialog.zoom button{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>질문을 잘 읽어요.</li><li>답이 있는 사진을 눌러요. 🔍를 누르면 크게 볼 수 있어요.</li><li>알맞은 날짜를 누르면 선이 이어져요.</li></ol><p>틀려도 괜찮아요. 사진을 다시 보고 또 해 보세요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="zoom" class="zoom" aria-label="사진 크게 보기"><img id="zimg" alt=""><button onclick="this.closest('dialog').close()">닫기</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'주',html:'다른 사람의 <b>한 주</b>'};
+const PH=[
+  {n:'대화 내용',img:'img/chat.jpg',alt:'영미와 나눈 대화. 5월 18일 (화)'},
+  {n:'영수증',img:'img/receipt.jpg',alt:'OO중화요리 영수증. 05-21 13:25'},
+  {n:'영화 티켓',img:'img/ticket.jpg',alt:'영화 오딧세이 티켓. 05-23 (토) 19:30'}
+];
+// 질문·보기는 요청서 그대로. 정답은 사진에 적힌 날짜(대화 5월 18일(화), 영수증 05-21, 티켓 05-23(토)).
+const Q=[
+  {q:'영미를 만난 날은 언제인가요?',ph:0,opts:['5/18(월)','5/18(화)','5/19(화)'],ans:1,ok:'대화 맨 위에 “5월 18일 (화)”라고 쓰여 있어요.',hint:'날짜 옆의 요일도 꼭 살펴보세요.',did:'영미를 만났어요.'},
+  {q:'OO중화요리에서 식사를 한 날은 언제인가요?',ph:1,opts:['5/19(월)','5/21(목)','5/23(토)'],ans:1,ok:'영수증에 “05-21”이라고 쓰여 있어요.',hint:'영수증 가게 이름 아래에 날짜가 있어요.',did:'OO중화요리에서 식사했어요.'},
+  {q:'영화를 본 날은 언제인가요?',ph:2,opts:['5/19(월)','5/21(목)','5/23(토)'],ans:2,ok:'영화 티켓에 “05-23 (토)”라고 쓰여 있어요.',hint:'영화 제목 아래에 날짜가 있어요.',did:'영화 「오딧세이」를 봤어요.'}
+];
+const DAY={'월':'월요일','화':'화요일','수':'수요일','목':'목요일','금':'금요일','토':'토요일','일':'일요일'};
+const read=d=>d.replace(/(\d+)\/(\d+)\((.)\)/,(_,m,dd,w)=>`${m}월 ${dd}일 ${DAY[w]}`);
+const show=d=>d.replace('(',' (');
+
+const root=document.getElementById('app');
+let sel={},timers=[],busy=false;
+const clear=()=>{timers.forEach(clearTimeout);timers=[];busy=false;try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const $=s=>root.querySelector(s);
+function zoom(i){const z=document.getElementById('zoom'),im=document.getElementById('zimg');im.src=PH[i].img;im.alt=PH[i].alt;z.showModal()}
+
+function home(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Look at a week</span><h1 class="h1">다른 사람의 한 주를<br><em>살펴봐요!</em></h1><p>대화, 영수증, 영화 티켓 사진이 있어요. 사진에서 날짜를 찾아 선으로 이어 보세요.</p></section>
+  <div class="picks two">${PH.slice(0,2).map((p,i)=>`<div class="photo pick"><i class="tp"></i><span class="cp"><img src="${p.img}" alt="${p.alt}"></span><span class="ct">${p.n}</span></div>`).join('')}</div>
+  <div class="photo tilt-r" style="margin:18px 40px 0"><i class="tp"></i><span class="cp"><img src="${PH[2].img}" alt="${PH[2].alt}"></span><span class="ct">${PH[2].n}<small>질문 3개를 풀어요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>quiz(0)});
+}
+
+function quiz(i){
+  clear();sel={};
+  const s=Q[i];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(3,i)}
+  <span class="qn">질문 ${i+1}</span>
+  <p class="saybig" style="margin-top:8px"><span>${s.q}</span><button class="spk" data-say="${s.q}" aria-label="질문 듣기">${DK.SPK}</button></p>
+  <p class="qs" style="margin-top:10px">답이 있는 <b>사진</b>을 누르고, 알맞은 <b>날짜</b>를 눌러 선으로 이어요.</p>
+  <div class="match" id="m"><svg aria-hidden="true"></svg>
+    ${PH.map((p,k)=>`<div class="mp" style="grid-row:${k+1}"><button class="pick photo" data-act="ph" data-k="${k}" aria-label="${p.n} 사진 고르기"><span class="cp"><img src="${p.img}" alt="${p.alt}"></span><span class="ct">${p.n}</span></button><button class="zm" data-act="zoom" data-k="${k}" aria-label="${p.n} 크게 보기">🔍</button></div>`).join('')}
+    ${s.opts.map((d,k)=>`<button class="dt" style="grid-row:${k+1}" data-act="dt" data-k="${k}" aria-label="${read(d)}">${show(d)}</button>`).join('')}
+  </div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${i<2?'다음 질문 ›':'결과 보기 ›'}</button></div>${DK.DKU}`,{
+    home,zoom:b=>zoom(+b.dataset.k),next:()=>i<2?quiz(i+1):result(),
+    ph:b=>{if(busy)return;sel.ph=+b.dataset.k;mark();DK.speak(PH[sel.ph].n);check(i)},
+    dt:b=>{if(busy)return;sel.dt=+b.dataset.k;mark();DK.speak(read(s.opts[sel.dt]));check(i)}
+  });
+  later(()=>DK.speak(s.q),300);
+}
+
+function mark(){
+  root.querySelectorAll('[data-act=ph]').forEach(b=>b.classList.toggle('on',+b.dataset.k===sel.ph));
+  root.querySelectorAll('.dt').forEach(b=>b.classList.toggle('on',+b.dataset.k===sel.dt));
+}
+
+// 두 칸 사이에 선 긋기
+function draw(cls){
+  const m=$('#m'),svg=m.querySelector('svg'),r=m.getBoundingClientRect();
+  const a=m.querySelector(`[data-act=ph][data-k="${sel.ph}"]`).getBoundingClientRect(),b=m.querySelector(`.dt[data-k="${sel.dt}"]`).getBoundingClientRect();
+  svg.innerHTML=`<circle cx="${a.right-r.left}" cy="${a.top+a.height/2-r.top}" r="6" fill="currentColor"/><line class="${cls}" x1="${a.right-r.left}" y1="${a.top+a.height/2-r.top}" x2="${b.left-r.left}" y2="${b.top+b.height/2-r.top}"/>`;
+  svg.style.color=cls==='ok'?'var(--ok)':'var(--no)';
+}
+
+function check(i){
+  if(sel.ph==null||sel.dt==null)return;
+  const s=Q[i],okPh=sel.ph===s.ph,okDt=sel.dt===s.ans,fb=$('#fb');
+  if(okPh&&okDt){
+    draw('ok');busy=true;
+    $(`[data-act=ph][data-k="${sel.ph}"]`).classList.add('ok');$(`.dt[data-k="${sel.dt}"]`).classList.add('ok');$('#m').classList.add('done');
+    fb.innerHTML=`<p class="fb ok"><span>⭕</span><span>맞아요! ${show(s.opts[s.ans])}<small>${s.ok}</small></span></p>`;
+    $('#nx').hidden=false;DK.speak('맞아요! '+s.ok);
+    $('#nx').scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
+  draw('no');busy=true;
+  const msg=!okPh?`${PH[sel.ph].n} 사진에는 답이 없어요. 다른 사진을 살펴볼까요?`:`날짜를 다시 찾아봐요. ${s.hint}`;
+  if(!okPh)$(`[data-act=ph][data-k="${sel.ph}"]`).classList.add('wrong');else $(`.dt[data-k="${sel.dt}"]`).classList.add('wrong');
+  fb.innerHTML=`<p class="fb no"><span>🙂</span><span>괜찮아요, 다시 해 봐요!<small>${msg}</small></span></p>`;
+  DK.speak('괜찮아요, 다시 해 봐요! '+msg);
+  later(()=>{busy=false;$('#m svg').innerHTML='';root.querySelectorAll('.wrong').forEach(e=>e.classList.remove('wrong'));if(okPh)sel.dt=null;else sel={};mark()},1400);
+}
+
+function result(){
+  clear();
+  const say='모든 날짜를 찾았어요! 한 주를 잘 살펴봤어요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="win"><span class="stamp">참<br>잘했어요</span><span class="wp"><img src="${PH[0].img}" alt="${PH[0].alt}"></span><div class="wc"><h2>한 주를 잘 살펴봤어요!</h2><p>사진 속 날짜를 모두 찾았어요.</p></div></div>
+  ${DK.sayBig(say)}
+  <div class="note"><h3>📅 이번 주에 한 일</h3><ul class="week">${Q.map(s=>`<li><b>${show(s.opts[s.ans])}</b><span>${s.did}</span></li>`).join('')}</ul></div>
+  <div class="acts two"><button class="btn sec" data-act="again">↻ 다시 풀기</button><button class="btn pri" data-act="home">처음으로</button></div>${DK.DKU}`,{home,again:()=>quiz(0)});
+  DK.speak(say);
+}
+
+addEventListener('resize',()=>{if(busy&&sel.ph!=null&&sel.dt!=null&&$('#m'))draw($('#m').classList.contains('done')?'ok':'no')});
+home();
+</script>
+</body>
+</html>

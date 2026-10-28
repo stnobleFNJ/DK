@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>매너 방탈출</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 게임판: 방 4개 + 열쇠 칸 */
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 6px}
+.rm{position:relative;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:8px 2px 4px;text-align:center;box-shadow:2px 2px 0 var(--line)}
+.rm b{display:block;font:700 10px var(--fm);letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.rm .dr{position:relative;display:block;width:30px;height:40px;margin:0 auto;border-radius:5px 5px 0 0;background:#24548c;border:3px solid #1b3f6c;border-bottom:0}
+.rm .dr::after{content:"";position:absolute;left:4px;top:18px;width:5px;height:5px;border-radius:50%;background:#f1c96b}
+.rm .dr i{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-style:normal}
+.rm.open .dr{background:linear-gradient(#fff3c9,#f6c75a)}
+.rm.open .dr::after{display:none}
+.rm.cur{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.rm.cur b{color:var(--ac)}
+.rm .ky{display:block;font-size:22px;line-height:30px;filter:grayscale(1);opacity:.22}
+.rm.got .ky{filter:none;opacity:1}
+.rm .ky.new{animation:keyin .7s ease}
+@keyframes keyin{0%{transform:scale(.2) rotate(-40deg)}60%{transform:scale(1.5) rotate(10deg)}100%{transform:none}}
+.bdl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:0 2px}
+.bdl b{color:var(--ac)}
+.acts[hidden]{display:none}
+/* 방 화면 */
+.rt{font:var(--hw) 28px/1.3 var(--fh);letter-spacing:-.03em;margin:4px 0 14px}
+.photo.room{margin:12px 4px 0}
+.photo.room .cp{aspect-ratio:auto}
+.photo.room .ct{display:flex;gap:10px;align-items:center;font-size:20px}
+.photo.room .ct span{flex:1}
+.opt{min-height:56px;align-items:center;font-size:17px}
+/* 열쇠 얻기 */
+.keypop{position:fixed;left:50%;top:42%;font-size:88px;pointer-events:none;z-index:9;animation:keypop 1.2s ease forwards}
+@keyframes keypop{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}30%{transform:translate(-50%,-50%) scale(1.25);opacity:1}65%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-38vh) scale(.3);opacity:0}}
+/* 문 열기 */
+.gwrap{perspective:900px;display:flex;justify-content:center;margin:26px 0 8px}
+.gate{position:relative;width:min(210px,58vw);aspect-ratio:3/4.3;background:radial-gradient(circle at 50% 40%,#fffbe8,#f6c75a 75%);border:12px solid #1b3f6c;border-bottom:0;border-radius:12px 12px 0 0;box-shadow:0 18px 30px -12px rgba(60,40,20,.35)}
+.leaf{position:absolute;inset:0;background:linear-gradient(160deg,#3a72ad,#22528a);transform-origin:100% 50%;transition:transform 1.1s cubic-bezier(.5,.1,.3,1);box-shadow:inset 0 0 0 6px rgba(0,0,0,.08)}
+.leaf::after{content:"";position:absolute;left:12%;top:50%;width:18px;height:18px;border-radius:50%;background:#f1c96b;box-shadow:inset -3px -3px 0 #d9a63c}
+.gate.open .leaf{transform:rotateY(-78deg)}
+.leaf .sg{position:absolute;left:50%;top:14%;transform:translateX(-50%);background:var(--paper);color:var(--ink);font:700 13px var(--fm);padding:4px 10px;border-radius:4px;white-space:nowrap}
+.leaf .lk{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);font-size:44px}
+.lk.pop{animation:keyin .5s ease}
+.guide{text-align:center;font:var(--hw) 24px/1.4 var(--fh);margin:10px 0 0}
+/* 탈출 */
+.keys{display:flex;justify-content:center;gap:10px;font-size:34px;margin:4px 0 0}
+.keys span{animation:keyin .6s ease both}
+.keys span:nth-child(2){animation-delay:.15s}.keys span:nth-child(3){animation-delay:.3s}.keys span:nth-child(4){animation-delay:.45s}
+.note small{color:var(--muted);font-size:12px;display:block}
+.stamp.esc{animation:stampin .5s .3s ease both}
+@keyframes stampin{0%{transform:scale(2.4) rotate(12deg);opacity:0}100%{transform:rotate(12deg);opacity:1}}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>방 그림을 보고 동료의 상황을 살펴봐요.</li><li>두 가지 말 중에서 매너있는 말을 골라요.</li><li>맞히면 열쇠를 하나 얻어요. 열쇠 4개를 모으면 탈출!</li></ol><p>틀려도 괜찮아요. 설명을 듣고 다시 고르면 돼요. 「다시하기」를 누르면 처음부터 다시 해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'탈',html:'매너 <b>방탈출</b>'};
+// 방 4개 — 제목·상황 문장은 그림(img/roomN.jpg)에 있던 글자를 옮겼다.
+// good/bad/why/tip/manner 는 교재에 문구가 없어 임시로 작성했다(임시 문구).
+const ROOMS=[
+  {title:'음료를 엎었어요',cap:'동료가 실수로 음료를 엎었어요.',img:'img/room1-photo.jpg',alt:'동료가 음료를 엎고 머리를 긁고 있어요',
+   good:'괜찮아요? 제가 닦는 걸 도와줄게요.',bad:'아, 조심 좀 하지!',
+   why:'실수한 동료를 탓하면 마음이 더 속상해요. 먼저 괜찮은지 물어봐 주세요.',tip:'괜찮은지 물어보면 동료가 마음을 놓아요.',manner:'괜찮은지 먼저 물어보기'},
+  {title:'의자를 옮기고 있어요',cap:'동료가 혼자 의자를 옮기고 있어요.',img:'img/room2-photo.jpg',alt:'동료가 의자 두 개를 들고 옮기고 있어요',
+   good:'같이 옮길까요? 제가 하나 들게요.',bad:'길 막지 말고 빨리 비켜요.',
+   why:'힘들게 일하는 동료에게 짜증을 내면 서운해요. 같이 하자고 말해 주세요.',tip:'같이 하자고 말하면 일이 쉽고 즐거워져요.',manner:'같이 하자고 말하기'},
+  {title:'문 앞에서 도움이 필요해요',cap:'동료가 양손에 물건을 들고 문 앞에 서 있어요.',img:'img/room3-photo.jpg',alt:'동료가 상자와 가방을 들고 문 앞에 서 있어요',
+   good:'제가 문을 열어 드릴게요. 먼저 들어가세요.',bad:'저 먼저 지나갈게요. 좀 비켜 주세요.',
+   why:'양손이 무거운 동료는 문을 열기 힘들어요. 문을 열어 주면 큰 도움이 돼요.',tip:'문을 열어 주는 작은 도움이 큰 힘이 돼요.',manner:'문 열어 주기'},
+  {title:'메뉴를 고르고 있어요',cap:'식당에서 동료가 메뉴를 고르는 데 시간이 걸리고 있어요.',img:'img/room4-photo.jpg',alt:'식당에서 동료가 메뉴판을 보고 있어요',
+   good:'천천히 골라도 괜찮아요. 기다릴게요.',bad:'아직도 못 골랐어요? 빨리 좀 해요!',
+   why:'재촉하면 동료의 마음이 급해져요. 기다려 주면 편하게 고를 수 있어요.',tip:'기다려 주면 동료가 편하게 고를 수 있어요.',manner:'재촉하지 않고 기다리기'}
+];
+
+const root=document.getElementById('app');
+let keys=[],mine=null,timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const got=()=>keys.filter(Boolean).length;
+
+// 게임판: cur = 지금 있는 방 번호(없으면 -1)
+const board=cur=>`<div class="board" aria-label="열쇠 ${got()}개, 모두 4개">${ROOMS.map((r,i)=>`<div class="rm${keys[i]?' got open':''}${i===cur?' cur':''}" id="rm${i}"><b>ROOM ${i+1}</b><span class="dr">${!keys[i]&&i!==cur?'<i>🔒</i>':''}</span><span class="ky">🔑</span></div>`).join('')}</div>
+  <p class="bdl"><span>열쇠를 모아 문을 열어요</span><span>🔑 <b id="kc">${got()}</b> / 4</span></p>`;
+
+function home(){
+  clear();keys=[];mine=null;
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Escape room</span><h1 class="h1">매너있게 말하고<br><em>방에서 탈출해요!</em></h1><p>매너있게 말하고 열쇠를 모아 보세요. 방 4개에서 매너있는 말을 고르면 열쇠를 하나씩 얻어요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/start.jpg" alt="굳게 닫힌 파란 문"></span><span class="ct">닫힌 문 앞에 섰어요<small>열쇠 4개를 모으면 문이 열려요</small></span></div>
+  ${board(-1)}
+  <div class="acts"><button class="btn pri" data-act="start">방에 들어가기</button></div>${DK.DKU}`,{start:()=>unlock(0)});
+}
+
+// 문 열기 연출: i = 들어갈 방(4이면 탈출 문)
+function unlock(i){
+  clear();
+  const exit=i===ROOMS.length,sign=exit?'EXIT':`ROOM ${i+1}`;
+  const msg=exit?'열쇠 4개로 마지막 문을 열어요!':i?`ROOM ${i+1} 문이 열려요!`:'ROOM 1 문을 열어요!';
+  const go=()=>exit?finish():room(i);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${board(exit?-1:i)}
+  <div class="gwrap"><button class="gate" id="gate" aria-label="${sign} 문 열기"><span class="leaf"><span class="sg">${sign}</span><span class="lk" id="lk">🔒</span></span></button></div>
+  <p class="guide" aria-live="polite">${msg}</p>${DK.DKU}`,{home});
+  DK.speak(msg);
+  const gate=root.querySelector('#gate'),lk=root.querySelector('#lk');
+  later(()=>{lk.textContent='🔓';lk.classList.add('pop')},500);
+  later(()=>gate.classList.add('open'),900);
+  later(go,2300);
+  gate.onclick=()=>{clear();go()};               // 누르면 바로 들어가기
+}
+
+function room(i){
+  clear();
+  const r=ROOMS[i],last=i===ROOMS.length-1;
+  const opts=DK.shuffle([{t:r.good,ok:1},{t:r.bad,ok:0}]);  // 정답 위치는 매번 바뀜
+  const intro=`${r.title}. ${r.cap} 어떻게 말하면 좋을까요?`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${board(i)}
+  <span class="eb" style="margin-top:16px">Room ${i+1}</span><h1 class="rt">${r.title}</h1>
+  <div class="photo room tilt-l"><i class="tp"></i><span class="cp"><img src="${r.img}" alt="${r.alt}"></span><span class="ct"><span>${r.cap}</span><button class="spk" data-say="${DK.esc(intro)}" aria-label="소리로 듣기">${DK.SPK}</button></span></div>
+  <p class="q">어떻게 말하면 좋을까요?</p><p class="qs">두 가지 말 중에서 매너있는 말을 골라 보세요.</p>
+  <div class="opts">${opts.map((o,k)=>`<button class="opt" data-act="pick" data-ok="${o.ok}"><span class="no">${k+1}</span><span>“${o.t}”</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="next" hidden><button class="btn pri" data-act="next">${last?'열쇠 4개로 탈출하기 ›':'다음 방으로 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>unlock(i+1),
+    pick:b=>{
+      if(b.disabled)return;
+      const fb=root.querySelector('#fb');
+      if(b.dataset.ok!=='1'){
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        fb.innerHTML=`<p class="fb no">✕<span>앗, 매너없는 말이에요.<small>${r.why} 다른 말을 다시 골라 보세요.</small></span></p>`;
+        DK.speak(`앗, 매너없는 말이에요. ${r.why} 다른 말을 다시 골라 보세요.`);
+        return;
+      }
+      root.querySelectorAll('.opt').forEach(o=>{o.disabled=true});
+      b.classList.add('ok');b.style.opacity=1;
+      keys[i]=true;
+      fb.innerHTML=`<p class="fb ok">✓<span>매너있는 말이에요! 열쇠 1개를 얻었어요.<small>${r.tip}</small></span></p>`;
+      DK.speak(`${r.good} 매너있는 말이에요! 열쇠를 얻었어요.`);
+      const pop=document.createElement('div');pop.className='keypop';pop.textContent='🔑';pop.setAttribute('aria-hidden','true');document.body.appendChild(pop);
+      setTimeout(()=>pop.remove(),1300);
+      later(()=>{const rm=root.querySelector('#rm'+i);rm.classList.add('got','open');rm.querySelector('.ky').classList.add('new');root.querySelector('#kc').textContent=got()},1000);
+      root.querySelector('#next').hidden=false;
+      later(()=>root.querySelector('#next').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  DK.speak(intro);
+}
+
+function finish(){
+  clear();
+  const done='방에서 탈출했어요! 매너있는 말로 열쇠 4개를 모두 모았어요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="win"><i class="stamp esc">탈출<br>성공</i><span class="wp"><img src="img/escape.jpg" alt="빛이 들어오는 열린 문"></span><div class="wc"><h2>방에서 탈출했어요!</h2><p>매너있는 말로 열쇠 4개를 모두 모았어요.</p></div></div>
+  <div class="keys" aria-label="열쇠 4개">${ROOMS.map(()=>'<span>🔑</span>').join('')}</div>
+  <div class="note"><i class="tp"></i><h3>오늘 배운 매너있는 말</h3><ol>${ROOMS.map(r=>`<li><small>${r.title}</small>“${r.good}”</li>`).join('')}</ol></div>
+  <p class="q">내가 지키고 싶은 매너는?</p><p class="qs">하나를 골라 보세요. 고르지 않아도 괜찮아요.</p>
+  <div class="opts">${ROOMS.map((r,k)=>`<button class="opt${mine===k?' on':''}" data-act="mine" data-k="${k}"><span class="no">${k+1}</span><span>${r.manner}</span></button>`).join('')}</div>
+  <div id="say"></div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시하기</button></div>${DK.DKU}`,{
+    home,again:home,listen:()=>DK.speak(done),
+    mine:b=>{
+      mine=+b.dataset.k;
+      root.querySelectorAll('[data-act=mine]').forEach(o=>o.classList.toggle('on',o===b));
+      const t=`나는 ‘${ROOMS[mine].manner}’ 매너를 지키고 싶어요.`;
+      const say=root.querySelector('#say');say.innerHTML=DK.sayBig(t);say.querySelector('[data-say]').onclick=()=>DK.speak(t);
+      DK.speak(t);say.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+  later(()=>DK.speak(done),400);
+}
+
+home();
+</script>
+</body>
+</html>

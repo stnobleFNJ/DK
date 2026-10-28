@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#888">
+<iframe id="f" style="width:390px;height:844px;border:0;background:#fff"></iframe>
+<script>
+// 사용: src/에 잠시 복사해 두고 ?src=games/7-1/index.html&clicks=sel1,sel2,... (각 클릭 사이 900ms)
+const p=new URLSearchParams(location.search);f.src=p.get('src');
+f.onload=()=>{const d=()=>f.contentDocument;const cs=(p.get('clicks')||'').split(',').filter(Boolean);let i=0;
+ const nx=()=>{if(i>=cs.length)return;const s=cs[i++];const el=s.startsWith('text:')?[...d().querySelectorAll('button')].find(b=>b.textContent.includes(s.slice(5))):d().querySelector(s);el&&el.click();setTimeout(nx,+(p.get('gap')||900))};setTimeout(nx,600)}
+</script>

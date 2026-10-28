@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>연락처를 찾아주세요</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 수준 고르기 */
+.lv{display:grid;gap:10px}
+.lv button{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;box-shadow:2px 2px 0 var(--line)}
+.lv button:hover{border-color:var(--ac)}
+.lv b{font:var(--hw) 24px var(--fh);flex:1}
+.lv small{font:700 13px var(--fb);color:var(--ac);background:#fff;border:1.5px solid var(--ac);border-radius:999px;padding:3px 10px}
+.lv i{font-style:normal;font-size:26px}
+.mini{font-size:56px;text-align:center;margin:6px 0 0}
+/* 휴대폰 틀 */
+.phone{position:relative;margin:16px auto 0;max-width:380px;height:min(620px,calc(100dvh - 150px));min-height:440px;border:7px solid var(--dark);border-radius:30px;background:#fff;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 24px rgba(60,40,20,.25)}
+.sbar{flex:none;display:flex;justify-content:space-between;padding:6px 18px 4px;font:700 12px var(--fb);color:#222}
+/* 바탕화면 */
+.ph-home{flex:1;padding:20px 18px;background:linear-gradient(180deg,#8fa9c9,#c9b99a)}
+.ph-home .clk{text-align:center;color:#fff;font:300 44px var(--fb);margin:4px 0 26px;letter-spacing:-.02em}
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px}
+.app-i{display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff;font:500 11px var(--fb);text-align:center}
+.app-i span{width:54px;height:54px;border-radius:15px;background:rgba(255,255,255,.5);display:grid;place-items:center;font-size:27px}
+.app-i.tg span{background:#fff;box-shadow:0 0 0 3px var(--tape),0 4px 10px rgba(0,0,0,.2);animation:pulse 1.4s infinite}
+.app-i.tg{font-weight:800}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.hint{margin-top:26px;text-align:center;color:#fff;font:700 14px var(--fb);background:rgba(0,0,0,.22);border-radius:10px;padding:9px}
+/* 전화번호부 */
+.mis{flex:none;background:#fdf1cf;border-bottom:1px solid #edd79a;padding:9px 14px;text-align:center}
+.mis small{display:block;font:700 11px var(--fb);color:#8a6d1f}
+.mis b{font:var(--hw) 19px/1.3 var(--fh);color:#5b4300}
+.pbh{flex:none;display:flex;align-items:baseline;justify-content:space-between;padding:10px 16px 6px;border-bottom:1px solid #eee}
+.pbh b{font:800 21px var(--fb);color:#111}
+.pbh span{font-size:12px;color:#888}
+.list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.list h4{margin:0;padding:3px 16px;background:#f4f4f4;font:700 12px var(--fb);color:#777;position:sticky;top:0;z-index:1}
+.ct{display:flex;align-items:center;gap:12px;width:100%;padding:11px 16px;min-height:56px;border-bottom:1px solid #f0f0f0;color:#111}
+.ct:active{background:#f3efe6}
+.ct .em{flex:none;width:40px;height:40px;border-radius:50%;background:#f1ece2;display:grid;place-items:center;font-size:22px}
+.ct .nm{font:500 17px var(--fb)}
+.toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 18px;border-radius:20px;font:700 14px var(--fb);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:3}
+.toast.show{opacity:1}
+/* 통화 화면 */
+.ph-call{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:44px 18px 30px;background:linear-gradient(180deg,#2b2926,#1c1a17);color:#fff;text-align:center}
+.ph-call .ce{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:60px;margin:0 auto 16px}
+.ph-call .cn{font:700 22px/1.35 var(--fb)}
+.ph-call .cs{font-size:14px;color:#bbb;margin-top:6px}
+.nonum{display:none;flex-direction:column;align-items:center;gap:8px;border:2px solid #ff5a4e;background:rgba(255,90,78,.14);border-radius:16px;padding:16px 14px;animation:shake .4s}
+.nonum.show{display:flex}
+.nonum i{font-style:normal;font-size:38px}
+.nonum b{font:700 18px var(--fb);color:#ff7a70}
+.nonum .spk{background:#ff5a4e}
+.hang{width:66px;height:66px;border-radius:50%;background:#e5483d;display:grid;place-items:center;font-size:28px;margin:14px auto 0}
+.hang+p{margin:6px 0 0;font-size:12px;color:#bbb}
+/* 결과 */
+.res{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:26px 14px 18px;margin:24px 4px 8px}
+.res .big{font-size:58px;line-height:1}
+.res h2{font:var(--lw) 26px/1.35 var(--fl);letter-spacing:-.04em;margin:12px 0 0}
+.res p{font-size:14px;color:var(--muted);margin:8px 0 0}
+.res .stamp{font-size:17px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>연락처 개수를 골라요. 많을수록 어려워요.</li><li>휴대폰에서 반짝이는 ‘전화번호부’를 눌러요.</li><li>고등학교 3학년 담임 선생님을 찾아 눌러요.</li><li>전화를 걸면 어떻게 되는지 들어 봐요.</li></ol><p>다른 사람을 눌러도 괜찮아요. 다시 찾으면 돼요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'연',html:'연락처 <b>찾기</b>'};
+// 연락처·수준·문구는 프로토타입(중6-3 연락처찾기게임.html) 그대로.
+// 단, 프로토타입의 🧑‍🏫(ZWJ 이모지)는 Windows에서 두 글자로 갈라져 보여 담임 🏫, 복지관 🙋, 평생교육센터 📚로 바꿨다.
+const TARGET={label:'고등학교 3학년 담임 선생님',emoji:'🏫'};
+const LEVELS=[{n:20,t:'쉬움',e:'🙂'},{n:40,t:'보통',e:'😮'},{n:80,t:'어려움',e:'🤯'}];
+const POOL=[
+  ['엄마','👩'],['아빠','👨'],['형','👦'],['오빠','👦'],['누나','👧'],['언니','👧'],['동생','🧒'],['할머니','👵'],['할아버지','👴'],
+  ['이모','👩'],['삼촌','👨'],['고모','👩'],['사촌 형','👦'],['사촌 누나','👧'],['고등학교 친구','🧑'],['중학교 친구','🧑'],
+  ['초등학교 친구','🧑'],['동네 친구','🧑'],['온라인 게임 친구','🎮'],['교회 누나','⛪'],['교회 형','⛪'],['이웃집 아줌마','🏠'],
+  ['이웃집 아저씨','🏠'],['복지관 선생님','🙋'],['평생교육센터 선생님','📚'],['활동지원사 선생님','🤝'],['행정복지센터 선생님','🏢'],
+  ['주치의 선생님','🩺'],['치과 선생님','🦷'],['체육관 코치','🏋️'],['미술학원 선생님','🎨'],['컴퓨터학원 친구','💻'],['직장 동료','💼'],
+  ['직장 상사','💼'],['단골 카페 사장님','☕'],['문구점 아저씨','🏪'],['버스 기사님','🚌'],['편의점 아저씨','🏪'],['미용실 선생님','💇'],
+  ['수영장 코치','🏊'],['요리학원 선생님','🍳']
+].map(([label,emoji])=>({label,emoji}));
+const MISSION=`${TARGET.label} 연락처를 찾아 전화를 걸어 주세요`;
+const NONUM='이 번호는 없는 번호입니다.';                 // 통화 음성(요청서)
+const RESULT='이 번호는 없는 번호입니다';                  // 결과 문구(요청서)
+const SUB='오래된 연락처는 이렇게 연결되지 않기도 해요. 내 관계망을 한번 점검해 볼까요?'; // 프로토타입 문구
+const WRONG='땡! 다시 찾아볼까요?';                        // 프로토타입 문구
+
+const root=document.getElementById('app');
+let level=LEVELS[0],list=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const now=()=>{const d=new Date();return `${d.getHours()}:${DK.pad(d.getMinutes())}`};
+const sbar=()=>`<div class="sbar"><span>${now()}</span><span>📶 🔋</span></div>`;
+
+/* 프로토타입 방식: 섞어서 n개 → 모자라면 "이름 2, 3…"으로 채움 → 하나 빼고 가나다순 → 40%~끝 사이에 담임 선생님 끼우기 */
+function makeList(n){
+  const base=DK.shuffle(POOL);let r=[];
+  if(n<=base.length)r=base.slice(0,n);
+  else{r=[...base];let round=2,i=0;while(r.length<n){const it=base[i%base.length];r.push({label:`${it.label} ${round}`,emoji:it.emoji});i++;if(i%base.length===0)round++}}
+  r.splice(Math.floor(Math.random()*r.length),1);
+  r.sort((a,b)=>a.label.localeCompare(b.label,'ko'));
+  const min=Math.floor(r.length*.4);
+  r.splice(min+Math.floor(Math.random()*(r.length-min+1)),0,TARGET);
+  return r;
+}
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ',BASE={'ㄲ':'ㄱ','ㄸ':'ㄷ','ㅃ':'ㅂ','ㅆ':'ㅅ','ㅉ':'ㅈ'};
+const cho=s=>{const c=s.charCodeAt(0)-0xAC00;if(c<0||c>11171)return '#';const k=CHO[Math.floor(c/588)];return BASE[k]||k};
+
+function home(){
+  clear();
+  const say='지석씨를 도와 연락처를 찾아주세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Find the contact</span><h1 class="h1">지석씨를 도와<br><em>연락처를 찾아주세요!</em></h1><p>지석씨가 고등학교 3학년 담임 선생님께 전화를 걸고 싶어요. 많은 연락처 중에서 선생님을 찾아 눌러 보세요.</p></section>
+  <p class="mini" aria-hidden="true">📱🏫</p>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:pickLevel});
+}
+
+function pickLevel(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">연락처 개수를 골라 주세요.</p><p class="qs">숫자가 클수록 더 어려워요.</p>
+  <div class="lv">${LEVELS.map((l,i)=>`<button data-act="lv" data-i="${i}" aria-label="${l.t}, 연락처 ${l.n}개"><i aria-hidden="true">${l.e}</i><b>${l.t}</b><small>${l.n}개</small></button>`).join('')}</div>${DK.DKU}`,{
+    home,lv:b=>{level=LEVELS[+b.dataset.i];list=makeList(level.n);phoneHome()}
+  });
+  DK.speak('연락처 개수를 골라 주세요.');
+}
+
+function phoneHome(){
+  clear();
+  const A=[['📷','카메라'],['💬','문자'],['🎵','음악'],['🗓️','캘린더'],['🖼️','사진'],['⚙️','설정'],['🌤️','날씨']];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="phone">${sbar()}<div class="ph-home"><div class="clk">${now()}</div>
+  <div class="apps">${A.map(([e,t])=>`<div class="app-i" aria-hidden="true"><span>${e}</span>${t}</div>`).join('')}<button class="app-i tg" data-act="open" aria-label="전화번호부 열기"><span>📒</span>전화번호부</button></div>
+  <p class="hint">👆 반짝이는 ‘전화번호부’를 눌러 보세요</p></div></div>${DK.DKU}`,{home,open:contacts});
+  DK.speak('반짝이는 전화번호부를 눌러 보세요.');
+}
+
+function contacts(){
+  clear();
+  let g='',rows='';
+  list.forEach((c,i)=>{const k=cho(c.label);if(k!==g){g=k;rows+=`<h4>${k}</h4>`}rows+=`<button class="ct" data-act="ct" data-i="${i}"><span class="em" aria-hidden="true">${c.emoji}</span><span class="nm">${DK.esc(c.label)}</span></button>`});
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="phone">${sbar()}<div class="mis"><small>🎯 오늘의 미션</small><b>${MISSION}</b></div>
+  <div class="pbh"><b>전화번호부</b><span>연락처 ${list.length}개</span></div>
+  <div class="list">${rows}</div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>${DK.DKU}`,{
+    home,ct:b=>{
+      const c=list[+b.dataset.i];
+      if(c===TARGET){call();return}
+      const t=root.querySelector('#toast');t.textContent=WRONG;t.classList.add('show');DK.speak(WRONG);
+      timers.forEach(clearTimeout);timers=[];later(()=>t.classList.remove('show'),1300);
+    }
+  });
+  DK.speak(MISSION);
+}
+
+/* 신호음 없이 바로 결번 안내 음성 */
+function call(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="phone">${sbar()}<div class="ph-call">
+    <div><div class="ce" aria-hidden="true">${TARGET.emoji}</div><div class="cn">${TARGET.label}</div><div class="cs" id="cs">전화 거는 중…</div></div>
+    <div class="nonum" id="nn" role="alert"><i aria-hidden="true">🚫</i><b>“${NONUM}”</b><button class="spk" data-say="${NONUM}" aria-label="다시 듣기">${DK.SPK}</button></div>
+    <div><button class="hang" data-act="end" aria-label="전화 끊기">📞</button><p>전화 끊기</p></div>
+  </div></div>${DK.DKU}`,{home,end:finish});
+  DK.speak(NONUM);   // 누른 순간(사용자 동작 안)에 말해야 휴대폰에서도 소리가 난다
+  later(()=>{root.querySelector('#nn').classList.add('show');root.querySelector('#cs').textContent='통화 연결 실패'},700);
+}
+
+// 임시: 결과 화면의 '함께 생각해 봐요' 질문 2개는 프로토타입에 없어 지어냈다(기획자 확인 필요).
+function finish(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="res"><i class="stamp">연결<br>실패</i><div class="big" aria-hidden="true">📵</div><h2>「${RESULT}」</h2><p>${SUB}</p></div>
+  <div class="note"><h3>함께 생각해 봐요</h3><ul><li>지금도 연락하는 사람은 누구인가요?</li><li>오래 연락하지 않은 사람은 누구인가요?</li></ul></div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 해 보기</button></div>${DK.DKU}`,{
+    home,again:pickLevel,listen:()=>DK.speak(`${RESULT}. ${SUB}`)
+  });
+  later(()=>DK.speak(`${RESULT}. ${SUB}`),300);
+}
+
+home();
+</script>
+</body>
+</html>

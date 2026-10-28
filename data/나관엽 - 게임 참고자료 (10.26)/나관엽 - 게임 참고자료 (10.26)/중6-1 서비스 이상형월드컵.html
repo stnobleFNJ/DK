@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>나에게 필요한 서비스 이상형 월드컵</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    background: #F4F2EC;
+    color: #262523;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 18px 16px 50px; min-height: 100vh; }
+  .title { text-align: center; font-size: 22px; font-weight: 800; margin: 6px 0 4px; color: #26215C; }
+  .subtitle { text-align: center; font-size: 15px; color: #5F5E5A; margin: 0 0 18px; }
+
+  .intro-card, .result-card {
+    background: #FFFFFF; border: 2px solid #E4E1D6; border-radius: 18px; padding: 24px 20px; text-align: center;
+  }
+  .intro-card p { font-size: 17px; line-height: 1.7; margin: 10px 0; text-align: left; }
+  .big-btn {
+    display: block; width: 100%; margin-top: 14px; background: #26215C; color: #FFFFFF; border: none;
+    border-radius: 16px; padding: 18px; font-size: 18px; font-weight: 800; cursor: pointer;
+  }
+  .big-btn:active { transform: scale(0.98); }
+
+  .round-label { text-align: center; font-size: 20px; font-weight: 800; color: #26215C; margin: 0 0 4px; }
+  .match-label { text-align: center; font-size: 15px; font-weight: 700; color: #5F5E5A; margin-bottom: 10px; }
+  .progress-track { height: 10px; background: #E4E1D6; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+  .progress-fill { height: 100%; background: #26215C; border-radius: 6px; transition: width 0.25s ease; }
+  .question { text-align: center; font-size: 18px; font-weight: 800; margin: 4px 0 14px; }
+
+  .vs-wrap { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  .card-btn {
+    background: #FFFFFF; border: 3px solid #D3D1C7; border-radius: 20px; padding: 22px 16px; cursor: pointer;
+    text-align: center; width: 100%; transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
+    min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    font-family: inherit; color: inherit;
+  }
+  .card-btn:active { transform: scale(0.98); }
+  .card-btn.picked { border-color: #2EA64E; background: #EAF3DE; }
+  .card-emoji { font-size: 46px; line-height: 1; }
+  .card-text { font-size: 19px; font-weight: 700; line-height: 1.5; color: #262523; }
+  .vs-badge {
+    align-self: center; background: #26215C; color: #FFFFFF; font-weight: 800; font-size: 15px;
+    padding: 6px 16px; border-radius: 999px;
+  }
+
+  .champ-banner {
+    background: #EAF3DE; color: #173404; border-radius: 16px; padding: 18px 14px; margin-bottom: 16px; font-size: 18px; font-weight: 800; line-height: 1.5;
+  }
+  .champ-name { display: block; font-size: 24px; margin-top: 6px; }
+  .rank-card {
+    background: #FFFFFF; border: 2px solid #E4E1D6; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; text-align: left;
+  }
+  .rank-card.first { border-color: #2EA64E; border-width: 3px; }
+  .rank-head { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; }
+  .rank-num {
+    min-width: 62px; height: 30px; padding: 0 10px; border-radius: 999px; background: #26215C; color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex: none;
+  }
+  .hero {
+    background: linear-gradient(180deg,#FFF6D6,#FFE9A0); border: 4px solid #E0A100; border-radius: 22px;
+    padding: 22px 16px 20px; margin-bottom: 18px; text-align: center; color: #3A2A00;
+  }
+  .hero-label { font-size: 16px; font-weight: 800; }
+  .hero-crown { font-size: 44px; line-height: 1.1; margin-top: 6px; }
+  .hero-pill {
+    display: inline-block; background: #B97A00; color: #fff; font-size: 20px; font-weight: 800;
+    padding: 6px 22px; border-radius: 999px; margin-top: 8px;
+  }
+  .hero-name { display: block; font-size: 30px; font-weight: 800; margin-top: 12px; line-height: 1.3; }
+  .hero-desc { margin-top: 10px; font-size: 17px; font-weight: 600; line-height: 1.5; }
+  .rank-card.big { padding: 18px 18px; border-width: 3px; border-color: #26215C; margin-bottom: 14px; }
+  .rank-card.big .rank-head { font-size: 23px; }
+  .rank-card.big .rank-num { height: 36px; min-width: 76px; font-size: 17px; }
+  .rank-card.small { padding: 10px 14px; margin-bottom: 8px; }
+  .rank-card.small .rank-head { font-size: 16px; }
+  .rank-card.small .rank-num { height: 26px; min-width: 56px; font-size: 13px; background: #5F5E5A; }
+  .rank-desc { margin-top: 8px; font-size: 15px; color: #5F5E5A; line-height: 1.5; }
+  .note-box {
+    margin-top: 14px; padding: 14px; border-radius: 14px; background: #FAEEDA; color: #633806;
+    font-size: 15px; line-height: 1.6; text-align: left; font-weight: 600;
+  }
+  .record-box {
+    margin-top: 14px; padding: 14px; border-radius: 14px; border: 2px dashed #B4B2A9; font-size: 16px; line-height: 1.9; text-align: left; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title">나에게 필요한 서비스</div>
+  <div class="subtitle">이상형 월드컵</div>
+  <div id="app"></div>
+</div>
+
+<script>
+var SERVICES = {
+  sports:   { name: "장애인 스포츠 강좌 이용권", emoji: "🏊" },
+  edu:      { name: "평생교육 이용권",           emoji: "🏫" },
+  pension:  { name: "장애인연금",                emoji: "💰" },
+  activity: { name: "장애인활동지원",            emoji: "🚶" },
+  guardian: { name: "공공후견",                  emoji: "⚖️" },
+  plan:     { name: "개인별지원계획",            emoji: "🗺️" },
+  rights:   { name: "권익옹호",                  emoji: "🛡️" }
+};
+
+var CARDS = [
+  { id: "S1", svc: "sports",   emoji: "🏊", text: "운동 수업 비용을 나라에서 지원해줘요" },
+  { id: "S2", svc: "sports",   emoji: "🏓", text: "수영, 헬스, 탁구 같은 운동을 배워요" },
+  { id: "E1", svc: "edu",      emoji: "🏫", text: "평생교육기관에서 수업듣는 비용을 지원해줘요" },
+  { id: "E2", svc: "edu",      emoji: "🎨", text: "요리, 그림, 컴퓨터 같은 수업을 골라서 들어요" },
+  { id: "Y1", svc: "pension",  emoji: "💰", text: "매달 통장으로 생활비가 들어와요" },
+  { id: "Y2", svc: "pension",  emoji: "🪙", text: "수입이 적어 나라에서 조금씩 돈을 지원해줘요" },
+  { id: "A1", svc: "activity", emoji: "🧼", text: "씻기, 밥 먹기, 청소를 도와줘요" },
+  { id: "A2", svc: "activity", emoji: "🚶", text: "밖에서 이동할 때 옆에서 도와줘요" },
+  { id: "G1", svc: "guardian", emoji: "📄", text: "은행, 집 계약 같은 어려운 일을 도와줘요" },
+  { id: "G2", svc: "guardian", emoji: "👂", text: "내 이야기를 듣고 같이 결정해줘요" },
+  { id: "P1", svc: "plan",     emoji: "🧭", text: "나에게 맞는 도움을 같이 찾아줘요" },
+  { id: "P2", svc: "plan",     emoji: "📋", text: "받을 도움을 계획표로 만들어줘요" },
+  { id: "R1", svc: "rights",   emoji: "🛡️", text: "누가 나를 괴롭히면 도와줘요" },
+  { id: "R2", svc: "rights",   emoji: "🤝", text: "나쁜일이 생겼을때 해결을 도와줘요" }
+];
+
+var ROUND_NAMES = { 1: "1라운드", 2: "2라운드", 3: "4강", 4: "결승" };
+var TOTAL_MATCHES = 13;
+
+var app = document.getElementById("app");
+var G = null;
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function makeFirstRoundPairs(cards) {
+  for (var tries = 0; tries < 2000; tries++) {
+    var s = shuffle(cards);
+    var ok = true, pairs = [];
+    for (var i = 0; i < s.length; i += 2) {
+      if (s[i].svc === s[i + 1].svc) { ok = false; break; }
+      pairs.push([s[i], s[i + 1]]);
+    }
+    if (ok) return pairs;
+  }
+  var s2 = shuffle(cards), p = [];
+  for (var k = 0; k < s2.length; k += 2) p.push([s2[k], s2[k + 1]]);
+  return p;
+}
+
+function newGame() {
+  var cardState = {};
+  CARDS.forEach(function (c) { cardState[c.id] = { wins: 0, reach: 1 }; });
+  G = {
+    round: 1,
+    matchNo: 0,
+    pairs: makeFirstRoundPairs(CARDS),
+    idx: 0,
+    winners: [],
+    stats: cardState,
+    champion: null,
+    locked: false
+  };
+}
+
+function renderIntro() {
+  app.innerHTML =
+    '<div class="intro-card">' +
+    '<p>카드 2장 중에서 <b>나에게 더 필요한 도움</b> 하나를 골라요.</p>' +
+    '<p>계속 고르면 마지막에 <b>나에게 필요한 서비스 1~7순위</b>가 나와요.</p>' +
+    '<p>나온 순위는 교재에 적어요.</p>' +
+    '<button class="big-btn" id="startBtn">시작하기</button>' +
+    '</div>';
+  document.getElementById("startBtn").onclick = function () { newGame(); renderMatch(); };
+}
+
+function cardHtml(card, n) {
+  return '<button class="card-btn" data-n="' + n + '">' +
+    '<span class="card-emoji">' + card.emoji + '</span>' +
+    '<span class="card-text">' + card.text + '</span>' +
+    '</button>';
+}
+
+function renderMatch() {
+  var pair = G.pairs[G.idx];
+  var no = G.matchNo + 1;
+  var pct = Math.round((G.matchNo / TOTAL_MATCHES) * 100);
+
+  app.innerHTML =
+    '<div class="round-label">' + ROUND_NAMES[G.round] + '</div>' +
+    '<div class="match-label">' + no + ' / ' + TOTAL_MATCHES + ' 번째 대결</div>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="question">나에게 더 필요한 도움은?</div>' +
+    '<div class="vs-wrap">' +
+      cardHtml(pair[0], 0) +
+      '<div class="vs-badge">VS</div>' +
+      cardHtml(pair[1], 1) +
+    '</div>';
+
+  var btns = app.querySelectorAll(".card-btn");
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].onclick = (function (n) { return function () { pick(n, this); }; })(i);
+  }
+}
+
+function pick(n, btn) {
+  if (G.locked) return;
+  G.locked = true;
+  btn.classList.add("picked");
+  var pair = G.pairs[G.idx];
+  var winner = pair[n];
+  G.stats[winner.id].wins += 1;
+  G.stats[winner.id].reach = G.round + 1;
+  G.winners.push(winner);
+  G.matchNo += 1;
+  setTimeout(function () { G.locked = false; advance(); }, 280);
+}
+
+function advance() {
+  G.idx += 1;
+  if (G.idx < G.pairs.length) { renderMatch(); return; }
+
+  if (G.round === 4) {
+    G.champion = G.winners[0];
+    renderResult();
+    return;
+  }
+
+  var next = G.winners;
+  G.round += 1;
+  G.idx = 0;
+  G.winners = [];
+
+  if (G.round === 2) {
+    var s = shuffle(next);
+    var bye = s[0];
+    G.stats[bye.id].reach = Math.max(G.stats[bye.id].reach, 3);
+    G.winners = [bye];
+    G.pairs = [];
+    for (var i = 1; i < s.length; i += 2) G.pairs.push([s[i], s[i + 1]]);
+  } else {
+    var s2 = shuffle(next);
+    G.pairs = [];
+    for (var j = 0; j < s2.length; j += 2) G.pairs.push([s2[j], s2[j + 1]]);
+  }
+  renderMatch();
+}
+
+function computeRanking() {
+  var champSvc = G.champion.svc;
+  var svcStats = {};
+  Object.keys(SERVICES).forEach(function (k) { svcStats[k] = { wins: 0, reach: 1 }; });
+  CARDS.forEach(function (c) {
+    var st = G.stats[c.id];
+    svcStats[c.svc].wins += st.wins;
+    if (st.reach > svcStats[c.svc].reach) svcStats[c.svc].reach = st.reach;
+  });
+
+  var others = Object.keys(SERVICES).filter(function (k) { return k !== champSvc; });
+  others.sort(function (a, b) {
+    if (svcStats[b].wins !== svcStats[a].wins) return svcStats[b].wins - svcStats[a].wins;
+    return svcStats[b].reach - svcStats[a].reach;
+  });
+
+  var groups = [];
+  others.forEach(function (k) {
+    var last = groups[groups.length - 1];
+    if (last && svcStats[last[0]].wins === svcStats[k].wins && svcStats[last[0]].reach === svcStats[k].reach) {
+      last.push(k);
+    } else {
+      groups.push([k]);
+    }
+  });
+  return { groups: groups };
+}
+
+function renderResult() {
+  var r = computeRanking();
+  var champ = G.champion;
+  var cs = SERVICES[champ.svc];
+  var html = '<div class="result-card">';
+
+  html += '<div class="hero"><div class="hero-label">나에게 가장 필요한 서비스</div>' +
+    '<div class="hero-crown">🏆</div><div class="hero-pill">1순위</div>' +
+    '<span class="hero-name">' + cs.emoji + ' ' + cs.name + '</span>' +
+    '<div class="hero-desc">' + champ.text + '</div></div>';
+
+  var tie = false, pos = 2;
+  r.groups.forEach(function (group) {
+    var isTie = group.length > 1;
+    if (isTie) tie = true;
+    var size = pos <= 3 ? 'big' : 'small';
+    group.forEach(function (k) {
+      html += '<div class="rank-card ' + size + '"><div class="rank-head"><div class="rank-num">' +
+        (isTie ? '공동 ' : '') + pos + '순위</div><span>' + SERVICES[k].emoji + ' ' + SERVICES[k].name + '</span></div></div>';
+    });
+    pos += group.length;
+  });
+
+  if (tie) {
+    html += '<div class="note-box">순위가 같은 서비스가 있어요. 선생님과 이야기하며 더 필요한 순서를 직접 정해서 적어봐요.</div>';
+  }
+
+  html += '<button class="big-btn" id="againBtn">다시 하기</button>';
+  html += '</div>';
+
+  app.innerHTML = html;
+  document.getElementById("againBtn").onclick = function () { newGame(); renderMatch(); };
+  window.scrollTo(0, 0);
+}
+
+renderIntro();
+</script>
+</body>
+</html>

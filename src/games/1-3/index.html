@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 내일은?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 주제 표지 */
+.cover{margin:16px 6px 4px}
+.cover .ct{display:flex;align-items:center;gap:8px}
+.tn{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center;font:700 15px var(--fb)}
+.qrow{display:flex;align-items:center;gap:10px;margin:18px 0 4px}
+.qrow .q{margin:0;flex:1}
+.picks.four{grid-template-columns:1fr 1fr}
+.picks.four .photo .cp{aspect-ratio:3/2}
+.picks.four .photo .ct{font-size:20px}
+/* 결과: 나의 내일은? */
+.plan{position:relative;background:#fff;padding:22px 14px 14px;box-shadow:0 8px 20px rgba(60,40,20,.22);transform:rotate(-1deg);margin:22px 4px 8px;color:#3d352b}
+.plan .stamp{font-size:18px;top:-30px;right:-4px}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.prow:last-child{border-bottom:0}
+.prow .pp{flex:none;width:104px;aspect-ratio:3/2;overflow:hidden;border-radius:6px;background:var(--soft)}
+.prow .pp img{width:100%;height:100%;object-fit:cover}
+.prow .pt{flex:1;min-width:0}
+.prow .pt small{display:block;font:700 12px var(--fb);color:var(--ac)}
+.prow .pt b{display:block;font:var(--hw) 23px/1.2 var(--fh)}
+.prow .pt span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>주제마다 내일 하고 싶은 활동을 하나 골라요.</li><li>주제는 모두 4개예요.</li><li>「나의 내일은?」에서 내 계획을 봐요.</li></ol><p>정답은 없어요. ‹ 이전 버튼으로 다시 고를 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'내',html:'나의 <b>내일</b>'};
+// 주제 4개(요청서 전1-3). 표지 사진 = 실제 콜라주. 활동 사진(act-*.jpg)은 모두 임시생성 그림.
+// 임시: 주제마다 4번째 활동(스트레칭·친구와 전화·설거지하기·그림 그리기)은 콜라주에 없어 임시로 정함.
+// 임시: 활동 이름과 say 문장은 요청서에 없어 임시로 작성.
+const THEMES=[
+  {t:'나를 돌봐요',img:'img/theme-self.jpg',alt:'밥 먹기, 산책하기, 잠자기 사진',acts:[
+    {v:'밥 먹기',img:'img/act-meal.jpg',say:'맛있는 밥을 먹어요.'},
+    {v:'산책하기',img:'img/act-walk.jpg',say:'밖에서 천천히 걸어요.'},
+    {v:'푹 자기',img:'img/act-sleep.jpg',say:'일찍 자고 푹 쉬어요.'},
+    {v:'스트레칭',img:'img/act-stretch.jpg',say:'몸을 쭉쭉 늘려요.'}]},
+  {t:'사람들과 함께 해요',img:'img/theme-people.jpg',alt:'카페, 가족 식사, 지역 프로그램 사진',acts:[
+    {v:'카페 가기',img:'img/act-cafe.jpg',say:'친구와 카페에 가요.'},
+    {v:'가족과 식사',img:'img/act-family.jpg',say:'가족과 함께 밥을 먹어요.'},
+    {v:'지역 프로그램',img:'img/act-program.jpg',say:'동네 프로그램에 가요.'},
+    {v:'친구와 전화',img:'img/act-call.jpg',say:'친구에게 전화해요.'}]},
+  {t:'내 생활을 챙겨요',img:'img/theme-life.jpg',alt:'장보기, 빨래, 청소 사진',acts:[
+    {v:'장보기',img:'img/act-market.jpg',say:'마트에서 장을 봐요.'},
+    {v:'빨래하기',img:'img/act-laundry.jpg',say:'옷을 빨래해요.'},
+    {v:'청소하기',img:'img/act-clean.jpg',say:'방을 깨끗이 청소해요.'},
+    {v:'설거지하기',img:'img/act-dishes.jpg',say:'그릇을 깨끗이 씻어요.'}]},
+  {t:'내가 하고 싶은 일을 해요',img:'img/theme-fun.jpg',alt:'영화, 노래방, 캠핑 사진',acts:[
+    {v:'영화 보기',img:'img/act-movie.jpg',say:'영화관에서 영화를 봐요.'},
+    {v:'노래방 가기',img:'img/act-karaoke.jpg',say:'노래방에서 노래를 불러요.'},
+    {v:'캠핑하기',img:'img/act-camping.jpg',say:'캠핑을 가요.'},
+    {v:'그림 그리기',img:'img/act-draw.jpg',say:'좋아하는 그림을 그려요.'}]}
+];
+const QTXT='내일 무엇을 할까요?';
+
+const root=document.getElementById('app');
+let sel=[];                       // sel[i] = 주제 i에서 고른 활동 이름
+const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}};
+const chosen=i=>THEMES[i].acts.find(a=>a.v===sel[i]);
+const planText=()=>'나의 내일은? '+THEMES.map((t,i)=>chosen(i).say).join(' ');
+
+function home(){
+  quiet();sel=[];
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My tomorrow</span><h1 class="h1">내일 나는<br><em>무엇을 할까요?</em></h1><p>4가지 주제에서 하고 싶은 활동을 하나씩 골라요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/start.jpg" alt="다이어리에 하루 계획을 적는 사람"></span><span class="ct">나만의 하루 계획<small>주제 4개, 하나씩 골라요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>theme(0)});
+}
+
+function theme(i){
+  quiet();
+  const T=THEMES[i],a=chosen(i);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(4,i)}
+  <div class="photo cover tilt-r"><i class="tp"></i><span class="cp"><img src="${T.img}" alt="${T.alt}"></span><span class="ct"><i class="tn">${i+1}</i>${T.t}</span></div>
+  <div class="qrow"><p class="q">${QTXT}</p><button class="spk" data-say="${T.t}. ${QTXT}" aria-label="소리로 듣기">${DK.SPK}</button></div>
+  <p class="qs">하고 싶은 활동 하나를 골라요.</p>
+  <div class="picks four">${T.acts.map(o=>`<button class="pick photo${sel[i]===o.v?' on':''}" data-act="pick" data-v="${o.v}" aria-pressed="${sel[i]===o.v}" aria-label="${o.v} 고르기"><span class="cp"><img src="${o.img}" alt="${o.v}"></span><span class="ct">${o.v}</span></button>`).join('')}</div>
+  <div id="say">${a?DK.sayBig(a.say):''}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${a?'':'disabled'}>${i<3?'다음 ›':'내 계획 보기'}</button></div>${DK.DKU}`,{
+    home,prev:()=>i?theme(i-1):home(),next:()=>sel[i]&&(i<3?theme(i+1):result()),
+    pick:b=>{
+      sel[i]=b.dataset.v;
+      root.querySelectorAll('.pick').forEach(p=>{p.classList.toggle('on',p===b);p.setAttribute('aria-pressed',p===b)});
+      const t=chosen(i).say,box=root.querySelector('#say');
+      box.innerHTML=DK.sayBig(t);box.querySelector('[data-say]').onclick=()=>DK.speak(t);
+      root.querySelector('[data-act=next]').disabled=false;
+      DK.speak(t);box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+  if(!a)DK.speak(`${T.t}. ${QTXT}`);
+}
+
+function result(){
+  quiet();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <section class="hero"><span class="eb">My plan</span><h1 class="h1">나의 <em>내일은?</em></h1><p>내가 고른 내일 계획이에요.</p></section>
+  <div class="plan"><i class="tp"></i><span class="stamp">계획<br>완성</span>
+  ${THEMES.map((T,i)=>{const a=chosen(i);return `<div class="prow"><span class="pp"><img src="${a.img}" alt="${a.v}"></span><span class="pt"><small>${i+1}. ${T.t}</small><b>${a.v}</b><span>${a.say}</span></span><button class="spk" data-say="${a.say}" aria-label="${a.v} 소리로 듣기">${DK.SPK}</button></div>`}).join('')}
+  </div>
+  <div class="acts"><button class="btn line" data-act="listen">🔊 내 계획 다 듣기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="edit">‹ 고치기</button><button class="btn pri" data-act="again">↻ 다시하기</button></div></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(planText()),edit:()=>theme(0),again:home
+  });
+  DK.speak(planText());
+}
+
+home();
+</script>
+</body>
+</html>

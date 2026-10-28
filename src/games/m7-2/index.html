@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>위험한 연락 구분하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 메신저·문자 창 */
+.chat{position:relative;margin:16px 2px 0;background:#fff;border-radius:18px;box-shadow:0 6px 16px rgba(60,40,20,.18);overflow:hidden}
+.chat.msg{background:#e8eef4}
+.chat .ch{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #ece6da}
+.chat .av{flex:none;width:42px;height:42px;border-radius:50%;background:#f1ece2;display:grid;place-items:center;font-size:22px}
+.chat .who{flex:1;min-width:0}
+.chat .who b{display:block;font:800 17px var(--fb);color:#222;overflow-wrap:anywhere}
+.chat .who small{display:block;font-size:12px;color:#888}
+.chat .kind{flex:none;font:700 11px var(--fb);color:#fff;background:#7b8a99;border-radius:999px;padding:3px 9px}
+.chat.sms .kind{background:#5b9a5f}
+.chat .cb{padding:12px 12px 16px;display:flex;flex-direction:column;gap:8px}
+.chat .day{align-self:center;font-size:11px;color:#777;background:rgba(0,0,0,.06);border-radius:999px;padding:2px 10px}
+.row{display:flex;align-items:flex-end;gap:6px;max-width:92%}
+.bub{background:#f2f0ec;color:#222;border-radius:4px 16px 16px 16px;padding:10px 13px;font:500 16px/1.5 var(--fb);overflow-wrap:anywhere;white-space:pre-line}
+.chat.msg .bub{background:#fff}
+.row .tm{flex:none;font-size:10.5px;color:#888;white-space:nowrap}
+.lnk{color:#2a62b8;text-decoration:underline;word-break:break-all}
+.chat .spk{position:absolute;right:12px;bottom:12px;width:36px;height:36px}
+.chat .cb{padding-bottom:54px}
+/* 문항 번호 */
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+/* O / X 버튼 */
+.ox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.ox button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px 12px;background:var(--paper);border:2.5px solid var(--line);border-radius:16px;box-shadow:2px 3px 0 var(--line);text-align:center;transition:border-color .15s,background .15s,opacity .15s}
+.ox .sym{font:900 50px/1 var(--fb)}
+.ox .o .sym{color:#3f6fa8}
+.ox .x .sym{color:var(--no)}
+.ox .lb{font:var(--hw) 20px/1.25 var(--fh);color:var(--ink)}
+.ox .lb small{display:block;font:500 12px var(--fb);color:var(--muted)}
+.ox button:disabled{opacity:1}
+.ox button.right{border-color:var(--ok);background:#eef4e4}
+.ox button.miss{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.ox button.dim{opacity:.45}
+.fb .why{display:block;font-weight:500;color:var(--ink);margin-top:4px;font-size:15px;line-height:1.55}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px}
+.score .n{font:var(--hw) 54px/1 var(--fh);color:var(--ac)}
+.score .n small{font-size:24px;color:var(--muted)}
+.score h2{font:var(--lw) 23px/1.45 var(--fl);letter-spacing:-.04em;margin:14px 0 0}
+.score .stamp{font-size:17px}
+.rv{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}
+.rv li{display:flex;gap:10px;align-items:center;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 3px 8px rgba(60,40,20,.12);font-size:14px}
+.rv .mk{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--fb);color:#fff;background:var(--ok)}
+.rv li.bad .mk{background:var(--no)}
+.rv .t{flex:1;min-width:0}
+.rv .t b{display:block;font-size:14px}
+.rv .t span{font-size:12px;color:var(--muted)}
+.rv .a{flex:none;font:900 18px var(--fb)}
+.rv .a.o{color:#3f6fa8}.rv .a.x{color:var(--no)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>휴대폰에 온 문자나 메시지를 읽어요.</li><li>피싱(속이는 연락)이면 <b>X</b>를 눌러요.</li><li>괜찮은 연락이면 <b>O</b>를 눌러요.</li><li>10개를 모두 풀면 맞힌 개수를 알려 줘요.</li></ol><p>잘 모르겠으면 혼자 정하지 말고 주변 사람에게 물어봐요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'안',html:'위험한 연락 <b>구분하기</b>'};
+const DONE='의심되는 연락은 답하지 말고, 도움을 요청해요';   // 요청서 결과 문구
+// 임시: 기획자 확인 필요
+// 원본 프로토타입(중7-2 위험한연락구분하기.html)이 0바이트라 문항 10개를 모두 지어냈다. 피싱 6개, 정상 4개.
+// 전화번호는 010-0000-xxxx·02-0000-xxxx, 링크는 .example(쓸 수 없는 예약 도메인)으로 써서 실제로 없는 형식이다.
+// kind: sms(문자) / msg(메신저). saved: 저장된 사람이면 이름, 아니면 번호만 보인다. phish: 피싱이면 true(정답 X).
+const Q=[
+  {kind:'sms',from:'010-0000-4821',emoji:'📦',time:'오전 9:12',phish:true,
+   msgs:['[Web발신]\n고객님의 택배가 주소 불명으로 보관 중입니다. 아래 링크에서 주소를 확인해 주세요.','http://parcel-check.example/a1b2'],
+   why:'모르는 번호에서 온 링크예요. 누르면 내 정보가 빠져나갈 수 있어요. 택배는 택배 회사 앱이나 고객센터로 직접 확인해요.'},
+  {kind:'msg',from:'딸',sub:'새 친구 · 저장되지 않은 사람',emoji:'👤',time:'오후 1:40',phish:true,
+   msgs:['엄마, 나 폰이 고장 나서 친구 폰으로 연락해.','급하게 50만 원만 이 계좌로 보내 줘. 전화는 지금 못 받아.'],
+   why:'가족인 척하고 돈을 보내 달라고 해요. 전화를 못 받는다고 하면 더 의심해요. 꼭 원래 번호로 전화해서 확인해요.'},
+  {kind:'sms',from:'민수',sub:'친구 · 010-0000-3307',saved:1,emoji:'🧑',time:'오후 6:05',phish:false,
+   msgs:['지석아, 내일 2시에 도서관 앞에서 만나는 거 맞지?','늦으면 전화해!'],
+   why:'내가 저장해 둔 친구예요. 약속을 확인하는 내용이고, 돈이나 링크를 보내 달라고 하지 않아요.'},
+  {kind:'sms',from:'02-0000-9112',emoji:'⚖️',time:'오전 10:31',phish:true,
+   msgs:['[Web발신]\nOO지방검찰청 수사관입니다. 고객님 계좌가 범죄에 사용되었습니다.','지금 바로 010-0000-5550으로 전화하세요. 다른 사람에게 말하면 처벌받습니다.'],
+   why:'검찰이나 경찰은 문자로 전화하라고 하거나 비밀로 하라고 하지 않아요. 겁을 주면 피싱이에요.'},
+  {kind:'sms',from:'튼튼내과',sub:'병원 · 02-0000-1175',saved:1,emoji:'🏥',time:'오후 3:20',phish:false,
+   msgs:['[튼튼내과] 김지석님, 10월 30일(목) 오전 10시 진료가 예약되어 있습니다.','예약을 바꾸려면 병원으로 전화 주세요.'],
+   why:'내가 다니는 병원의 예약 안내예요. 링크가 없고, 돈이나 개인 정보를 묻지 않아요.'},
+  {kind:'msg',from:'이벤트 당첨 안내',sub:'저장되지 않은 사람',emoji:'🎁',time:'오후 8:47',phish:true,
+   msgs:['축하합니다! 🎉 스마트폰 이벤트에 당첨되었습니다.','상품을 받으려면 링크에 이름, 주민등록번호, 계좌번호를 입력하세요.\nhttp://gift-winner.example/event'],
+   why:'응모한 적 없는 당첨 안내는 거짓말이에요. 주민등록번호나 계좌번호는 절대 입력하지 않아요.'},
+  {kind:'sms',from:'010-0000-7034',emoji:'🏦',time:'오전 7:58',phish:true,
+   msgs:['[Web발신]\n[행복은행] 보안 문제로 고객님 계좌가 오늘 정지됩니다.','정지를 막으려면 아래 링크에서 계좌 비밀번호를 입력하세요.\nhttp://happybank-safe.example/login'],
+   why:'은행은 문자로 비밀번호를 묻지 않아요. 걱정되면 은행에 직접 전화하거나 찾아가서 물어봐요.'},
+  {kind:'msg',from:'복지관 박선생님',sub:'복지관',saved:1,emoji:'🙋',time:'오전 11:15',phish:false,
+   msgs:['지석씨, 이번 주 금요일 요리 수업은 3시에 시작해요.','앞치마 꼭 챙겨 오세요 😊'],
+   why:'내가 아는 복지관 선생님이에요. 수업 시간을 알려 주는 내용이라 괜찮아요.'},
+  {kind:'msg',from:'고수익 알바',sub:'저장되지 않은 사람',emoji:'💰',time:'오후 11:02',phish:true,
+   msgs:['집에서 하루 10만 원 버는 알바 하실래요?','통장이랑 체크카드만 빌려주시면 돼요. 비밀번호도 같이 알려 주세요.'],
+   why:'통장이나 카드를 빌려주면 범죄에 쓰여서 나도 벌을 받을 수 있어요. 쉽게 큰돈을 준다는 말은 의심해요.'},
+  {kind:'sms',from:'엄마',sub:'가족 · 010-0000-2580',saved:1,emoji:'👩',time:'오후 4:36',phish:false,
+   msgs:['지석아, 오늘 저녁은 김치찌개야.','일찍 들어와~'],
+   why:'늘 연락하던 엄마 번호예요. 저녁 이야기만 하고, 돈이나 링크를 보내 달라고 하지 않아요.'}
+];
+
+const root=document.getElementById('app');
+let order=[],ans=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const linkify=s=>DK.esc(s).replace(/https?:\/\/[^\s<]+/g,u=>`<span class="lnk">${u}</span>`);
+const plain=q=>q.msgs.join(' ').replace(/\[Web발신\]\s*/g,'').replace(/https?:\/\/\S+/g,'링크');
+
+function chat(q){
+  const who=q.from;
+  const sub=q.sub||'저장되지 않은 번호';
+  return `<div class="chat ${q.kind}" aria-label="${q.kind==='sms'?'문자':'메신저'}, 보낸 사람 ${DK.esc(who)}">
+  <div class="ch"><span class="av" aria-hidden="true">${q.emoji}</span><span class="who"><b>${DK.esc(who)}</b><small>${DK.esc(sub)}</small></span><span class="kind">${q.kind==='sms'?'문자':'메신저'}</span></div>
+  <div class="cb"><span class="day">오늘</span>${q.msgs.map((m,i)=>`<div class="row"><p class="bub" style="margin:0">${linkify(m)}</p>${i===q.msgs.length-1?`<span class="tm">${q.time}</span>`:''}</div>`).join('')}</div>
+  <button class="spk" data-say="${DK.esc(plain(q))}" aria-label="메시지 소리로 듣기">${DK.SPK}</button></div>`;
+}
+
+function home(){
+  clear();
+  const say='위험한 연락을 구분해 봅시다.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Phishing or not</span><h1 class="h1">위험한 연락을<br><em>구분해 봅시다!</em></h1><p>휴대폰에 온 문자와 메시지를 읽어 보세요. 속이는 연락(피싱)이면 X, 괜찮은 연락이면 O를 눌러요.</p></section>
+  <div class="ox" aria-hidden="true" style="pointer-events:none"><button class="o"><span class="sym">O</span><span class="lb">괜찮아요<small>피싱이 아니에요</small></span></button><button class="x"><span class="sym">X</span><span class="lb">위험해요<small>피싱이에요</small></span></button></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기 (10문제)</button><button class="btn sec" data-say="${say} 피싱이면 엑스, 피싱이 아니면 오를 눌러요.">🔊 듣기</button></div>${DK.DKU}`,{start:newGame});
+}
+
+function newGame(){order=DK.shuffle(Q.map((_,i)=>i));ans=[];ask(0)}
+
+function ask(i){
+  clear();
+  const q=Q[order[i]],last=i===order.length-1;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(order.length,i)}
+  <span class="qn">${i+1}번째 연락 / ${order.length}</span>
+  ${chat(q)}
+  <p class="q">이 연락은 피싱일까요?</p><p class="qs">피싱이면 X, 피싱이 아니면 O를 눌러요.</p>
+  <div class="ox"><button class="o" data-act="pick" data-v="0" aria-label="O, 괜찮아요, 피싱이 아니에요"><span class="sym">O</span><span class="lb">괜찮아요<small>피싱이 아니에요</small></span></button><button class="x" data-act="pick" data-v="1" aria-label="X, 위험해요, 피싱이에요"><span class="sym">X</span><span class="lb">위험해요<small>피싱이에요</small></span></button></div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="next" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 연락 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>last?finish():ask(i+1),
+    pick:b=>{
+      if(b.disabled)return;
+      const pickX=b.dataset.v==='1',ok=pickX===q.phish;
+      ans[i]=ok;
+      const right=root.querySelector(q.phish?'.ox .x':'.ox .o');
+      root.querySelectorAll('.ox button').forEach(x=>{x.disabled=true;if(x!==right&&x!==b)x.classList.add('dim')});
+      right.classList.add('right');
+      if(!ok){b.classList.add('miss')}
+      const head=ok?(q.phish?'맞아요! 피싱이에요.':'맞아요! 괜찮은 연락이에요.'):(q.phish?'아쉬워요. 이건 피싱이에요.':'아쉬워요. 이건 괜찮은 연락이에요.');
+      root.querySelector('#fb').innerHTML=`<p class="fb ${ok?'ok':'no'}">${ok?'✓':'✕'}<span>${head}<span class="why">${q.why}</span></span></p>`;
+      DK.speak(`${head} ${q.why}`);
+      root.querySelector('#next').hidden=false;
+      later(()=>root.querySelector('#next').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  DK.speak(`${i+1}번째 연락이에요. 이 연락은 피싱일까요?`);
+}
+
+function finish(){
+  clear();
+  const n=ans.filter(Boolean).length;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">안전<br>지킴이</i><div class="n">${n}<small> / ${order.length}개</small></div><p style="margin:6px 0 0;color:var(--muted);font-size:14px">${order.length}개 중에서 ${n}개를 맞혔어요.</p><h2>「${DONE}」</h2></div>
+  <p class="sl" style="margin:18px 0 0">다시 보기</p>
+  <ul class="rv">${order.map((k,i)=>{const q=Q[k];return `<li class="${ans[i]?'':'bad'}"><span class="mk" aria-label="${ans[i]?'맞힘':'틀림'}">${ans[i]?'✓':'✕'}</span><span class="t"><b>${DK.esc(q.from)}</b><span>${q.phish?'피싱':'괜찮은 연락'}</span></span><span class="a ${q.phish?'x':'o'}" aria-label="정답 ${q.phish?'X':'O'}">${q.phish?'X':'O'}</span></li>`}).join('')}</ul>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,again:newGame,listen:()=>DK.speak(`${order.length}개 중에서 ${n}개를 맞혔어요. ${DONE}.`)
+  });
+  later(()=>DK.speak(`${order.length}개 중에서 ${n}개를 맞혔어요. ${DONE}.`),400);
+}
+
+home();
+</script>
+</body>
+</html>

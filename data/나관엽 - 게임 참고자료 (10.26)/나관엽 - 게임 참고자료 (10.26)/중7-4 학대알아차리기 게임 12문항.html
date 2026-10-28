@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>이건 학대일까요?</title>
+<style>
+  :root{
+    --green:#2EA64E;
+    --green-dark:#1F7A3D;
+    --pink:#E85D8A;
+    --orange:#F5A623;
+    --blue:#3B82C4;
+    --bg:#FFFFFF;
+    --card-bg:#F4FAF5;
+    --text:#222222;
+    --sub:#555555;
+    --wrong:#D9453D;
+    --correct:#2EA64E;
+    --border:#DDE7DE;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14201A;
+      --card-bg:#1C2B22;
+      --text:#F2F6F3;
+      --sub:#C3D0C8;
+      --border:#33463A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14201A;
+    --card-bg:#1C2B22;
+    --text:#F2F6F3;
+    --sub:#C3D0C8;
+    --border:#33463A;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: "Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{
+    width:100%;
+    max-width:560px;
+    padding:20px 18px 60px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:18px;
+  }
+  header h1{
+    font-size:1.5rem;
+    margin:6px 0 4px;
+    color: var(--green-dark);
+  }
+  header p{
+    margin:0;
+    color: var(--sub);
+    font-size:0.95rem;
+  }
+
+  .progress-wrap{
+    background: var(--border);
+    border-radius: 20px;
+    height: 10px;
+    overflow:hidden;
+    margin: 14px 0 22px;
+  }
+  .progress-bar{
+    height:100%;
+    background: var(--green);
+    width:0%;
+    transition: width .35s ease;
+  }
+
+  .card{
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 20px;
+    margin-bottom: 18px;
+  }
+
+  .qnum{
+    display:inline-block;
+    background: var(--green);
+    color:#fff;
+    font-weight:700;
+    font-size:0.85rem;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  .qtext{
+    font-size: 1.15rem;
+    line-height:1.55;
+    font-weight:600;
+    margin: 0 0 22px;
+  }
+
+  .choices{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .choice-btn{
+    width:100%;
+    padding: 16px 14px;
+    font-size: 1.05rem;
+    font-weight:700;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    cursor:pointer;
+    transition: transform .08s ease, background .15s ease, border-color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .choice-btn:active{ transform: scale(0.98); }
+  .choice-btn.abuse{ border-color:#f3b5b0; }
+  .choice-btn.notabuse{ border-color:#bcdcc8; }
+
+  .choice-btn.selected.correct{
+    background: rgba(46,166,78,0.16);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  .choice-btn.selected.wrong{
+    background: rgba(217,69,61,0.14);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+  .choice-btn.reveal-correct{
+    border-color: var(--correct);
+    background: rgba(46,166,78,0.10);
+  }
+  .choice-btn:disabled{ cursor:default; }
+
+  .feedback{
+    margin-top:18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size:0.98rem;
+    line-height:1.5;
+    display:none;
+  }
+  .feedback.show{ display:block; }
+  .feedback.correct{ background: rgba(46,166,78,0.12); color: var(--correct); }
+  .feedback.wrong{ background: rgba(217,69,61,0.10); color: var(--wrong); }
+
+  .next-btn{
+    margin-top:18px;
+    width:100%;
+    padding:15px;
+    font-size:1.05rem;
+    font-weight:700;
+    border:none;
+    border-radius:14px;
+    background: var(--green);
+    color:#fff;
+    cursor:pointer;
+    display:none;
+  }
+  .next-btn.show{ display:block; }
+
+  /* result screen */
+  .result-card{
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding: 28px 22px;
+    text-align:center;
+  }
+  .result-score{
+    font-size:2.2rem;
+    font-weight:800;
+    color: var(--green-dark);
+    margin: 6px 0 2px;
+  }
+  .result-sub{
+    color:var(--sub);
+    margin-bottom:22px;
+  }
+  .type-bars{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    text-align:left;
+    margin: 18px 0 8px;
+  }
+  .type-row{ display:flex; align-items:center; gap:10px; }
+  .type-label{ width:64px; font-weight:700; font-size:0.95rem; flex-shrink:0; }
+  .type-track{
+    flex:1;
+    background: var(--border);
+    border-radius: 999px;
+    height: 14px;
+    overflow:hidden;
+    position:relative;
+  }
+  .type-fill{ height:100%; border-radius:999px; }
+  .type-fill.emo{ background: var(--pink); }
+  .type-fill.eco{ background: var(--orange); }
+  .type-fill.sex{ background: var(--blue); }
+  .type-count{ width:46px; text-align:right; font-size:0.85rem; color:var(--sub); flex-shrink:0; }
+
+  .focus-box{
+    margin-top: 22px;
+    padding: 16px;
+    border-radius:14px;
+    background: rgba(232,93,138,0.10);
+    border: 1px solid rgba(232,93,138,0.35);
+    text-align:left;
+    line-height:1.6;
+    font-size:0.98rem;
+  }
+  .focus-box b{ color: var(--pink); }
+
+  .action-btns{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-top: 24px;
+  }
+  .btn-primary{
+    padding:16px;
+    font-size:1.05rem;
+    font-weight:700;
+    border:none;
+    border-radius:14px;
+    background: var(--green);
+    color:#fff;
+    cursor:pointer;
+  }
+  .btn-secondary{
+    padding:16px;
+    font-size:1.0rem;
+    font-weight:700;
+    border:2px solid var(--border);
+    border-radius:14px;
+    background: transparent;
+    color: var(--text);
+    cursor:pointer;
+  }
+
+  .type-tag{
+    display:inline-block;
+    font-size:0.78rem;
+    font-weight:700;
+    padding:3px 10px;
+    border-radius:999px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .tag-emo{ background:rgba(232,93,138,0.15); color:var(--pink); }
+  .tag-eco{ background:rgba(245,166,35,0.18); color:#B9780D; }
+  .tag-sex{ background:rgba(59,130,196,0.15); color:var(--blue); }
+
+  .intro-card{
+    background: var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding: 26px 22px;
+    text-align:center;
+  }
+  .intro-card p{ line-height:1.7; margin: 14px 0; text-align:left; font-size:1rem;}
+  .start-btn{
+    margin-top:10px;
+    width:100%;
+    padding:17px;
+    font-size:1.1rem;
+    font-weight:800;
+    border:none;
+    border-radius:14px;
+    background: var(--green);
+    color:#fff;
+    cursor:pointer;
+  }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🟢 이건 학대일까요?</h1>
+    <p>12가지 상황을 보고 알맞은 답을 골라보세요</p>
+  </header>
+
+  <!-- 인트로 -->
+  <div id="intro" class="intro-card">
+    <p><b>정서적 · 경제적 · 성적</b> 상황이 섞여서 나와요.<br>
+    각 상황을 읽고 <b>학대예요 / 아니에요</b> 중에서 골라보세요.</p>
+    <p>마지막에 내가 <b>가장 많이 틀린 유형</b>을 알려주고,<br>
+    틀린 문제만 다시 풀어볼 수 있어요.</p>
+    <button class="start-btn" onclick="startGame()">시작하기</button>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div id="quiz" class="hidden">
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="card">
+      <span class="qnum" id="qnum">1 / 12</span>
+      <div class="qtext" id="qtext"></div>
+      <div class="choices">
+        <button class="choice-btn abuse" data-val="학대" onclick="selectAnswer(this)">😠 학대예요</button>
+        <button class="choice-btn notabuse" data-val="아니다" onclick="selectAnswer(this)">🙂 아니에요</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">다음 문제</button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="result" class="hidden">
+    <div class="result-card">
+      <div>🎉</div>
+      <div class="result-score" id="scoreText">0 / 12</div>
+      <div class="result-sub">맞혔어요</div>
+
+      <div class="type-bars" id="typeBars"></div>
+
+      <div class="focus-box" id="focusBox"></div>
+
+      <div class="action-btns">
+        <button class="btn-primary" id="retryWrongBtn" onclick="retryWrong()">틀린 문제만 다시 풀기</button>
+        <button class="btn-secondary" onclick="restartAll()">처음부터 다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  {id:1, type:"emo", text:"동료들이 제가 싫어하는 별명으로 부르며 놀려요.", answer:"학대",
+    explain:"싫어하는 별명으로 부르며 놀리는 것은 정서적 학대예요."},
+  {id:2, type:"emo", text:"밥 먹을 때 저만 빼고 다른 사람들끼리 모여서 먹어요.", answer:"학대",
+    explain:"일부러 따돌리는 것은 정서적 학대예요."},
+  {id:3, type:"emo", text:"손님이 큰소리로 욕을 하고, 화가 나서 물건을 던졌어요.", answer:"학대",
+    explain:"소리 지르기, 물건 던지기로 겁을 주는 것은 정서적 학대예요."},
+  {id:4, type:"emo", text:"제가 실수를 했을 때, 팀장님이 '잘못했네요. 수정하세요.'라고 차분한 목소리로 말했어요.", answer:"아니다",
+    explain:"모욕이나 겁주기 없이 차분하게 알려주는 것은 정당한 안내예요."},
+
+  {id:5, type:"eco", text:"몇 달 동안 일을 시켰는데, 월급을 제대로 주지 않았어요.", answer:"학대",
+    explain:"일을 시키고 정당한 대가를 주지 않는 것은 경제적 착취(학대)예요."},
+  {id:6, type:"eco", text:"동네 형이 '안 쓰는 통장 빌려주면 100만 원 줄게'라며 통장과 비밀번호를 받아갔어요.", answer:"학대",
+    explain:"통장·비밀번호를 이용해 이익을 취하는 것은 경제적 착취예요. 범죄에 이용될 수도 있어요."},
+  {id:7, type:"eco", text:"활동지원사가 제 허락 없이 통장에서 돈을 빼서 마음대로 썼어요.", answer:"학대",
+    explain:"허락 없이 돈을 가져가 쓰는 것은 명백한 경제적 학대예요."},
+  {id:8, type:"eco", text:"평생교육센터 프로그램을 듣기 위해 정해진 수강료를 냈어요.", answer:"아니다",
+    explain:"강요나 속임 없이 정해진 비용을 내는 것은 정당한 거래예요."},
+
+  {id:9, type:"sex", text:"채팅에서 알게 된 사람이 몸 사진을 계속 요구했어요.", answer:"학대",
+    explain:"원치 않는 몸 사진을 계속 요구하는 것은 성적 학대예요."},
+  {id:10, type:"sex", text:"직장 동료가 제 외모나 몸에 대해 성적인 말을 자꾸 했어요.", answer:"학대",
+    explain:"원치 않는 성적인 말을 반복하는 것도 성적 학대예요."},
+  {id:11, type:"sex", text:"사장님이 '정리하는 자세를 알려줄게요' 하며 다가와서 제 허리를 감싸듯 손을 올렸어요.", answer:"학대",
+    explain:"정리하는 자세는 말로도 알려줄 수 있어요. 굳이 허리를 만질 필요가 없는 접촉은 성적 학대예요."},
+  {id:12, type:"sex", text:"활동지원사님이 '팔을 여기로 넣어볼까요?' 하며 옷 입는 걸 도와줬어요.", answer:"아니다",
+    explain:"옷 입기처럼 실제로 필요한 도움을 주는 접촉은 학대가 아니에요."}
+];
+
+const TYPE_NAME = {emo:"정서적", eco:"경제적", sex:"성적"};
+const TYPE_TAGCLASS = {emo:"tag-emo", eco:"tag-eco", sex:"tag-sex"};
+
+let questions = [];
+let current = 0;
+let answers = []; // {id, correct, chosen}
+let mode = "all"; // "all" or "retry"
+let wrongIdsHistory = [];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startGame(){
+  questions = shuffle(ALL_QUESTIONS);
+  current = 0;
+  answers = [];
+  mode = "all";
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = questions[current];
+  document.getElementById('qnum').textContent = (current+1) + " / " + questions.length;
+  document.getElementById('qtext').textContent = q.text;
+  document.getElementById('progressBar').style.width = Math.round((current/questions.length)*100) + "%";
+
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b=>{
+    b.disabled = false;
+    b.classList.remove('selected','correct','wrong','reveal-correct');
+  });
+  document.getElementById('feedback').classList.remove('show','correct','wrong');
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').classList.remove('show');
+}
+
+function selectAnswer(btn){
+  const q = questions[current];
+  const chosen = btn.dataset.val;
+  const isCorrect = chosen === q.answer;
+
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled = true;
+    if(b === btn){
+      b.classList.add('selected', isCorrect ? 'correct' : 'wrong');
+    }
+    if(!isCorrect && b.dataset.val === q.answer){
+      b.classList.add('reveal-correct');
+    }
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show', isCorrect ? 'correct' : 'wrong');
+  fb.textContent = (isCorrect ? "✅ 맞았어요! " : "❌ 다시 생각해볼까요. ") + q.explain;
+
+  answers.push({id:q.id, type:q.type, correct:isCorrect});
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function nextQuestion(){
+  current++;
+  if(current < questions.length){
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult(){
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+
+  const total = answers.length;
+  const correctCount = answers.filter(a=>a.correct).length;
+  document.getElementById('scoreText').textContent = correctCount + " / " + total;
+
+  const wrongByType = {emo:0, eco:0, sex:0};
+  const totalByType = {emo:0, eco:0, sex:0};
+  answers.forEach(a=>{
+    totalByType[a.type]++;
+    if(!a.correct) wrongByType[a.type]++;
+  });
+
+  const maxWrong = Math.max(wrongByType.emo, wrongByType.eco, wrongByType.sex);
+
+  const barsEl = document.getElementById('typeBars');
+  barsEl.innerHTML = '';
+  const order = ['emo','eco','sex'];
+  const fillClass = {emo:'emo', eco:'eco', sex:'sex'};
+  order.forEach(t=>{
+    const pct = totalByType[t] > 0 ? Math.round((wrongByType[t]/totalByType[t])*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'type-row';
+    row.innerHTML = `
+      <div class="type-label">${TYPE_NAME[t]}</div>
+      <div class="type-track"><div class="type-fill ${fillClass[t]}" style="width:${pct}%"></div></div>
+      <div class="type-count">${wrongByType[t]}개 틀림</div>
+    `;
+    barsEl.appendChild(row);
+  });
+
+  const focusBox = document.getElementById('focusBox');
+  if(maxWrong === 0){
+    focusBox.innerHTML = "모든 유형을 잘 구분했어요! 앞으로도 불편한 상황이 있으면 꼭 이야기해주세요. 😊";
+  } else {
+    const focusTypes = order.filter(t => wrongByType[t] === maxWrong && maxWrong > 0);
+    const focusNames = focusTypes.map(t => TYPE_NAME[t]).join(', ');
+    focusBox.innerHTML = `<b>${focusNames} 학대</b> 관련 문제를 조금 더 헷갈려했어요.<br>아래 버튼으로 틀린 문제만 다시 풀어볼까요?`;
+  }
+
+  wrongIdsHistory = answers.filter(a=>!a.correct).map(a=>a.id);
+  const retryBtn = document.getElementById('retryWrongBtn');
+  if(wrongIdsHistory.length === 0){
+    retryBtn.classList.add('hidden');
+  } else {
+    retryBtn.classList.remove('hidden');
+    retryBtn.textContent = `틀린 문제 ${wrongIdsHistory.length}개 다시 풀기`;
+  }
+}
+
+function retryWrong(){
+  const wrongQs = ALL_QUESTIONS.filter(q => wrongIdsHistory.includes(q.id));
+  questions = shuffle(wrongQs);
+  current = 0;
+  answers = [];
+  mode = "retry";
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  renderQuestion();
+}
+
+function restartAll(){
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('intro').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

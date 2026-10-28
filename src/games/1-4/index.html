@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 프로그램 내 손으로</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 시간표가 위에 붙어 있도록: overflow-x:hidden 대신 clip (sticky가 동작) */
+.app{overflow-x:clip}
+.dock{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 -16px;padding:10px 16px 10px;box-shadow:0 6px 10px -6px rgba(60,40,20,.25)}
+.guide{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-radius:12px;background:var(--paper);border:1.5px solid var(--line);font:var(--hw) 20px/1.3 var(--fh)}
+.guide.go{border-color:var(--ac);background:#fff}
+.guide .gi{flex:none;width:40px;height:40px;border-radius:8px;overflow:hidden;background:var(--soft)}
+.guide .gi img{width:100%;height:100%;object-fit:cover}
+.guide span{flex:1}
+.guide.full{padding:0;border:0;background:none}
+.guide .gdone{flex:1}
+.sheet .stamp{top:-36px;right:-6px}
+.guide .cnt{flex:none;font:700 13px var(--fb);color:var(--ac);background:#fff;border:1.5px solid var(--ac);border-radius:999px;padding:3px 10px}
+/* 시간표 */
+.tt{display:grid;grid-template-columns:38px repeat(5,1fr);gap:4px;margin-top:10px}
+.tt .hd{text-align:center;font:700 15px var(--fb);color:var(--ink);padding:2px 0}
+.tt .rh{display:grid;place-items:center;font:700 13px var(--fb);color:var(--muted);writing-mode:vertical-rl;letter-spacing:.1em}
+.slot{position:relative;display:flex;flex-direction:column;min-height:72px;border-radius:8px;background:var(--paper);border:1.5px dashed var(--line);overflow:hidden;transition:border-color .15s,background .15s}
+.slot .em{margin:auto;font:700 22px var(--fb);color:var(--line)}
+.slot.full{border-style:solid;border-color:var(--line);background:#fff;box-shadow:0 2px 5px rgba(60,40,20,.15)}
+.slot .si{display:block;aspect-ratio:3/2;overflow:hidden}
+.slot .si img{width:100%;height:100%;object-fit:cover}
+.slot .sn{display:block;text-align:center;font:700 13px/1.2 var(--fb);padding:3px 1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock.ready .slot:not(.full){border-color:var(--ac);background:#fbeee9;animation:glow 1.4s ease-in-out infinite}
+.dock.ready .slot:not(.full) .em{color:var(--ac)}
+.dock.ready .slot.full{outline:2px dashed color-mix(in srgb,var(--ac) 50%,transparent);outline-offset:-2px}
+@keyframes glow{50%{background:#fff}}
+.slot.pop{animation:pop .35s}
+@keyframes pop{40%{transform:scale(1.08)}}
+/* 프로그램 목록 */
+.tray{margin-top:16px}
+.picks.progs{grid-template-columns:1fr 1fr}
+.picks.progs .photo .cp{aspect-ratio:3/2}
+.picks.progs .photo .ct{font-size:19px}
+.pick .where{position:absolute;left:12px;top:14px;z-index:2;background:var(--ok);color:#fff;border-radius:999px;font:700 12px var(--fb);padding:3px 9px}
+.pick.used{opacity:.55}
+.pick.used.on{opacity:1}
+.tray.nudge{animation:shake .4s}
+/* 결과 */
+.sheet{position:relative;background:#fff;padding:22px 10px 12px;box-shadow:0 8px 20px rgba(60,40,20,.22);transform:rotate(-1deg);margin:22px 2px 8px;color:#3d352b}
+.sheet .tt{margin-top:0}
+.sheet .slot{min-height:84px}
+.sheet .slot .sn{font-size:14px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>아래에서 하고 싶은 프로그램을 눌러요.</li><li>위 시간표에서 넣고 싶은 칸을 눌러요.</li><li>시간표 칸을 한 번 더 누르면 프로그램이 빠져요.</li><li>10칸을 모두 채우면 시간표가 완성돼요.</li></ol><p>넣은 프로그램을 다시 고르면 다른 칸으로 옮길 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'내',html:'내 <b>프로그램</b>'};
+const DAYS=['월','화','수','목','금'],HALF=['오전','오후'];
+// 임시: 프로그램 10개의 이름·설명은 요청서에 정해지지 않아 임시로 정함. 사진(img/prog-*.jpg)도 모두 임시생성 그림.
+const PROGS=[
+  {id:'cook',v:'요리 교실',s:'요리',img:'img/prog-cook.jpg',say:'맛있는 음식을 만들어요.'},
+  {id:'art',v:'미술 교실',s:'미술',img:'img/prog-art.jpg',say:'그림을 그리고 만들기를 해요.'},
+  {id:'exercise',v:'건강 체조',s:'체조',img:'img/prog-exercise.jpg',say:'음악에 맞춰 몸을 움직여요.'},
+  {id:'sing',v:'노래 교실',s:'노래',img:'img/prog-sing.jpg',say:'함께 노래를 불러요.'},
+  {id:'computer',v:'컴퓨터 교실',s:'컴퓨터',img:'img/prog-computer.jpg',say:'컴퓨터 쓰는 법을 배워요.'},
+  {id:'garden',v:'원예 교실',s:'원예',img:'img/prog-garden.jpg',say:'꽃과 채소를 길러요.'},
+  {id:'book',v:'책 읽기 모임',s:'책 읽기',img:'img/prog-book.jpg',say:'함께 책을 읽고 이야기해요.'},
+  {id:'dance',v:'댄스 교실',s:'댄스',img:'img/prog-dance.jpg',say:'신나게 춤을 춰요.'},
+  {id:'photo',v:'사진 교실',s:'사진',img:'img/prog-photo.jpg',say:'사진 찍는 법을 배워요.'},
+  {id:'bowling',v:'볼링',s:'볼링',img:'img/prog-bowling.jpg',say:'공을 굴려 핀을 쓰러뜨려요.'}
+];
+const SLOTS=DAYS.flatMap((d,di)=>HALF.map((h,hi)=>({k:`${di}${hi}`,d,h})));   // 10칸
+const slotName=k=>`${DAYS[k[0]]}요일 ${HALF[k[1]]}`;
+
+const root=document.getElementById('app');
+let place={},cur=null;                 // place[칸] = 프로그램 id, cur = 지금 고른 프로그램 id
+const P=id=>PROGS.find(p=>p.id===id);
+const slotOf=id=>Object.keys(place).find(k=>place[k]===id);
+const count=()=>Object.keys(place).length;
+const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}};
+
+function home(){
+  quiet();place={};cur=null;
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My weekly programs</span><h1 class="h1">내 프로그램<br><em>내 손으로</em></h1><p>프로그램 10개를 원하는 요일과 시간에 넣어 시간표를 만들어요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/start.jpg" alt="달력과 연필"></span><span class="ct">가상 수강신청<small>월요일~금요일, 오전·오후 10칸</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>{build();DK.speak('하고 싶은 프로그램을 먼저 골라요.')}});
+}
+
+const cell=(k,big)=>{const p=place[k]&&P(place[k]);
+  return p?`<span class="si"><img src="${p.img}" alt=""></span><span class="sn">${p.s}</span>`:'<span class="em" aria-hidden="true">+</span>'};
+const table=(big)=>`<div class="tt" role="group" aria-label="일주일 시간표"><span></span>${DAYS.map(d=>`<span class="hd">${d}</span>`).join('')}
+  ${HALF.map((h,hi)=>`<span class="rh">${h}</span>${DAYS.map((d,di)=>{const k=`${di}${hi}`,p=place[k]&&P(place[k]);
+    return big?`<div class="slot${p?' full':''}">${cell(k,true)}</div>`
+      :`<button class="slot${p?' full':''}" data-k="${k}" aria-label="${slotName(k)}, ${p?p.v+'. 누르면 빼요':'비어 있음'}">${cell(k)}</button>`}).join('')}`).join('')}</div>`;
+
+function build(){
+  quiet();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="dock" id="dock"><div id="guide" aria-live="polite"></div><div id="tt"></div></div>
+  <section class="tray" id="tray"><p class="sl">프로그램 10개</p><div class="picks progs" id="progs"></div></section>
+  <div class="acts"><button class="btn pri" data-act="done">시간표 완성하기</button><button class="btn sec" data-act="clear">모두 빼기</button></div>${DK.DKU}`,{
+    home,done:()=>count()===SLOTS.length&&result(),
+    clear:()=>{place={};cur=null;draw();DK.speak('모두 뺐어요.')}
+  });
+  draw();
+}
+
+function draw(){
+  const g=root.querySelector('#guide'),p=cur&&P(cur),n=count(),full=n===SLOTS.length;
+  g.className='guide'+(p?' go':'');
+  g.innerHTML=p?`<span class="gi"><img src="${p.img}" alt=""></span><span>「${p.v}」<br>넣을 칸을 눌러요</span><b class="cnt">${n}/10</b>`
+    :full?`<button class="btn pri gdone">다 채웠어요! 시간표 완성 ›</button>`
+    :`<span>아래에서 프로그램을 골라요</span><b class="cnt">${n}/10</b>`;
+  if(full&&!p){g.className='guide full';g.querySelector('.gdone').onclick=result}
+  root.querySelector('#dock').classList.toggle('ready',!!p);
+  root.querySelector('#tt').innerHTML=table(false);
+  root.querySelector('#progs').innerHTML=PROGS.map(o=>{const k=slotOf(o.id);
+    return `<button class="pick photo${cur===o.id?' on':''}${k?' used':''}" data-id="${o.id}" aria-pressed="${cur===o.id}" aria-label="${o.v}${k?', '+slotName(k)+'에 넣었어요':''}">${k?`<i class="where">✓ ${DAYS[k[0]]} ${HALF[k[1]]}</i>`:''}<span class="cp"><img src="${o.img}" alt=""></span><span class="ct">${o.v}</span></button>`}).join('');
+  root.querySelector('[data-act=done]').disabled=!full;
+  root.querySelectorAll('.slot[data-k]').forEach(b=>b.onclick=()=>tapSlot(b.dataset.k));
+  root.querySelectorAll('#progs .pick').forEach(b=>b.onclick=()=>tapProg(b.dataset.id));
+}
+
+function tapProg(id){
+  if(cur===id){cur=null;draw();return}
+  cur=id;const p=P(id),k=slotOf(id);
+  draw();
+  DK.speak(`${p.v}. ${p.say} ${k?'옮길':'넣을'} 칸을 눌러요.`);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function tapSlot(k){
+  if(cur){
+    const p=P(cur),old=slotOf(cur);
+    if(old)delete place[old];
+    place[k]=cur;cur=null;                         // 다른 프로그램이 있던 칸이면 그 프로그램은 목록으로 돌아간다
+    draw();pop(k);
+    DK.speak(`${slotName(k)}, ${p.v}.`+(count()===SLOTS.length?' 시간표를 다 채웠어요!':''));
+  }else if(place[k]){
+    const p=P(place[k]);delete place[k];draw();
+    DK.speak(`${p.v}${DK.eul(p.v)} 뺐어요.`);
+  }else{
+    const t=root.querySelector('#tray');t.classList.remove('nudge');void t.offsetWidth;t.classList.add('nudge');
+    DK.speak('먼저 아래에서 프로그램을 골라요.');
+  }
+}
+const pop=k=>{const b=root.querySelector(`.slot[data-k="${k}"]`);b&&b.classList.add('pop')};
+
+const weekText=()=>'내 프로그램 시간표예요. '+DAYS.map((d,di)=>`${d}요일 오전 ${P(place[di+'0']).v}, 오후 ${P(place[di+'1']).v}.`).join(' ');
+
+function result(){
+  quiet();cur=null;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <section class="hero"><span class="eb">My week</span><h1 class="h1">내 프로그램<br><em>내 손으로</em></h1><p>내가 만든 일주일 시간표예요.</p></section>
+  <div class="sheet"><i class="tp"></i><span class="stamp">완성!</span>${table(true)}</div>
+  <div class="acts"><button class="btn line" data-act="listen">🔊 시간표 듣기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="edit">‹ 고치기</button><button class="btn pri" data-act="again">↻ 다시하기</button></div></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(weekText()),edit:build,again:home
+  });
+  DK.speak('시간표가 완성됐어요! '+weekText());
+}
+
+home();
+</script>
+</body>
+</html>

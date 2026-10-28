@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>건강 빨간불을 초록불로 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--red:#d2412f;--grn:#3f9b4a;--yel:#e7b23a}
+/* 신호등 */
+.tl{display:inline-flex;gap:8px;padding:8px 10px;border-radius:999px;background:#2f2b27;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+.tl i{width:30px;height:30px;border-radius:50%;background:#4a443d;transition:background .4s,box-shadow .4s}
+.tl i.r.on{background:var(--red);box-shadow:0 0 14px 3px rgba(210,65,47,.7)}
+.tl i.y.on{background:var(--yel);box-shadow:0 0 14px 3px rgba(231,178,58,.7)}
+.tl i.g.on{background:var(--grn);box-shadow:0 0 14px 3px rgba(63,155,74,.75)}
+.tl.big{gap:14px;padding:14px 18px}
+.tl.big i{width:58px;height:58px}
+.hero-tl{display:flex;flex-direction:column;align-items:center;gap:14px;margin:10px 0 4px}
+.hero-tl p{margin:0;font:var(--hw) 21px/1.4 var(--fh);text-align:center}
+.blink{animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.55}}
+/* 진행: 작은 신호 5개 */
+.lamps{display:flex;justify-content:center;gap:10px;margin:14px 0 4px}
+.lamps i{width:22px;height:22px;border-radius:50%;background:var(--soft);border:2px solid var(--line);display:grid;place-items:center;font:700 11px var(--fb);color:#fff;font-style:normal}
+.lamps i.cur{background:var(--red);border-color:var(--red)}
+.lamps i.d{background:var(--grn);border-color:var(--grn)}
+/* 빨간불 카드 */
+.redc{margin:18px 4px 0}
+.redc .cp{aspect-ratio:3/2}
+.redc .tl{position:absolute;left:14px;top:14px;z-index:2;padding:6px 8px;gap:6px}
+.redc .tl i{width:24px;height:24px}
+.redc .ct{display:flex;gap:10px;align-items:center;font-size:23px}
+.redc .ct span{flex:1}
+.tag{display:inline-block;font:700 13px var(--fb);color:#fff;border-radius:6px;padding:2px 8px;margin-bottom:3px}
+.tag.r{background:var(--red)}.tag.g{background:var(--grn)}
+.redc .ct .tag{display:block;width:max-content;font-size:12px}
+/* 초록불 보기 3개: 가로형 카드 */
+.gopts{display:grid;gap:14px;padding:4px 2px}
+.gopt{display:flex;align-items:center;gap:12px;background:#fff;padding:8px;min-height:92px;box-shadow:0 5px 12px rgba(60,40,20,.16);border-radius:6px;border:3px solid transparent;transition:border-color .2s,opacity .2s}
+.gopt .gi{flex:none;width:44%;aspect-ratio:3/2;overflow:hidden;border-radius:4px;background:var(--soft)}
+.gopt .gi img{width:100%;height:100%;object-fit:cover}
+.gopt .gt{flex:1;font:var(--hw) 21px/1.3 var(--fh);letter-spacing:-.02em;color:#3d352b}
+.gopt:hover{border-color:var(--line)}
+.gopt.wrong{border-color:var(--no);opacity:.5;animation:shake .4s}
+.gopt.ok{border-color:var(--grn);background:#f1f7ec}
+.gopt.dim{opacity:.4}
+.fb.ok{background:#e9f3e3;color:var(--grn)}
+/* 결과 */
+.master{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.master h2{font:var(--lw) 26px/1.35 var(--fl);letter-spacing:-.04em;margin:14px 0 0;color:var(--ink)}
+.master .stamp{background:var(--grn);font-size:17px}
+.rl{display:grid;gap:12px;margin-top:16px}
+.ri{display:flex;gap:10px;align-items:center;background:#fff;padding:7px;box-shadow:0 4px 10px rgba(60,40,20,.14);border-radius:6px}
+.ri .gi{flex:none;width:40%;aspect-ratio:3/2;overflow:hidden;border-radius:4px}
+.ri .gi img{width:100%;height:100%;object-fit:cover}
+.ri .rt{flex:1;min-width:0}
+.ri s{display:block;font-size:13px;color:var(--muted)}
+.ri b{display:block;font:var(--hw) 20px/1.3 var(--fh);color:#2f6e37;margin-top:2px}
+.ri .spk{width:34px;height:34px;background:var(--grn)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>빨간불 행동을 봐요. 건강에 좋지 않은 행동이에요.</li><li>그림 3개 중에서 건강에 좋은 초록불 행동을 골라요.</li><li>5번 모두 바꾸면 건강 마스터가 돼요.</li></ol><p>틀려도 괜찮아요. 다시 고르면 돼요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'건',html:'건강 <b>신호등</b>'};
+// 빨간불 행동 5가지 = 요청서 문구(바꾸지 않는다).
+// 초록불 보기 3개(정답 1·오답 2)와 결과 문장은 요청서에 없어 임시로 만들었다.
+// 그림은 모두 임시 그림(tools/gen_3_1.py). 진짜 사진이 오면 같은 파일 이름으로 덮어쓴다.
+const Q=[
+  {red:'누워 있는 것을 좋아해요',img:'img/red-lie.jpg',
+   // 임시: 보기 3개
+   opts:[{t:'일어나서 스트레칭을 해요',img:'img/stretch.jpg',ok:1},{t:'소파에 누워 텔레비전을 봐요',img:'img/sofa-tv.jpg'},{t:'하루 종일 잠만 자요',img:'img/sleep-all-day.jpg'}]},
+  {red:'라면을 자주 먹어요',img:'img/red-ramen.jpg',
+   // 임시: 보기 3개
+   opts:[{t:'밥과 채소 반찬을 먹어요',img:'img/rice-veg.jpg',ok:1},{t:'라면을 두 개 끓여 먹어요',img:'img/ramen-two.jpg'},{t:'밥 대신 과자를 먹어요',img:'img/snack-meal.jpg'}]},
+  {red:'탄산음료를 자주 마셔요',img:'img/red-soda.jpg',
+   // 임시: 보기 3개
+   opts:[{t:'목마르면 물을 마셔요',img:'img/water.jpg',ok:1},{t:'탄산음료를 한 잔 더 마셔요',img:'img/soda-more.jpg'},{t:'달콤한 주스를 많이 마셔요',img:'img/juice.jpg'}]},
+  {red:'운동을 안 해요',img:'img/red-noexercise.jpg',
+   // 임시: 보기 3개
+   opts:[{t:'공원에서 걸어요',img:'img/walk.jpg',ok:1},{t:'하루 종일 게임만 해요',img:'img/game.jpg'},{t:'하루 종일 앉아만 있어요',img:'img/sit-all-day.jpg'}]},
+  {red:'밤늦게 음식을 먹어요',img:'img/red-latefood.jpg',
+   // 임시: 보기 3개
+   opts:[{t:'저녁을 일찍 먹어요',img:'img/early-dinner.jpg',ok:1},{t:'밤에 치킨을 시켜 먹어요',img:'img/chicken-night.jpg'},{t:'자기 전에 피자를 먹어요',img:'img/pizza-bed.jpg'}]}
+];
+const good=q=>q.opts.find(o=>o.ok);
+const DONE='건강 마스터가 된 것을 축하합니다!';   // 요청서 문구
+const RETRY='다시 선택해 보세요!';               // 요청서 문구
+
+const root=document.getElementById('app');
+let timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const tl=(cls,state,lbl)=>`<span class="tl ${cls}" role="img" aria-label="${lbl}"><i class="r${state==='r'?' on':''}"></i><i class="y${state==='y'?' on':''}"></i><i class="g${state==='g'?' on':''}"></i></span>`;
+const lamps=(cur)=>`<div class="lamps" aria-label="${cur+1}번째 문제, 모두 ${Q.length}개">${Q.map((_,i)=>`<i class="${i<cur?'d':i===cur?'cur':''}">${i<cur?'✓':i+1}</i>`).join('')}</div>`;
+
+function home(){
+  clear();
+  const intro='건강 빨간불을 초록불로 바꿔 보세요!';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Health traffic light</span><h1 class="h1">건강 빨간불을<br><em>초록불로 바꿔 보세요!</em></h1><p>건강에 나쁜 빨간불 행동을 보고, 건강에 좋은 초록불 행동을 골라요.</p></section>
+  <div class="hero-tl">${tl('big','r','빨간불이 켜진 신호등')}<p>빨간불 행동 5가지를<br>초록불로 바꿔요</p></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${intro}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>ask(0)});
+  // 홈 신호등: 빨간불 → 초록불로 바뀌는 모습을 살짝 보여 준다
+  const L=root.querySelectorAll('.hero-tl .tl i');
+  const cyc=(k)=>{L.forEach((l,j)=>l.classList.toggle('on',j===k));later(()=>cyc((k+1)%3),k===1?700:1600)};
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)later(()=>cyc(1),1600);
+}
+
+function ask(i){
+  clear();
+  const q=Q[i],last=i===Q.length-1;
+  const opts=DK.shuffle(q.opts);                 // 정답 위치는 매번 바뀜
+  const intro=`빨간불! ${q.red}. 알맞은 초록불 행동을 골라 보세요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${lamps(i)}
+  <div class="photo redc tilt-l"><i class="tp"></i>${tl('','r','빨간불')}<span class="cp"><img src="${q.img}" alt="${DK.esc(q.red)}"></span><span class="ct"><span><i class="tag r">빨간불</i>${q.red}</span><button class="spk" data-say="${DK.esc(intro)}" aria-label="소리로 듣기">${DK.SPK}</button></span></div>
+  <p class="q">초록불 행동을 골라 보세요.</p><p class="qs">건강에 좋은 행동 1개를 골라요.</p>
+  <div class="gopts">${opts.map(o=>`<button class="gopt" data-act="pick" data-ok="${o.ok?1:0}" aria-label="${DK.esc(o.t)}"><span class="gi"><img src="${o.img}" alt=""></span><span class="gt">${o.t}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="next" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 빨간불 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>last?finish():ask(i+1),
+    pick:b=>{
+      if(b.disabled)return;
+      const fb=root.querySelector('#fb');
+      if(b.dataset.ok!=='1'){
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        fb.innerHTML=`<p class="fb no">✕<span>${RETRY}</span></p>`;
+        DK.speak(RETRY);
+        return;
+      }
+      root.querySelectorAll('.gopt').forEach(o=>{o.disabled=true;if(o!==b)o.classList.add('dim')});
+      b.classList.add('ok');
+      const L=root.querySelectorAll('.redc .tl i');
+      L[0].classList.remove('on');L[2].classList.add('on');
+      root.querySelector('.redc .tl').setAttribute('aria-label','초록불');
+      const t=good(q).t;
+      fb.innerHTML=`<p class="fb ok">✓<span>초록불이 켜졌어요!<small>“${t}.” 건강에 좋은 행동이에요.</small></span></p>`;
+      DK.speak(`초록불이 켜졌어요! ${t}.`);
+      root.querySelector('#next').hidden=false;
+      later(()=>root.querySelector('#next').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  DK.speak(intro);
+}
+
+function finish(){
+  clear();
+  const all=Q.map(q=>good(q).t+'.').join(' ');
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="master"><i class="stamp">건강<br>마스터</i>${tl('big','g','초록불이 켜진 신호등')}<h2>${DONE}</h2></div>
+  <p class="sl" style="margin:18px 0 0">빨간불에서 초록불로 바뀐 행동</p>
+  <div class="rl">${Q.map(q=>{const g=good(q);return `<div class="ri"><span class="gi"><img src="${g.img}" alt="${DK.esc(g.t)}"></span><span class="rt"><s>${q.red}</s><b>${g.t}.</b></span><button class="spk" data-say="${DK.esc(g.t)}" aria-label="소리로 듣기">${DK.SPK}</button></div>`}).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 해 보기</button></div>${DK.DKU}`,{
+    home,again:()=>ask(0),listen:()=>DK.speak(`${DONE} ${all}`)
+  });
+  later(()=>DK.speak(DONE),400);
+}
+
+home();
+</script>
+</body>
+</html>

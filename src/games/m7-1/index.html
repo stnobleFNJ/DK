@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우리집 위험 요소 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 방 고르기 카드 */
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;padding:10px 4px 4px}
+.rooms .photo .cp{aspect-ratio:4/3}
+.rooms .ct{display:flex;align-items:center;gap:6px}
+.rooms .ct span{flex:1}
+.rooms .st{font:700 12px var(--fb);color:var(--muted);background:var(--soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.rooms .pick.done .st{background:var(--ok);color:#fff}
+.rooms .pick.done .cp img{filter:saturate(.75)}
+.badge{position:absolute;right:10px;top:12px;z-index:2;width:34px;height:34px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font:700 18px var(--fb);box-shadow:0 2px 6px rgba(0,0,0,.25);transform:rotate(8deg)}
+/* 장면 */
+.scene{position:relative;margin:14px 0 0;padding:6px;background:#fff;box-shadow:0 6px 14px rgba(60,40,20,.18)}
+.scene .si{position:relative;overflow:hidden;cursor:pointer}
+.scene .si>.bg{width:100%;height:auto}
+.hot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;aspect-ratio:1;z-index:2}
+.hot.hint{animation:hint 1s ease-in-out 3}
+@keyframes hint{0%,100%{box-shadow:0 0 0 0 rgba(241,201,107,0)}50%{box-shadow:0 0 0 5px rgba(241,201,107,.95),inset 0 0 0 999px rgba(241,201,107,.25)}}
+.stk{position:absolute;transform:translate(-50%,-50%);width:27%;pointer-events:none;z-index:3;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.2) rotate(-20deg);opacity:0}to{transform:translate(-50%,-50%) scale(1) rotate(0)}}
+.miss{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid rgba(255,255,255,.95);box-shadow:0 0 0 2px rgba(0,0,0,.25);z-index:4;pointer-events:none;animation:miss .7s ease-out forwards}
+@keyframes miss{from{transform:scale(.4);opacity:1}to{transform:scale(1.3);opacity:0}}
+.rh{display:flex;align-items:center;gap:10px;margin:16px 0 0}
+.rh .q{margin:0;flex:1}
+.cnt{flex:none;font:var(--hw) 22px var(--fh);background:var(--tape);border-radius:999px;padding:2px 14px}
+/* 찾은 위험 요소 목록 */
+.hl{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.hl li{display:flex;gap:10px;align-items:center;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:8px 10px;min-height:58px;color:var(--muted);font-size:14px}
+.hl li.f{border-style:solid;border-color:var(--ok);background:#f2f6ea;color:var(--ink)}
+.hl li img{flex:none;width:46px;height:auto}
+.hl li .qm{flex:none;width:46px;height:46px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font:700 20px var(--fb);color:var(--muted)}
+.hl li span{flex:1;min-width:0}
+.hl li s{display:block;font-size:13px;color:var(--muted)}
+.hl li b{display:block;font-size:15px;color:#2f6e37}
+.hl .spk{width:34px;height:34px;background:var(--ok)}
+/* 결과 */
+.master{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.master .big{font-size:64px;line-height:1}
+.master h2{font:var(--lw) 28px/1.35 var(--fl);letter-spacing:-.04em;margin:12px 0 0}
+.master p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.master .stamp{background:var(--ok);font-size:16px}
+.rt{font:var(--hw) 21px var(--fh);margin:20px 0 0}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>거실, 주방, 화장실, 현관 중 한 곳을 골라요.</li><li>그림 속 위험한 곳을 찾아 눌러요.</li><li>누르면 안전해진 모습 스티커가 붙어요.</li><li>네 곳을 모두 찾으면 우리집 안전관리사가 돼요!</li></ol><p>잘 모르겠으면 ‘힌트’를 눌러 보세요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'안',html:'우리집 <b>안전 찾기</b>'};
+// 방·위험 요소·위험 문구(label)는 프로토타입(중7-1 방선택형) 그대로.
+// 좌표(x,y: 그림 폭·높이 %)는 실제 그림을 보고 위험 요소 한가운데로 다시 맞췄다. r = 누르는 범위 지름(그림 폭 %).
+// 안전 문구(safe)와 스티커(img/safe-*.png)는 원본에 없어 임시로 만들었다(tools/gen_m7_1.py).
+const ROOMS=[
+  {key:'living',name:'거실',img:'img/living.jpg',w:1200,h:900,hz:[
+    {x:16,y:57,r:20,label:'전기히터가 커튼 가까이 있어요 (화재 위험)',stk:'img/safe-heater.png',
+     safe:'히터를 끄고 커튼에서 멀리 두었어요.'},   // 임시: 안전 문구
+    {x:72,y:77,r:24,label:'전기장판이 접힌 채 켜져 있어요 (화재 위험)',stk:'img/safe-blanket.png',
+     safe:'전기장판을 펴고 전원을 껐어요.'}]},      // 임시: 안전 문구
+  {key:'kitchen',name:'주방',img:'img/kitchen.jpg',w:1200,h:1200,hz:[
+    {x:89,y:43,r:20,label:'가스불 위 냄비를 두고 자리를 비웠어요 (화재 위험)',stk:'img/safe-pot.png',
+     safe:'가스불을 끄고, 요리할 때는 자리를 지켜요.'},  // 임시: 안전 문구
+    {x:52,y:49,r:18,label:'칼이 아무렇게나 놓여있어요 (베임 위험)',stk:'img/safe-knife.png',
+     safe:'칼을 칼꽂이에 꽂아 두었어요.'},              // 임시: 안전 문구
+    {x:11,y:31,r:20,label:'전자레인지에 금속 그릇을 넣었어요 (화재 위험)',stk:'img/safe-microwave.png',
+     safe:'금속 그릇을 빼고 전자레인지용 그릇을 썼어요.'}]},  // 임시: 안전 문구
+  {key:'bath',name:'화장실',img:'img/bath.jpg',w:1200,h:900,hz:[
+    {x:40,y:78,r:26,label:'바닥에 물이 흥건해요 (낙상 위험)',stk:'img/safe-floor.png',
+     safe:'바닥의 물기를 닦았어요.'},                  // 임시: 안전 문구
+    {x:86,y:47,r:18,label:'헤어드라이기가 물 근처에 있어요 (감전 위험)',stk:'img/safe-dryer.png',
+     safe:'드라이기 코드를 뽑고 물에서 멀리 두었어요.'}]},  // 임시: 안전 문구
+  {key:'entrance',name:'현관',img:'img/entrance.jpg',w:1200,h:900,hz:[
+    {x:29,y:36,r:22,label:'현관문이 잠기지 않고 열려있어요 (문단속 위험)',stk:'img/safe-door.png',
+     safe:'현관문을 닫고 잠갔어요.'},                  // 임시: 안전 문구
+    {x:81,y:77,r:22,label:'문어발 콘센트예요 (전기 화재 위험)',stk:'img/safe-multitap.png',
+     safe:'안 쓰는 플러그를 뽑아 콘센트를 정리했어요.'}]}  // 임시: 안전 문구
+];
+const DONE='내가 우리집 안전관리사!';   // 요청서·프로토타입 결과 문구
+const found=Object.fromEntries(ROOMS.map(r=>[r.key,new Set()]));
+const isDone=r=>found[r.key].size===r.hz.length;
+const allDone=()=>ROOMS.every(isDone);
+
+const root=document.getElementById('app');
+let timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+function home(){
+  clear();
+  const say='우리집 위험 요소를 찾아보세요! 살펴볼 곳을 골라요.';
+  const n=ROOMS.filter(isDone).length;
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Home safety check</span><h1 class="h1">우리집 위험 요소를<br><em>찾아보세요</em></h1><p>그림 속 위험한 곳을 찾아 누르면 안전하게 바뀌어요. 살펴볼 곳을 골라요.</p></section>
+  ${DK.seg(ROOMS.length,n)}
+  <div class="rooms">${ROOMS.map(r=>{const d=isDone(r);return `<button class="pick photo${d?' done':''}" data-act="room" data-k="${r.key}" aria-label="${r.name}${d?', 다 찾았어요':''}"><i class="tp"></i>${d?'<i class="badge" aria-hidden="true">✓</i>':''}<span class="cp"><img src="${r.img}" alt=""></span><span class="ct"><span>${r.name}</span><i class="st">${d?'다 찾음':found[r.key].size+' / '+r.hz.length}</i></span></button>`}).join('')}</div>
+  <div class="acts">${allDone()?'<button class="btn pri" data-act="fin">결과 보기 ›</button>':''}<button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    room:b=>room(ROOMS.find(r=>r.key===b.dataset.k)),fin:finish
+  });
+  DK.speak(n?say.replace('! ','! 다음으로 '):say);
+}
+
+function room(r){
+  clear();
+  const F=found[r.key],ar=r.w/r.h;
+  const pos=h=>`left:${h.x}%;top:${h.y}%`;
+  // 스티커는 그림 밖으로 나가지 않게 가운데 쪽으로 당긴다(높이 % = 폭 % × 가로세로비)
+  const sp=h=>{const sw=27,sh=sw*400/360*ar;return `left:${clamp(h.x,sw/2+1,99-sw/2)}%;top:${clamp(h.y,sh/2+1,99-sh/2)}%`};
+  const li=(h,i)=>F.has(i)?`<li class="f"><img src="${h.stk}" alt=""><span><s>${h.label}</s><b>${h.safe}</b></span><button class="spk" data-say="${DK.esc(h.safe)}" aria-label="소리로 듣기">${DK.SPK}</button></li>`
+    :`<li><i class="qm" aria-hidden="true">?</i><span>아직 찾지 못한 위험 요소</span></li>`;
+  const intro=`${r.name}이에요. 위험한 곳 ${r.hz.length}개를 찾아 눌러 보세요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="rh"><p class="q">${r.name}의 위험 요소를 찾아요</p><span class="cnt" id="cnt" aria-live="polite">${F.size} / ${r.hz.length}</span></div>
+  <p class="qs">그림에서 위험한 곳을 눌러 보세요.</p>
+  <div class="scene"><div class="si" id="si"><img class="bg" src="${r.img}" width="${r.w}" height="${r.h}" alt="${r.name} 그림">
+    ${r.hz.map((h,i)=>F.has(i)?`<img class="stk" src="${h.stk}" alt="" style="${sp(h)};animation:none">`:`<button class="hot" data-i="${i}" style="${pos(h)};width:${h.r}%" aria-label="숨은 위험 요소 ${i+1}"></button>`).join('')}
+  </div></div>
+  <div id="fb" aria-live="polite"></div>
+  <ul class="hl" id="hl">${r.hz.map(li).join('')}</ul>
+  <div class="acts" id="acts">${isDone(r)?nextBtn():`<div class="acts two" style="margin:0"><button class="btn line" data-act="hint">💡 힌트</button><button class="btn sec" data-act="home">다른 곳 고르기</button></div>`}</div>${DK.DKU}`,{
+    home,
+    hint:()=>{  // 임시: 힌트 버튼(프로토타입에 없음) — 아직 못 찾은 곳 하나를 반짝인다
+      const b=root.querySelector('.hot');if(!b)return;
+      b.classList.remove('hint');void b.offsetWidth;b.classList.add('hint');
+      b.scrollIntoView({behavior:'smooth',block:'center'});DK.speak('반짝이는 곳을 살펴보세요.');
+    }
+  });
+  const si=root.querySelector('#si'),fb=root.querySelector('#fb');
+  bindNext();
+  si.addEventListener('click',e=>{
+    const b=e.target.closest('.hot');
+    if(b){
+      const i=+b.dataset.i,h=r.hz[i];
+      F.add(i);b.remove();
+      si.insertAdjacentHTML('beforeend',`<img class="stk" src="${h.stk}" alt="" style="${sp(h)}">`);
+      root.querySelector('#cnt').textContent=`${F.size} / ${r.hz.length}`;
+      root.querySelectorAll('#hl li')[i].outerHTML=li(h,i);
+      root.querySelectorAll('#hl [data-say]').forEach(x=>x.onclick=()=>DK.speak(x.dataset.say));
+      const last=isDone(r);
+      // 프로토타입: '안전해졌어요! (위험 문구)'
+      fb.innerHTML=`<p class="fb ok">✓<span>${last?'🎉 다 찾았어요!':'안전해졌어요!'}<small>${h.label}<br>→ ${h.safe}</small></span></p>`;
+      DK.speak(`안전해졌어요! ${h.safe}${last?' 다 찾았어요!':''}`);
+      if(last){root.querySelector('#acts').innerHTML=nextBtn();bindNext()}
+      return;
+    }
+    if(isDone(r))return;
+    // 빈 곳을 누르면 동그라미만 잠깐 보여 준다
+    const rc=si.getBoundingClientRect(),m=document.createElement('i');
+    m.className='miss';m.style.left=(e.clientX-rc.left)+'px';m.style.top=(e.clientY-rc.top)+'px';
+    si.appendChild(m);later(()=>m.remove(),700);
+    fb.innerHTML=`<p class="fb no">🙂<span>여기는 괜찮아요.<small>다른 곳을 찾아보세요.</small></span></p>`;  // 임시: 빈 곳 안내 문구
+  });
+  DK.speak(intro);
+}
+const nextBtn=()=>allDone()?'<button class="btn pri" data-act="fin">결과 보기 ›</button>':'<button class="btn pri" data-act="back">다른 곳 고르기 ›</button>';
+function bindNext(){
+  root.querySelectorAll('[data-act=back]').forEach(b=>b.onclick=home);
+  root.querySelectorAll('[data-act=fin]').forEach(b=>b.onclick=finish);
+}
+
+function finish(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="master"><i class="stamp">안전<br>관리사</i><div class="big" aria-hidden="true">🛡️</div><h2>내가 우리집<br>안전관리사!</h2><p>네 곳의 위험 요소를 모두 찾았어요.</p></div>
+  ${ROOMS.map(r=>`<p class="rt">${r.name}</p><ul class="hl">${r.hz.map(h=>`<li class="f"><img src="${h.stk}" alt=""><span><s>${h.label}</s><b>${h.safe}</b></span><button class="spk" data-say="${DK.esc(h.safe)}" aria-label="소리로 듣기">${DK.SPK}</button></li>`).join('')}</ul>`).join('')}
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 처음으로</button></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(DONE+' 네 곳의 위험 요소를 모두 찾았어요.'),
+    again:()=>{ROOMS.forEach(r=>found[r.key].clear());home()}
+  });
+  later(()=>DK.speak(DONE),400);
+}
+
+home();
+</script>
+</body>
+</html>

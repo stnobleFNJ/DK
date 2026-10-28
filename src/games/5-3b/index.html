@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 마음 전하기 룰렛</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 2인 진행판: 한 사람 3칸 */
+.trk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+.pl{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;box-shadow:2px 2px 0 var(--line)}
+.pl.on{border-color:var(--ac);background:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 25%,transparent)}
+.pl b{font:var(--hw) 19px var(--fh)}
+.pl .tok{width:34px;height:34px}
+.slots{display:flex;gap:6px}
+.slots i{width:34px;height:34px;border-radius:8px;border:1.5px dashed var(--line);display:grid;place-items:center;font:700 12px var(--fb);font-style:normal;color:#fff}
+.slots i.f{border:0;background:var(--c)}
+/* 룰렛 */
+.wheel{position:relative;width:min(320px,82vw);aspect-ratio:1;margin:22px auto 0}
+.wheel svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 14px rgba(60,40,20,.25));transition:transform 3s cubic-bezier(.15,.75,.2,1)}
+.ptr{position:absolute;left:50%;top:-12px;z-index:2;width:0;height:0;transform:translateX(-50%);border:16px solid transparent;border-top:28px solid var(--ac);border-bottom:0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.hub{position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:var(--ac);border:4px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.3);display:grid;place-items:center;color:#fff;font:var(--hw) 17px var(--fh)}
+.seglab{font:700 11px var(--fb);fill:#fff}
+/* 결과 */
+.win .wc .tag{display:inline-block;font:700 12px var(--fb);color:#fff;background:var(--c);border-radius:999px;padding:2px 10px;margin-bottom:4px}
+.win .wc p{font-size:15px;opacity:.85;line-height:1.6}
+.feel{display:flex;flex-wrap:wrap;gap:8px}
+.feel button{min-height:44px;padding:8px 14px;border-radius:999px;background:var(--paper);border:1.5px solid var(--line);font:var(--hw) 19px var(--fh)}
+.feel button.on{background:var(--ac);border-color:var(--ac);color:var(--on)}
+.tmp{font-size:11px;color:var(--muted);margin:6px 0 0;text-align:right}
+.done .trk{margin-top:6px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>두 사람이 번갈아 룰렛을 돌려요.</li><li>화살표가 가리킨 상황을 보고, 나의 기분을 말해요.</li><li>말하기 예시를 보고 내 마음을 소리 내어 말해요.</li><li>다 말하면 ‘말했어요 ✓’를 눌러요. 한 사람이 3칸씩, 모두 6칸을 채우면 끝이에요.</li></ol><p>상대를 존중하며 내 마음을 말해 보세요. 예시와 다르게 말해도 괜찮아요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'마',html:'내 마음 <b>룰렛</b>'};
+// 상황 4가지 (최신 요청서·그림). desc·feel·say는 기획서에 문구가 없어 임시로 작성
+const CASES=[
+  {t:'노크 없이 들어온 엄마',c:'#d9606f',desc:'내 방에서 공부하고 있는데, 엄마가 노크 없이 문을 열고 들어왔어요.',feel:['깜짝 놀라요','당황스러워요','기분 나빠요'],say:'엄마, 들어오기 전에 노크해 주세요. 갑자기 들어오면 깜짝 놀라요.'},
+  {t:'허락 없이 과자를 먹은 동생',c:'#d9932a',desc:'내가 먹으려고 둔 과자를 동생이 묻지도 않고 먹고 있어요.',feel:['속상해요','화나요','아쉬워요'],say:'내 과자를 먹고 싶으면 먼저 물어봐 줘. 말없이 먹으면 속상해.'},
+  {t:'내 새 옷을 입은 형',c:'#4f8f4a',desc:'내가 새로 산 옷을 형이 말없이 꺼내 입었어요. 나는 깜짝 놀랐어요.',feel:['깜짝 놀라요','속상해요','화나요'],say:'형, 그건 내가 새로 산 옷이야. 입고 싶으면 먼저 물어봐 줘.'},
+  {t:'쉬려는데 나가자는 엄마',c:'#3f6fa8',desc:'피곤해서 쉬려고 누웠는데, 엄마가 같이 나가자고 해요.',feel:['피곤해요','힘들어요','귀찮아요'],say:'엄마, 오늘은 너무 피곤해서 쉬고 싶어요. 다음에 같이 나가요.'}
+];
+const TURNS=3;   // 한 사람 3칸, 모두 6칸 (교재 2인 진행판)
+
+const root=document.getElementById('app');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+let done,rot,last,res,spinning,timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const reset=()=>{done=[[],[]];rot=0;last=-1;res=null;spinning=false};
+const who=()=>done[0].length<=done[1].length?0:1;   // 1번 → 2번 번갈아
+const bind=(el,h)=>{el.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>DK.speak(b.dataset.say));for(const [a,f] of Object.entries(h))el.querySelectorAll(`[data-act="${a}"]`).forEach(b=>b.onclick=e=>f(b,e))};
+
+// 룰렛 그림: 위(화살표)에서 시계 방향 각도. 상황1=왼쪽 위, 2=오른쪽 위, 3=오른쪽 아래, 4=왼쪽 아래 (교재 보드와 같게)
+const pt=(deg,r)=>{const a=deg*Math.PI/180;return `${(r*Math.sin(a)).toFixed(2)} ${(-r*Math.cos(a)).toFixed(2)}`};
+const R=96;
+const WHEEL=`<svg viewBox="-100 -100 200 200" role="img" aria-label="상황 4개가 있는 룰렛"><defs>${CASES.map((c,i)=>{const a=(i-1)*90;return `<clipPath id="cl${i}"><path d="M0 0L${pt(a,R)}A${R} ${R} 0 0 1 ${pt(a+90,R)}Z"/></clipPath>`}).join('')}</defs>
+  <circle r="99" fill="#fff"/>
+  ${CASES.map((c,i)=>{const a=(i-1)*90,m=a+45,sx=Math.sin(m*Math.PI/180)>0?0:-R,sy=-Math.cos(m*Math.PI/180)>0?0:-R,[lx,ly]=pt(m,64).split(' ');
+    return `<g><image href="img/seg${i+1}.jpg" x="${sx}" y="${sy}" width="${R}" height="${R}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${i})"/>
+    <path d="M0 0L${pt(a,R)}A${R} ${R} 0 0 1 ${pt(a+90,R)}Z" fill="none" stroke="${c.c}" stroke-width="3"/>
+    <rect x="${lx-22}" y="${ly-9}" width="44" height="18" rx="9" fill="${c.c}" stroke="#fff" stroke-width="1.5"/><text class="seglab" x="${lx}" y="${+ly+4}" text-anchor="middle">상황 ${i+1}</text></g>`}).join('')}
+  <path d="M0 -${R}V${R}M-${R} 0H${R}" stroke="#fff" stroke-width="3"/>
+</svg>`;
+
+const slots=p=>`<span class="slots">${Array.from({length:TURNS},(_,k)=>{const c=done[p][k];return c==null?'<i></i>':`<i class="f" style="--c:${CASES[c].c}">${c+1}</i>`}).join('')}</span>`;
+const tracker=on=>`<div class="trk" aria-label="진행판">${[0,1].map(p=>`<div class="pl${on===p?' on':''}"><span class="tok t${p+1}">${p+1}</span><b>${p+1}번 사람</b>${slots(p)}</div>`).join('')}</div>`;
+
+function home(){
+  clear();reset();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Speak my mind</span><h1 class="h1">룰렛을 돌려<br><em>내 마음을 말해 볼까요?</em></h1><p>두 사람이 번갈아 룰렛을 돌려요. 화살표가 가리킨 상황에서 내 마음을 말해 보세요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="상황 그림 4개가 있는 룰렛 보드"></span><span class="ct">내 마음 전하기 룰렛<small>한 사람이 3번씩, 모두 6번 말해요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:play});
+}
+
+function play(){
+  clear();res=null;spinning=false;
+  const p=who();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${tracker(p)}
+  <p class="q" style="text-align:center">${p+1}번 사람 차례예요!</p><p class="qs" style="text-align:center">룰렛을 돌려 상황을 골라요.</p>
+  <div class="wheel"><span class="ptr" aria-hidden="true"></span><div id="wh" style="width:100%;height:100%">${WHEEL}</div><span class="hub" aria-hidden="true">마음</span></div>
+  <div class="acts"><button class="btn pri" data-act="spin" id="spinb">룰렛 돌리기</button></div>
+  <div id="res" aria-live="polite"></div>${DK.DKU}`,{home,spin});
+  const svg=root.querySelector('.wheel svg');
+  svg.style.transition='none';svg.style.transform=`rotate(${rot}deg)`;
+  DK.speak(`${p+1}번 사람 차례예요. 룰렛을 돌려 보세요.`);
+}
+
+function spin(){
+  if(spinning)return;
+  clear();spinning=true;res=null;
+  const box=root.querySelector('#res'),btn=root.querySelector('#spinb'),svg=root.querySelector('.wheel svg');
+  box.innerHTML='';btn.disabled=true;btn.textContent='돌아가는 중…';
+  let k;do k=Math.floor(Math.random()*4);while(k===last);   // 같은 상황이 바로 또 나오지 않게
+  last=k;
+  const at=(k-1)*90+45+(Math.random()*50-25);                 // 칸 안의 한 점
+  const want=(360-at%360+360)%360,now=(rot%360+360)%360;
+  rot+=(want-now+360)%360+360*5;
+  const ms=reduce.matches?0:3000;
+  svg.style.transition=ms?'transform 3s cubic-bezier(.15,.75,.2,1)':'none';
+  svg.getBoundingClientRect();
+  svg.style.transform=`rotate(${rot}deg)`;
+  later(()=>{spinning=false;btn.textContent='룰렛 돌리기';show(k)},ms+(ms?200:300));
+}
+
+function show(k){
+  res=k;
+  const c=CASES[k],box=root.querySelector('#res');
+  box.innerHTML=`<div class="win" style="--c:${c.c}"><i class="tp"></i><span class="wp"><img src="img/case${k+1}.jpg" alt="${c.t}"></span><div class="wc"><span class="tag">상황 ${k+1}</span><h2>${c.t}</h2><p>${c.desc}</p></div></div>
+  <p class="q">나는 어떤 기분인가요?</p><p class="qs">그림 속 ‘나’의 기분을 소리 내어 말해 보세요. 정답은 없어요.</p>
+  <div class="feel">${c.feel.map(f=>`<button data-act="feel" data-v="${f}">${f}</button>`).join('')}</div>
+  <p class="q">어떻게 말하면 좋을까요?</p><p class="qs">따라 말해 보거나, 나만의 말로 바꿔 말해 보세요.</p>
+  ${DK.sayBig(c.say)}<p class="tmp">말하기 예시</p>
+  <div class="acts"><button class="btn pri" data-act="said">말했어요 ✓</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="again">↻ 다시 돌리기</button><button class="btn line" data-act="reset">처음부터 다시하기</button></div></div>`;
+  bind(box,{
+    feel:b=>{box.querySelectorAll('.feel button').forEach(x=>x.classList.toggle('on',x===b));DK.speak('나는 '+b.dataset.v)},
+    said:()=>{done[who()].push(k);done[0].length+done[1].length>=TURNS*2?finish():play()},
+    again:()=>{window.scrollTo({top:0,behavior:reduce.matches?'auto':'smooth'});spin()},
+    reset:home
+  });
+  root.querySelector('#spinb').disabled=true;
+  box.querySelector('.win').scrollIntoView({behavior:reduce.matches?'auto':'smooth',block:'start'});
+  DK.speak(`상황 ${k+1}. ${c.desc} 나는 어떤 기분인가요?`);
+}
+
+function finish(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="done"><div class="win"><i class="tp"></i><span class="stamp">완료!</span><span class="wp"><img src="img/board.jpg" alt="룰렛 보드"></span><div class="wc"><h2>모두 말했어요!</h2><p>두 사람이 3번씩, 모두 6번 내 마음을 전했어요.</p></div></div>
+  ${tracker(-1)}</div>
+  <div class="note"><h3>기억해요</h3><ul><li>내 기분을 먼저 말해요.</li><li>바라는 것을 부드럽게 부탁해요.</li><li>상대의 말도 잘 들어요.</li></ul></div>
+  <div class="acts"><button class="btn pri" data-act="again">처음부터 다시하기</button></div>${DK.DKU}`,{home,again:home});
+  DK.speak('모두 말했어요! 잘했어요.');
+}
+
+home();
+</script>
+</body>
+</html>

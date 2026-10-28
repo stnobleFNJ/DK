@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>생애주기 게임</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* 디자인 기준: data/dk/typeA.html (종이 전시) */
+:root{--bg:#f4efdf;--paper:#fffaf0;--ink:#453f36;--muted:#807669;--line:#d8c9b3;--ac:#b9543c;--on:#fff;--soft:#e9dfca;--tape:#f1c96b;--tx:rgba(170,167,147,.18);
+ --fb:"Noto Sans KR",system-ui,sans-serif;--fh:"Gaegu","Noto Sans KR",cursive;--fm:"Space Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);background-image:repeating-linear-gradient(0deg,transparent 0 27px,var(--tx) 27px 28px);color:var(--ink);font-family:var(--fb);line-height:1.6;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 72px}
+.eb{display:block;font:700 12px var(--fm);letter-spacing:.2em;color:var(--ac);text-transform:uppercase}
+h1{margin:6px 0 0;font:700 clamp(34px,6vw,48px)/1.2 var(--fh);letter-spacing:-.03em}
+h1 em{font-style:normal;color:var(--ac)}
+.sec{margin:44px 0 0;display:flex;align-items:baseline;gap:10px;font:700 26px/1.2 var(--fh);letter-spacing:-.02em}
+.sec:first-of-type{margin-top:28px}
+.sec span{font:700 12px var(--fm);letter-spacing:.16em;color:var(--muted)}
+.grid{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 16px}
+.card{position:relative;display:flex;flex-direction:column;gap:4px;height:100%;min-height:132px;padding:18px 14px 14px;color:inherit;text-decoration:none}
+.code{font:700 13px var(--fm);letter-spacing:.08em;color:var(--ac)}
+.name{font:700 22px/1.25 var(--fh);letter-spacing:-.02em}
+.name small{display:block;margin-top:2px;font:500 14px/1.4 var(--fb);color:var(--muted);letter-spacing:0}
+.name b{font-family:var(--fb);font-size:17px;font-weight:900;color:var(--muted)}
+/* 완성된 게임: 스크랩북 카드 */
+a.card{background:#fff;box-shadow:0 6px 14px rgba(60,40,20,.18);transform:rotate(-1.5deg);transition:transform .2s,box-shadow .2s}
+.grid li:nth-child(even) a.card{transform:rotate(1.5deg)}
+a.card::before{content:"";position:absolute;top:-9px;left:50%;width:58px;height:18px;transform:translateX(-50%) rotate(-4deg);background:var(--tape);opacity:.88}
+a.card .go{margin-top:auto;align-self:flex-start;background:var(--ac);color:var(--on);font-weight:700;font-size:14px;border-radius:999px;padding:6px 14px}
+a.card:hover,a.card:focus-visible{transform:rotate(0) translateY(-3px);box-shadow:0 12px 24px rgba(60,40,20,.22);outline:none}
+a.card:focus-visible{outline:3px solid var(--ac);outline-offset:3px}
+a.card:active{transform:scale(.97)}
+/* 개발 전: 빈 종이 */
+.img{margin-top:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.img .bd{flex:none;font-weight:700;border-radius:999px;padding:1px 10px;border:1.5px solid currentColor}
+/* 있음=초록 칠, 일부=노랑 칠(테이프 색), 없음=빨강 테두리만 */
+.img .bd.ok{color:#fff;background:#4f7a3a;border-color:#4f7a3a}
+.img .bd.part{color:#5a3f08;background:var(--tape);border-color:#d9a93f}
+.img .bd.none{color:var(--ac);background:transparent}
+.img .bd.na{color:var(--muted);border-style:dashed}
+.img .bd.tbd{color:var(--muted);font-weight:900}
+.img small{font-size:12px;line-height:1.4;flex-basis:100%}
+a.card .img{margin-top:6px}
+div.card{background:var(--paper);border:1.5px dashed var(--line)}
+div.card .code{color:var(--muted)}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:900px){.wrap{padding:44px 32px 88px}.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:30px 20px}}
+@media (prefers-reduced-motion:reduce){a.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><span class="eb">생애주기 · 성인</span><h1>오늘의 <em>게임</em> 목록</h1></header>
+<div id="games"></div>
+</div>
+<script>
+// 이름은 docs/게임개발목록.md 기준. 요청서에 없는 차시는 name을 비워 두면 굵은 '미정'으로 표시된다.
+// 게임이 완성되면 href를 채우면 카드가 링크로 바뀐다.
+// img: 소스이미지(docs/게임개발목록.md '소스이미지 현황') ok=있음 · part=일부 · none=없음 · na=필요 없음 · 비우면 굵은 '미정'. imgNote: 부족한 이미지.
+const EARLY=[
+ {code:'전1-1',name:'오늘의 PICK (내가 좋아하는 것 찾기)',href:'games/1-1/index.html',img:'ok'},
+ {code:'전1-2',name:'다른 사람의 한 주 살펴보기',href:'games/1-2/index.html',img:'ok'},
+ {code:'전1-3',name:'내일 계획 만들기 (나의 내일은?)',href:'games/1-3/index.html',img:'part',imgNote:'활동별 사진 16장 임시 그림'},
+ {code:'전1-4',name:'내가 원하는 프로그램 고르기',href:'games/1-4/index.html',img:'none',imgNote:'프로그램 10개 임시 그림'},
+ {code:'전3-1',name:'건강 빨간불을 초록불로 만들기',href:'games/3-1/index.html',img:'none',imgNote:'빨간불 5 + 초록불 보기 15 임시 그림'},
+ {code:'전3-2'},
+ {code:'전3-3',name:'내 마음 표현하기',href:'games/3-3/index.html',img:'none',imgNote:'상황 4장 임시 그림'},
+ {code:'전4-1',name:'나의 코디 꾸미기',href:'games/4-1/index.html',img:'none',imgNote:'옷·신발 24개 + 남·여 모델 임시 그림'},
+ {code:'전4-2',name:'나의 공간 아름답게 꾸미기',href:'games/4-2/index.html',img:'none',imgNote:'방 배경 + 가구 21개 임시 그림'},
+ {code:'전5-1'},
+ {code:'전5-2',name:'우리집 한바퀴 (공간 바르게 사용하기)',href:'games/5-2/index.html',img:'part',imgNote:'바른 행동 그림 5장 임시 그림'},
+ {code:'전5-3',name:'시우씨의 이야기 완성하기',href:'games/5-3a/index.html',img:'ok'},
+ {code:'전5-3',name:'내 마음 전하기 룰렛',href:'games/5-3b/index.html',img:'ok'},
+ {code:'전6-1'},
+ {code:'전6-2',name:'매너있게 말하고 방에서 탈출하기',href:'games/6-2/index.html',img:'ok'},
+ {code:'전7-1',name:'나의 취향카드 만들기',href:'games/7-1/index.html',img:'ok'},
+ {code:'전7-2'},
+ {code:'전7-3',name:'혼자 이동하기',href:'games/7-3/index.html',img:'ok'}
+];
+const MIDDLE=[
+ {code:'중5-1',name:'예의 없는 행동 주사위 게임',href:'games/m5-1/index.html',img:'ok'},
+ {code:'중5-2',name:'나의 권리 말판 게임',href:'games/m5-2/index.html',img:'ok'},
+ {code:'중6-1',name:'나에게 필요한 서비스 이상형 월드컵',href:'games/m6-1/index.html',img:'ok'},
+ {code:'중6-2',name:'내가 살고 싶은 집 (주거 이상형 월드컵)',href:'games/m6-2/index.html',img:'ok'},
+ {code:'중6-3',name:'연락처를 찾아주세요 (지석씨 돕기)',href:'games/m6-3/index.html',img:'na'},
+ {code:'중7-1',name:'우리집 위험 요소 찾기',href:'games/m7-1/index.html',img:'part',imgNote:'안전해진 모습 스티커 임시 그림'},
+ {code:'중7-2',name:'위험한 연락 구분하기',href:'games/m7-2/index.html',img:'na'},
+ {code:'중7-4',name:'이건 학대일까요?',href:'games/m7-4/index.html',img:'ok'}
+];
+const SECTIONS=[['성인 전기','EARLY',EARLY],['성인 중기','MIDDLE',MIDDLE]];
+const IMG={ok:'있음',part:'일부',none:'없음',na:'필요 없음'};
+const root=document.getElementById('games');
+SECTIONS.forEach(([title,en,games])=>{
+const h=document.createElement('h2');h.className='sec';h.textContent=title;
+const e=document.createElement('span');e.textContent=en+' · '+games.length;h.append(e);
+const list=document.createElement('ul');list.className='grid';
+root.append(h,list);
+games.forEach(g=>{
+ const li=document.createElement('li');
+ const el=document.createElement(g.href?'a':'div');
+ el.className='card';
+ if(g.href){el.href=g.href;el.target='_blank';el.rel='noopener'}
+ const code=document.createElement('span');
+ code.className='code';code.textContent=g.code;
+ const n=document.createElement('span');
+ n.className='name';
+ if(g.name){
+  // '이름 (설명)'은 괄호 부분을 다음 줄로 내린다
+  const m=g.name.match(/^(.*?)\s*(\(.*\))$/);
+  n.textContent=m?m[1]:g.name;
+  if(m){const s=document.createElement('small');s.textContent=m[2];n.append(s)}
+ }
+ else{const b=document.createElement('b');b.textContent='미정';n.append(b)}
+ el.append(code,n);
+ const img=document.createElement('span');
+ img.className='img';
+ const bd=document.createElement('span');
+ bd.className='bd '+(IMG[g.img]?g.img:'tbd');
+ bd.textContent=IMG[g.img]||'미정';
+ img.append('이미지',bd);
+ if(g.imgNote){const s=document.createElement('small');s.textContent=g.imgNote;img.append(s)}
+ el.append(img);
+ if(g.href){const go=document.createElement('span');go.className='go';go.textContent='시작하기 →';el.append(go)}
+ li.append(el);list.append(li);
+});
+});
+</script>
+</body>
+</html>

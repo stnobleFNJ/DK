@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>나의 권리 말판 게임</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF6E0;
+    --cream-deep:#FCEBC0;
+    --navy:#2B2440;
+    --gold:#FFC94A;
+    --coral:#FF6F5B;
+    --blue:#3B6FE0;
+    --pink:#FF5C99;
+    --green:#2FAE66;
+    --purple:#8B5CF6;
+    --white:#FFFFFF;
+    --shadow: 0 6px 0 rgba(43,36,64,0.15);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:var(--cream);
+    font-family:'Noto Sans KR', sans-serif;
+    color:var(--navy);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .display{font-family:'Do Hyeon', sans-serif; letter-spacing:0.5px;}
+  #app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,201,74,0.35), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(139,92,246,0.18), transparent 40%),
+      var(--cream);
+    overflow:hidden;
+  }
+  .screen{
+    display:none;
+    flex-direction:column;
+    flex:1;
+    padding:24px 20px 28px;
+    animation: fadeIn .35s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  button{font-family:inherit; cursor:pointer; border:none; -webkit-tap-highlight-color: transparent;}
+  button:active{transform:translateY(3px);}
+  .btn{
+    display:flex; align-items:center; justify-content:center;
+    min-height:68px;
+    border-radius:20px;
+    font-size:22px;
+    font-weight:700;
+    color:var(--white);
+    background:var(--blue);
+    box-shadow: var(--shadow);
+    transition: transform .08s ease;
+    padding:14px 20px;
+    text-align:center;
+    line-height:1.3;
+  }
+  .btn.big{font-size:26px; min-height:78px;}
+  .btn.outline{
+    background:var(--white);
+    color:var(--navy);
+    border:3px solid var(--navy);
+    box-shadow:none;
+  }
+  .btn:disabled{opacity:.5; transform:none; cursor:default;}
+
+  /* ---------- TITLE ---------- */
+  #screen-title{align-items:center; justify-content:center; text-align:center; gap:18px;}
+  .info-btn{
+    position:absolute; top:18px; right:18px;
+    width:44px; height:44px; border-radius:50%;
+    background:var(--white); font-size:20px;
+    box-shadow:var(--shadow); z-index:5;
+  }
+  .pawns-row{display:flex; gap:14px; margin-bottom:6px;}
+  .pawn-dot{width:22px;height:22px;border-radius:50%; box-shadow:0 3px 0 rgba(0,0,0,0.15);}
+  .title-word{font-size:clamp(34px,10vw,52px); display:inline-block;}
+  h1.game-title{margin:0; line-height:1.25;}
+  .subtitle{font-size:18px; color:#6b6280; margin-top:4px;}
+
+  /* ---------- SETUP ---------- */
+  #screen-setup{gap:22px; justify-content:center;}
+  .setup-q{font-size:24px; font-weight:700; text-align:center;}
+  .count-row{display:flex; gap:14px; justify-content:center;}
+  .count-btn{
+    width:80px; height:80px; border-radius:20px;
+    background:var(--white); font-size:32px; font-weight:900;
+    box-shadow:var(--shadow); color:var(--navy); border:4px solid transparent;
+  }
+  .count-btn.selected{border-color:var(--gold); background:#FFF1CC;}
+  .team-list{display:flex; flex-direction:column; gap:10px;}
+  .team-chip{
+    display:flex; align-items:center; gap:12px;
+    background:var(--white); border-radius:16px; padding:12px 16px;
+    box-shadow:var(--shadow); font-size:18px; font-weight:700;
+  }
+  .chip-dot{width:26px;height:26px;border-radius:50%; flex-shrink:0;}
+
+  /* ---------- BOARD ---------- */
+  #screen-board{padding:14px 14px 18px; gap:12px;}
+  .turn-bar{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    padding:12px 16px; border-radius:18px; color:var(--white);
+    font-size:20px; font-weight:700; box-shadow:var(--shadow);
+    transition: background .3s ease;
+  }
+  .turn-bar .dot{width:20px;height:20px;border-radius:50%; background:rgba(255,255,255,0.9);}
+  .board{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+    background:var(--cream-deep); padding:10px; border-radius:20px;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.6);
+  }
+  .tile{
+    position:relative;
+    aspect-ratio:1/1;
+    background:var(--white);
+    border-radius:14px;
+    border:3px solid var(--tile-color, var(--gold));
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:4px;
+  }
+  .tile .num{
+    position:absolute; top:3px; left:5px; font-size:11px; font-weight:900; color:#9a90ad;
+  }
+  .tile .emoji{font-size:clamp(16px,4.2vw,24px);}
+  .tile.start, .tile.finish{
+    background:linear-gradient(160deg,#fff, var(--cream-deep));
+  }
+  .tile .label{font-size:9px; font-weight:700; color:#9a90ad; margin-top:-2px;}
+  .pawn-row{
+    position:absolute; bottom:3px; left:3px; right:3px;
+    display:flex; gap:2px; flex-wrap:wrap; justify-content:center;
+  }
+  .pawn{
+    width:12px;height:12px;border-radius:50%;
+    box-shadow:0 2px 0 rgba(0,0,0,0.2);
+    animation: pop .3s ease;
+  }
+  @keyframes pop{from{transform:scale(0);} to{transform:scale(1);}}
+  .mark-row{
+    position:absolute; top:3px; right:3px;
+    display:flex; gap:1px;
+  }
+  .mark{
+    width:13px;height:13px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:900; color:var(--white);
+  }
+
+  .dice-zone{
+    margin-top:auto;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding-top:6px;
+  }
+  .dice{
+    width:110px; height:110px; border-radius:26px;
+    background:var(--white); box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    font-size:58px; font-weight:900; color:var(--navy);
+    transition: transform .12s ease;
+  }
+  .dice.rolling{animation: shake .12s infinite;}
+  @keyframes shake{
+    0%{transform:rotate(-6deg);} 50%{transform:rotate(6deg);} 100%{transform:rotate(-6deg);}
+  }
+  .dice-hint{font-size:16px; color:#6b6280; font-weight:700;}
+
+  /* ---------- SITUATION ---------- */
+  #screen-situation{align-items:center; text-align:center; gap:16px; justify-content:flex-start;}
+  .situation-badge{
+    background:var(--coral); color:var(--white); font-weight:900;
+    padding:6px 18px; border-radius:100px; font-size:16px;
+  }
+  .situation-emoji{
+    font-size:88px; background:var(--white); width:150px; height:150px;
+    border-radius:32px; display:flex; align-items:center; justify-content:center;
+    box-shadow:var(--shadow); margin-top:6px;
+  }
+  .situation-text{
+    font-size:24px; font-weight:700; line-height:1.5; margin:6px 0 4px;
+  }
+  .choices{display:flex; flex-direction:column; gap:14px; width:100%; margin-top:8px;}
+  .choice-btn{
+    background:var(--white); color:var(--navy); border:3px solid #E6DFC8;
+    border-radius:20px; padding:18px; font-size:19px; font-weight:700;
+    box-shadow:var(--shadow); text-align:left; display:flex; gap:12px; align-items:center;
+  }
+  .choice-letter{
+    flex-shrink:0; width:36px; height:36px; border-radius:50%;
+    background:var(--cream-deep); display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-family:'Do Hyeon',sans-serif;
+  }
+  .choice-btn.correct{background:#E7F8EE; border-color:var(--green);}
+  .choice-btn.wrong{background:#FFEDEA; border-color:var(--coral);}
+  .choice-btn:disabled{transform:none;}
+
+  /* ---------- RESULT ---------- */
+  #screen-result{align-items:center; justify-content:center; text-align:center; gap:16px;}
+  .result-icon{font-size:96px;}
+  .result-title{font-size:30px; font-weight:900;}
+  .result-title.ok{color:var(--green);}
+  .result-title.no{color:var(--coral);}
+  .result-feedback{font-size:19px; line-height:1.5; background:var(--white); border-radius:18px; padding:18px; box-shadow:var(--shadow);}
+
+  /* ---------- VICTORY ---------- */
+  #screen-victory{align-items:center; justify-content:center; text-align:center; gap:18px;}
+  .trophy{font-size:110px;}
+  .victory-title{font-size:30px; font-weight:900;}
+
+  /* ---------- MODAL (rules) ---------- */
+  .modal-overlay{
+    position:absolute; inset:0; background:rgba(43,36,64,0.55);
+    display:none; align-items:center; justify-content:center; z-index:20; padding:24px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal-box{
+    background:var(--white); border-radius:22px; padding:24px; max-width:440px;
+    width:100%; max-height:80vh; overflow-y:auto;
+  }
+  .modal-box h2{font-family:'Do Hyeon',sans-serif; margin-top:0; font-size:24px;}
+  .modal-box ol{padding-left:20px; font-size:16px; line-height:1.7;}
+  .modal-close{margin-top:14px; width:100%;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <div class="screen active" id="screen-title">
+    <button class="info-btn" onclick="openRules()">ℹ️</button>
+    <div class="pawns-row">
+      <div class="pawn-dot" style="background:var(--blue)"></div>
+      <div class="pawn-dot" style="background:var(--pink)"></div>
+      <div class="pawn-dot" style="background:var(--green)"></div>
+      <div class="pawn-dot" style="background:var(--purple)"></div>
+    </div>
+    <h1 class="game-title display">
+      <span class="title-word" style="color:var(--blue)">나의</span>
+      <span class="title-word" style="color:var(--coral)">권리</span><br>
+      <span class="title-word" style="color:var(--purple)">말판</span>
+      <span class="title-word" style="color:var(--green)">게임</span>
+    </h1>
+    <div class="subtitle">주사위를 굴리며 나의 권리를 예의있게 표현해요</div>
+    <button class="btn big" style="width:100%; margin-top:18px;" onclick="goTo('screen-setup')">🎲 시작하기</button>
+  </div>
+
+  <!-- SETUP -->
+  <div class="screen" id="screen-setup">
+    <div class="setup-q">몇 명이 함께 할까요?</div>
+    <div class="count-row" id="count-row"></div>
+    <div class="team-list" id="team-list"></div>
+    <button class="btn big" style="width:100%; margin-top:10px;" onclick="startGame()">게임 시작</button>
+  </div>
+
+  <!-- BOARD -->
+  <div class="screen" id="screen-board">
+    <div class="turn-bar" id="turn-bar"></div>
+    <div class="board" id="board"></div>
+    <div class="dice-zone">
+      <div class="dice-hint" id="dice-hint">화면을 눌러 주사위를 굴려요</div>
+      <button class="dice" id="dice" onclick="rollDice()">🎲</button>
+    </div>
+  </div>
+
+  <!-- SITUATION -->
+  <div class="screen" id="screen-situation">
+    <div class="situation-badge" id="situation-badge">3번 칸</div>
+    <div class="situation-emoji" id="situation-emoji">🙅</div>
+    <div class="situation-text" id="situation-text"></div>
+    <div style="font-size:15px;color:#6b6280;font-weight:700;">내 권리를 더 예의있게 표현하는 말은 무엇일까요?</div>
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="screen-result">
+    <div class="result-icon" id="result-icon">⭕</div>
+    <div class="result-title" id="result-title">정답이에요!</div>
+    <div class="result-feedback" id="result-feedback"></div>
+    <button class="btn big" style="width:100%;" onclick="nextTurn()">다음 사람 차례로 ▶</button>
+  </div>
+
+  <!-- VICTORY -->
+  <div class="screen" id="screen-victory">
+    <div class="trophy">🏆</div>
+    <div class="victory-title display" id="victory-title"></div>
+    <div style="font-size:18px;color:#6b6280;">가장 먼저 도착했어요!</div>
+    <button class="btn big" style="width:100%; margin-top:12px;" onclick="resetGame()">🔄 다시 하기</button>
+  </div>
+
+  <!-- RULES MODAL -->
+  <div class="modal-overlay" id="rules-modal">
+    <div class="modal-box">
+      <h2 class="display">게임 규칙</h2>
+      <ol>
+        <li>화면을 눌러 주사위를 굴려요.</li>
+        <li>나온 숫자만큼 말이 이동해요.</li>
+        <li>도착한 칸의 상황을 보고, 내 권리를 더 예의있게 표현하는 말을 골라요.</li>
+        <li>정답이면 ⭕, 틀리면 △가 칸에 표시돼요. 다시 기회는 없어요.</li>
+        <li>차례대로 돌아가며 반복해요.</li>
+        <li>13번 칸에 가장 먼저 도착한 사람이 승리해요!</li>
+      </ol>
+      <button class="btn outline modal-close" onclick="closeRules()">닫기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const PLAYER_META = [
+  {name:'파랑 팀', color:'var(--blue)', hex:'#3B6FE0', emoji:'🔵'},
+  {name:'분홍 팀', color:'var(--pink)', hex:'#FF5C99', emoji:'🌸'},
+  {name:'초록 팀', color:'var(--green)', hex:'#2FAE66', emoji:'🍀'},
+  {name:'보라 팀', color:'var(--purple)', hex:'#8B5CF6', emoji:'💜'}
+];
+
+const TILE_COLORS = ['#3B6FE0','#2FAE66','#FF8A3D','#FF5C99','#8B5CF6','#2FB0C0','#FFC94A','#FF5C5C'];
+
+const LAST_TILE = 13;
+
+const TILE_EMOJI = {1:'🚩',2:'🍽️',3:'😠',4:'✋',5:'🗣️',6:'😤',7:'🙋',8:'📍',9:'😳',10:'🪑',11:'🤫',12:'🛍️',13:'🏆'};
+
+const TILES = {
+  2:{text:'먹고 싶은 메뉴를 묻지 않고 주문해요.',
+     choices:[
+       {text:'저도 먹고 싶은 메뉴가 있어요. 저에게도 물어봐 주세요.', correct:true, feedback:'맞아요! 화내지 않고 내 권리를 부드럽게 표현하는 방법이에요.'},
+       {text:'왜 마음대로 시켜요! 짜증나게 하지 마세요!', correct:false, feedback:'아니에요. 같은 마음이라도 화내며 말하면 오해를 살 수 있어요.'}
+     ]},
+  3:{text:'계속 반말로 나에게 말해요.',
+     choices:[
+       {text:'저에게 존댓말로 말씀해 주세요.', correct:true, feedback:'맞아요! 차분하게 부탁하는 말투가 내 권리를 잘 전달해요.'},
+       {text:'말버릇이 그게 뭐예요! 당장 그만해요!', correct:false, feedback:'아니에요. 소리치듯 말하면 대화가 더 어려워질 수 있어요.'}
+     ]},
+  4:{text:'갑자기 손목을 잡아 당겨요.',
+     choices:[
+       {text:'먼저 말씀해 주시고 잡아 주세요.', correct:true, feedback:'맞아요! 놀랐던 마음을 침착하게 부탁하는 말로 전하는 것이 좋아요.'},
+       {text:'왜 함부로 만져요! 손 치워요!', correct:false, feedback:'아니에요. 놀랄 수는 있지만, 화내듯 소리치면 상대방도 놀라게 돼요.'}
+     ]},
+  5:{text:'다른 사람 앞에서 나의 가족 이야기를 해요.',
+     choices:[
+       {text:'제 가족 이야기는 다른 분께 하지 말아 주세요.', correct:true, feedback:'맞아요! 분명하지만 예의 있게 부탁하는 말이에요.'},
+       {text:'당신이 뭔데 그런 얘기를 해요!', correct:false, feedback:'아니에요. 따지듯 말하면 내 뜻이 오히려 잘 전달되지 않아요.'}
+     ]},
+  6:{text:'하기 싫다는 활동을 계속 시켜요.',
+     choices:[
+       {text:'저는 하고 싶지 않아요.', correct:true, feedback:'맞아요! 짧고 분명하게, 침착하게 내 마음을 말하는 것이 좋아요.'},
+       {text:'싫다고 몇 번을 말해요! 그만 좀 하세요!', correct:false, feedback:'아니에요. 화를 내며 말하면 내 뜻이 아니라 화만 전달될 수 있어요.'}
+     ]},
+  7:{text:'도와달라는 표현을 무시해요.',
+     choices:[
+       {text:'저 좀 도와주세요.', correct:true, feedback:'맞아요! 다시 한 번 침착하게 부탁하는 것이 좋은 방법이에요.'},
+       {text:'왜 못 들은 척해요! 답답하게!', correct:false, feedback:'아니에요. 화를 내면 오히려 도움을 요청하기 더 어려워질 수 있어요.'}
+     ]},
+  8:{text:'가고 싶은 장소를 정할 때 내 말을 듣지 않아요.',
+     choices:[
+       {text:'저도 가고 싶은 곳이 있어요. 제 이야기도 들어주세요.', correct:true, feedback:'맞아요! 내 의견이 있다는 것을 차분하게 알리는 것이 좋아요.'},
+       {text:'왜 내 말은 무시해요! 마음대로 정하지 마요!', correct:false, feedback:'아니에요. 따지듯 말하면 대화가 더 어려워질 수 있어요.'}
+     ]},
+  9:{text:'머리를 쓰다듬으며 어린아이처럼 대해요.',
+     choices:[
+       {text:'저는 어린아이가 아니에요. 존중해서 대해 주세요.', correct:true, feedback:'맞아요! 내 마음을 분명하고 침착하게 전하는 표현이에요.'},
+       {text:'만지지 마요! 나를 무시하는 거예요?', correct:false, feedback:'아니에요. 다그치듯 말하면 오해가 생길 수 있어요.'}
+     ]},
+  10:{text:'허락 없이 내 몸의 자세를 바꿔요.',
+     choices:[
+       {text:'먼저 말씀해 주시고 자세를 바꿔 주세요.', correct:true, feedback:'맞아요! 놀란 마음을 부탁하는 말로 차분하게 전하는 것이 좋아요.'},
+       {text:'왜 허락도 없이 만져요! 하지 마요!', correct:false, feedback:'아니에요. 소리치듯 말하면 상대방도 놀라고 대화가 어려워져요.'}
+     ]},
+  11:{text:'나의 개인적인 고민을 다른 사람에게 말해요.',
+     choices:[
+       {text:'제 고민은 다른 분께 말하지 말아 주세요.', correct:true, feedback:'맞아요! 분명하지만 예의 있게 부탁하는 말이에요.'},
+       {text:'당신이 뭔데 내 얘기를 떠들어요!', correct:false, feedback:'아니에요. 따지듯 말하면 내 마음이 잘 전달되지 않을 수 있어요.'}
+     ]},
+  12:{text:'내가 고른 물건 대신 다른 물건을 사요.',
+     choices:[
+       {text:'제가 고른 물건으로 사고 싶어요. 제 선택을 존중해 주세요.', correct:true, feedback:'맞아요! 내 선택을 차분하고 분명하게 말하는 것이 좋아요.'},
+       {text:'왜 마음대로 바꿔요! 짜증나게!', correct:false, feedback:'아니에요. 짜증내듯 말하면 내 뜻보다 화가 먼저 전달돼요.'}
+     ]}
+};
+
+/* ---------------- STATE ---------------- */
+let numPlayers = 2;
+let positions = [];
+let marks = [];
+let currentPlayer = 0;
+let pendingChoice = null;
+let currentTile = null;
+
+/* ---------------- NAV ---------------- */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openRules(){ document.getElementById('rules-modal').classList.add('active'); }
+function closeRules(){ document.getElementById('rules-modal').classList.remove('active'); }
+
+/* ---------------- SETUP ---------------- */
+function renderSetup(){
+  const countRow = document.getElementById('count-row');
+  countRow.innerHTML = '';
+  [2,3,4].forEach(n=>{
+    const b = document.createElement('button');
+    b.className = 'count-btn' + (n===numPlayers ? ' selected':'');
+    b.textContent = n;
+    b.onclick = ()=>{ numPlayers = n; renderSetup(); };
+    countRow.appendChild(b);
+  });
+  const list = document.getElementById('team-list');
+  list.innerHTML = '';
+  for(let i=0;i<numPlayers;i++){
+    const p = PLAYER_META[i];
+    const chip = document.createElement('div');
+    chip.className = 'team-chip';
+    chip.innerHTML = `<div class="chip-dot" style="background:${p.hex}"></div>${p.emoji} ${p.name}`;
+    list.appendChild(chip);
+  }
+}
+
+function startGame(){
+  positions = Array(numPlayers).fill(1);
+  marks = Array(numPlayers).fill(null).map(()=>({}));
+  currentPlayer = 0;
+  renderBoard();
+  updateTurnBar();
+  goTo('screen-board');
+}
+
+function resetGame(){
+  numPlayers = 2;
+  renderSetup();
+  goTo('screen-title');
+}
+
+/* ---------------- BOARD ---------------- */
+function updateTurnBar(){
+  const p = PLAYER_META[currentPlayer];
+  const bar = document.getElementById('turn-bar');
+  bar.style.background = p.hex;
+  bar.innerHTML = `<span class="dot"></span> ${p.emoji} ${p.name} 차례예요`;
+  document.getElementById('dice-hint').textContent = '화면을 눌러 주사위를 굴려요';
+  document.getElementById('dice').disabled = false;
+}
+
+function renderBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let n=1;n<=LAST_TILE;n++){
+    const tile = document.createElement('div');
+    tile.className = 'tile' + (n===1?' start':'') + (n===LAST_TILE?' finish':'');
+    tile.style.setProperty('--tile-color', TILE_COLORS[(n-1)%TILE_COLORS.length]);
+
+    const num = document.createElement('div');
+    num.className='num'; num.textContent = n;
+    tile.appendChild(num);
+
+    const emoji = document.createElement('div');
+    emoji.className='emoji'; emoji.textContent = TILE_EMOJI[n];
+    tile.appendChild(emoji);
+
+    if(n===1){ const l=document.createElement('div'); l.className='label'; l.textContent='시작'; tile.appendChild(l); }
+    if(n===LAST_TILE){ const l=document.createElement('div'); l.className='label'; l.textContent='도착'; tile.appendChild(l); }
+
+    // marks
+    const markRow = document.createElement('div');
+    markRow.className='mark-row';
+    for(let i=0;i<numPlayers;i++){
+      if(marks[i] && marks[i][n]){
+        const m = document.createElement('div');
+        m.className='mark';
+        m.style.background = PLAYER_META[i].hex;
+        m.textContent = marks[i][n];
+        markRow.appendChild(m);
+      }
+    }
+    tile.appendChild(markRow);
+
+    // pawns
+    const pawnRow = document.createElement('div');
+    pawnRow.className='pawn-row';
+    for(let i=0;i<numPlayers;i++){
+      if(positions[i]===n){
+        const pw = document.createElement('div');
+        pw.className='pawn';
+        pw.style.background = PLAYER_META[i].hex;
+        pawnRow.appendChild(pw);
+      }
+    }
+    tile.appendChild(pawnRow);
+
+    board.appendChild(tile);
+  }
+}
+
+/* ---------------- DICE / MOVE ---------------- */
+const DICE_FACES = ['⚀','⚁','⚂','⚃'];
+
+function rollDice(){
+  const diceEl = document.getElementById('dice');
+  diceEl.disabled = true;
+  diceEl.classList.add('rolling');
+  document.getElementById('dice-hint').textContent = '주사위를 굴리는 중...';
+  let ticks = 0;
+  const spin = setInterval(()=>{
+    diceEl.textContent = DICE_FACES[Math.floor(Math.random()*4)];
+    ticks++;
+    if(ticks>8){
+      clearInterval(spin);
+      diceEl.classList.remove('rolling');
+      const roll = Math.floor(Math.random()*4)+1;
+      diceEl.textContent = DICE_FACES[roll-1];
+      document.getElementById('dice-hint').textContent = `${roll}칸 이동해요!`;
+      setTimeout(()=>movePawn(roll), 650);
+    }
+  }, 90);
+}
+
+function movePawn(steps){
+  let remaining = steps;
+  const step = ()=>{
+    if(remaining<=0){
+      afterMove();
+      return;
+    }
+    positions[currentPlayer] = Math.min(LAST_TILE, positions[currentPlayer]+1);
+    renderBoard();
+    remaining--;
+    if(positions[currentPlayer]>=LAST_TILE){
+      afterMove();
+      return;
+    }
+    setTimeout(step, 260);
+  };
+  step();
+}
+
+function afterMove(){
+  const pos = positions[currentPlayer];
+  if(pos>=LAST_TILE){
+    showVictory();
+    return;
+  }
+  showSituation(pos);
+}
+
+/* ---------------- SITUATION ---------------- */
+function showSituation(tileNum){
+  currentTile = tileNum;
+  const data = TILES[tileNum];
+  document.getElementById('situation-badge').textContent = `${tileNum}번 칸`;
+  document.getElementById('situation-emoji').textContent = TILE_EMOJI[tileNum];
+  document.getElementById('situation-text').textContent = data.text;
+
+  const choices = [...data.choices];
+  // shuffle
+  choices.sort(()=>Math.random()-0.5);
+
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  const letters = ['A','B'];
+  choices.forEach((c,idx)=>{
+    const btn = document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML = `<span class="choice-letter display">${letters[idx]}</span><span>${c.text}</span>`;
+    btn.onclick = ()=>selectChoice(c, btn, box);
+    box.appendChild(btn);
+  });
+
+  goTo('screen-situation');
+}
+
+function selectChoice(choice, btnEl, box){
+  box.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  btnEl.classList.add(choice.correct ? 'correct':'wrong');
+  pendingChoice = choice;
+  setTimeout(()=>showResult(choice), 500);
+}
+
+function showResult(choice){
+  const mark = choice.correct ? 'O' : '△';
+  marks[currentPlayer][currentTile] = mark;
+
+  document.getElementById('result-icon').textContent = choice.correct ? '⭕' : '❌';
+  const titleEl = document.getElementById('result-title');
+  titleEl.textContent = choice.correct ? '정답이에요!' : '아쉬워요!';
+  titleEl.className = 'result-title ' + (choice.correct?'ok':'no');
+  document.getElementById('result-feedback').textContent = choice.feedback;
+
+  goTo('screen-result');
+}
+
+function nextTurn(){
+  renderBoard();
+  currentPlayer = (currentPlayer+1) % numPlayers;
+  updateTurnBar();
+  goTo('screen-board');
+}
+
+/* ---------------- VICTORY ---------------- */
+function showVictory(){
+  const p = PLAYER_META[currentPlayer];
+  const title = document.getElementById('victory-title');
+  title.textContent = `${p.emoji} ${p.name} 승리! 🎉`;
+  title.style.color = p.hex;
+  goTo('screen-victory');
+}
+
+/* ---------------- INIT ---------------- */
+renderSetup();
+</script>
+</body>
+</html>

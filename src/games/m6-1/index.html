@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4efdf">
+<title>나에게 필요한 서비스 이상형 월드컵</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* ===== 두 사진 대결 화면 — 1-1 「오늘의 PICK」 reels(gal 라벨 + scr 배지)를 옮겼다 ===== */
+.vsv{display:flex;flex-direction:column;min-height:calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+.rrow{display:flex;align-items:center;gap:10px}
+.rrow .seg{flex:1;margin:0}
+.rbtn{flex:none;width:38px;height:38px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;font:700 18px var(--fb);color:var(--ink)}
+.rbtn[disabled]{opacity:.35}
+.rqrow{display:flex;align-items:center;gap:10px;margin:12px 0 0}
+.rq{flex:1;margin:0;font:var(--hw) 25px/1.25 var(--fh);letter-spacing:-.03em}
+.rq small{display:block;font:500 13px var(--fb);color:var(--muted);letter-spacing:0;margin-top:2px}
+.rq small b{color:var(--ac)}
+.duel{position:relative;flex:1;display:flex;flex-direction:column;gap:12px;margin-top:12px;min-height:440px}
+.half{position:relative;flex:1;min-height:210px;border-radius:10px;overflow:hidden;background:#222;box-shadow:0 6px 16px rgba(60,40,20,.16);transition:opacity .35s,filter .35s,box-shadow .2s}
+.half img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.half::before{content:"";position:absolute;inset:38% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.72));z-index:1;pointer-events:none}
+.half.off{opacity:.32;filter:grayscale(.7)}
+.half.on{box-shadow:0 0 0 4px var(--ac),0 10px 22px rgba(60,40,20,.24)}
+.half .nm{position:absolute;left:14px;right:78px;bottom:14px;z-index:2;color:#fff;font:var(--lw) 22px/1.3 var(--fl);letter-spacing:-.03em;text-shadow:0 1px 8px rgba(0,0,0,.55);text-align:left}
+.half .rail{position:absolute;right:12px;bottom:12px;z-index:2;display:grid;gap:4px;justify-items:center;color:#fff;font:700 16px var(--fh);text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.half .rail b{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:var(--paper);color:var(--ac);border:2px dashed var(--ac);transition:transform .25s,background .25s}
+.half.a .nm{bottom:36px}
+.half.a .rail{bottom:32px}
+.half .rail svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.1;transition:fill .2s}
+.half.on .rail b{transform:scale(1.14);background:var(--ac);color:#fff;border-color:transparent}
+.half.on .rail svg{fill:#fff;stroke:#fff}
+.vs{position:absolute;left:50%;top:50%;z-index:7;width:58px;height:58px;border-radius:50%;background:var(--ac);color:var(--on);font:700 22px var(--fh);display:grid;place-items:center;transform:translate(-50%,-50%) rotate(12deg);box-shadow:2px 3px 0 rgba(0,0,0,.2);pointer-events:none}
+.pk{position:absolute;left:50%;top:46%;z-index:4;display:none;pointer-events:none;white-space:nowrap;color:#fff;font:700 40px var(--fh);border:4px solid var(--ac);border-radius:50%;padding:4px 26px 8px;background:rgba(0,0,0,.25);text-shadow:0 2px 6px rgba(0,0,0,.4);--pr:-8deg;transform:translate(-50%,-50%) rotate(var(--pr))}
+.half.on .pk{display:block;animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(var(--pr))}to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(var(--pr))}}
+.vsv .dku{margin:12px 0 0}
+.vsv .dku img{width:84px}
+
+/* ===== 처음 화면 ===== */
+.svcs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0}
+.svcs span{font:700 13px var(--fb);background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:5px 11px}
+
+/* ===== 결과: 순위표 ===== */
+.win .stamp{font-size:22px}
+.ranks{display:grid;gap:10px;margin-top:18px}
+.rk{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:8px 12px 8px 8px;box-shadow:0 3px 10px rgba(60,40,20,.1)}
+.rk .pi{flex:none;width:84px;aspect-ratio:4/3;border-radius:9px;overflow:hidden;background:var(--soft)}
+.rk .pi img{width:100%;height:100%;object-fit:cover}
+.rk .pt{flex:1;min-width:0}
+.rk small{display:inline-block;font:700 13px var(--fb);color:var(--on);background:var(--ac);border-radius:999px;padding:1px 10px}
+.rk b{display:block;font:var(--hw) 24px/1.2 var(--fh);margin-top:3px}
+.rk.sm{padding:6px 12px 6px 6px}
+.rk.sm .pi{width:58px}
+.rk.sm small{background:var(--muted)}
+.rk.sm b{font-size:20px}
+.tie{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:#fff7e0;font-size:14px;font-weight:700;color:#7a5a12}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 골라요!</h2><ol><li>위·아래 사진 2장 중에서 <b>나에게 더 필요한 도움</b>을 눌러요.</li><li>모두 13번 골라요.</li><li>마지막에 나에게 필요한 서비스 1~7순위가 나와요.</li><li>나온 순위는 교재에 적어요.</li></ol><p>정답은 없어요. ↶ 버튼으로 이전 선택으로 돌아갈 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'도',html:'필요한 <b>서비스</b>'};
+// 서비스 7개 · 설명 14개 — 프로토타입 「중6-1 서비스 이상형월드컵.html」 그대로(그림은 실제 그림 14장)
+const SERVICES={
+  sports:  {name:'장애인 스포츠 강좌 이용권'},
+  edu:     {name:'평생교육 이용권'},
+  pension: {name:'장애인연금'},
+  activity:{name:'장애인활동지원'},
+  guardian:{name:'공공후견'},
+  plan:    {name:'개인별지원계획'},
+  rights:  {name:'권익옹호'}
+};
+const CARDS=[
+  {id:'S1',svc:'sports',  text:'운동 수업 비용을 나라에서 지원해줘요',img:'img/sports-1.jpg'},
+  {id:'S2',svc:'sports',  text:'수영, 헬스, 탁구 같은 운동을 배워요',img:'img/sports-2.jpg'},
+  {id:'E1',svc:'edu',     text:'평생교육기관에서 수업듣는 비용을 지원해줘요',img:'img/edu-1.jpg'},
+  {id:'E2',svc:'edu',     text:'요리, 그림, 컴퓨터 같은 수업을 골라서 들어요',img:'img/edu-2.jpg'},
+  {id:'Y1',svc:'pension', text:'매달 통장으로 생활비가 들어와요',img:'img/pension-1.jpg'},
+  {id:'Y2',svc:'pension', text:'수입이 적어 나라에서 조금씩 돈을 지원해줘요',img:'img/pension-2.jpg'},
+  {id:'A1',svc:'activity',text:'씻기, 밥 먹기, 청소를 도와줘요',img:'img/activity-1.jpg'},
+  {id:'A2',svc:'activity',text:'밖에서 이동할 때 옆에서 도와줘요',img:'img/activity-2.jpg'},
+  {id:'G1',svc:'guardian',text:'은행, 집 계약 같은 어려운 일을 도와줘요',img:'img/guardian-1.jpg'},
+  {id:'G2',svc:'guardian',text:'내 이야기를 듣고 같이 결정해줘요',img:'img/guardian-2.jpg'},
+  {id:'P1',svc:'plan',    text:'나에게 맞는 도움을 같이 찾아줘요',img:'img/plan-1.jpg'},
+  {id:'P2',svc:'plan',    text:'받을 도움을 계획표로 만들어줘요',img:'img/plan-2.jpg'},
+  {id:'R1',svc:'rights',  text:'누가 나를 괴롭히면 도와줘요',img:'img/rights-1.jpg'},
+  {id:'R2',svc:'rights',  text:'나쁜 일이 생겼을 때 해결을 도와줘요',img:'img/rights-2.jpg'}
+];
+const ROUND_NAMES={1:'1라운드',2:'2라운드',3:'4강',4:'결승'};
+const TOTAL=13;   // 7 + 3 + 2 + 1
+const Q='나에게 더 필요한 도움은?';
+const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.4-4.4-9.2-8.9C1.5 8 3.6 4.6 7.1 4.6c2 0 3.4 1 4.9 2.8 1.5-1.8 2.9-2.8 4.9-2.8 3.5 0 5.6 3.4 4.3 6.8-1.8 4.5-9.2 8.9-9.2 8.9z"/></svg>';
+const byId=id=>CARDS.find(c=>c.id===id);
+
+const root=document.getElementById('app');
+let G=null,hist=[],timer=null;
+const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}};
+const snap=()=>JSON.parse(JSON.stringify(G));
+
+/* 1라운드: 같은 서비스끼리 만나지 않게 짝 짓기(프로토타입과 같음) */
+function firstPairs(){
+  for(let t=0;t<2000;t++){
+    const s=DK.shuffle(CARDS),p=[];let ok=true;
+    for(let i=0;i<s.length;i+=2){if(s[i].svc===s[i+1].svc){ok=false;break}p.push([s[i].id,s[i+1].id])}
+    if(ok)return p;
+  }
+  const s=DK.shuffle(CARDS),p=[];for(let i=0;i<s.length;i+=2)p.push([s[i].id,s[i+1].id]);return p;
+}
+function newGame(){
+  const stats={};CARDS.forEach(c=>stats[c.id]={wins:0,reach:1});
+  G={round:1,matchNo:0,pairs:firstPairs(),idx:0,winners:[],stats,champion:null};hist=[];
+}
+/* 다음 대결로. 2라운드는 7장 중 1장이 부전승으로 4강에 바로 올라간다(프로토타입과 같음) */
+function advance(){
+  G.idx++;
+  if(G.idx<G.pairs.length)return;
+  if(G.round===4){G.champion=G.winners[0];return}
+  const next=G.winners;G.round++;G.idx=0;G.winners=[];G.pairs=[];
+  const s=DK.shuffle(next);
+  if(G.round===2){
+    const bye=s[0];G.stats[bye].reach=Math.max(G.stats[bye].reach,3);G.winners=[bye];
+    for(let i=1;i<s.length;i+=2)G.pairs.push([s[i],s[i+1]]);
+  }else for(let i=0;i<s.length;i+=2)G.pairs.push([s[i],s[i+1]]);
+}
+/* 순위: 1순위 = 우승 카드의 서비스. 나머지는 서비스 카드 2장의 이긴 횟수 합 → 올라간 라운드 순. 같으면 공동 순위 */
+function ranking(){
+  const champ=byId(G.champion).svc,sv={};
+  Object.keys(SERVICES).forEach(k=>sv[k]={wins:0,reach:1,best:null});
+  CARDS.forEach(c=>{const st=G.stats[c.id],s=sv[c.svc];s.wins+=st.wins;if(st.reach>s.reach)s.reach=st.reach;
+    if(!s.best||st.wins>G.stats[s.best].wins)s.best=c.id});
+  const others=Object.keys(SERVICES).filter(k=>k!==champ).sort((a,b)=>sv[b].wins-sv[a].wins||sv[b].reach-sv[a].reach);
+  const groups=[];
+  others.forEach(k=>{const l=groups[groups.length-1];if(l&&sv[l[0]].wins===sv[k].wins&&sv[l[0]].reach===sv[k].reach)l.push(k);else groups.push([k])});
+  const rows=[];let pos=2;
+  groups.forEach(g=>{g.forEach(k=>rows.push({svc:k,pos,tie:g.length>1,img:byId(sv[k].best).img}));pos+=g.length});
+  return rows;
+}
+
+function home(){
+  quiet();clearTimeout(timer);
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Service world cup</span><h1 class="h1">나에게 필요한<br><em>서비스 이상형 월드컵</em></h1>
+  <p>사진 2장 중에서 <b>나에게 더 필요한 도움</b> 하나를 골라요.<br>계속 고르면 마지막에 <b>나에게 필요한 서비스 1~7순위</b>가 나와요.<br>나온 순위는 교재에 적어요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/plan-1.jpg" alt="담당자와 함께 나에게 맞는 도움을 찾는 모습"></span><span class="ct">서비스 7가지 · 설명 14장<small>모두 13번 골라요</small></span></div>
+  <div class="svcs" aria-label="서비스 7가지">${Object.values(SERVICES).map(s=>`<span>${s.name}</span>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>{newGame();match()}});
+}
+
+function match(sel){
+  const pair=G.pairs[G.idx].map(byId);
+  const say=`${Q} ${pair[0].text}. 아니면, ${pair[1].text}.`;
+  DK.mount(root,`<div class="vsv">
+  <div class="rtop"><div class="rrow"><button class="rbtn" data-act="home" aria-label="처음으로">‹</button>${DK.seg(TOTAL,G.matchNo)}<button class="rbtn" data-act="undo" aria-label="이전 선택으로" ${hist.length?'':'disabled'}>↶</button></div>
+  <div class="rqrow"><p class="rq">${Q}<small><b>${ROUND_NAMES[G.round]}</b> · ${G.matchNo+1} / ${TOTAL} 번째 대결</small></p><button class="spk" data-say="${DK.esc(say)}" aria-label="소리로 듣기">${DK.SPK}</button></div></div>
+  <div class="duel">${pair.map((c,i)=>`<button class="half ${i?'b':'a'}" data-act="pick" data-i="${i}" aria-label="${DK.esc(c.text)} 고르기"><img src="${c.img}" alt=""><span class="nm">${DK.esc(c.text)}</span><span class="rail"><b>${HEART}</b><span>필요해</span></span><span class="pk">이거!</span></button>`).join('')}
+  <span class="vs" aria-hidden="true">VS</span></div>${DK.DKU}</div>`,{
+    home,
+    undo:()=>{if(!hist.length||G.locked)return;clearTimeout(timer);G=hist.pop();match()},
+    pick:b=>{
+      if(G.locked)return;G.locked=true;
+      const i=+b.dataset.i;
+      root.querySelectorAll('.half').forEach((h,j)=>h.classList.add(j===i?'on':'off'));
+      root.querySelectorAll('[data-act=undo]').forEach(u=>u.disabled=true);
+      timer=setTimeout(()=>{
+        const before=snap();before.locked=false;hist.push(before);
+        const w=G.pairs[G.idx][i];
+        G.stats[w].wins++;G.stats[w].reach=G.round+1;G.winners.push(w);G.matchNo++;
+        advance();G.locked=false;quiet();
+        G.champion?result():match();
+      },matchMedia('(prefers-reduced-motion: reduce)').matches?150:700);
+    }
+  });
+}
+
+function result(){
+  quiet();
+  const c=byId(G.champion),cs=SERVICES[c.svc],rows=ranking();
+  const tie=rows.some(r=>r.tie);
+  const line=`나에게 가장 필요한 서비스는 ${cs.name}${DK.ieyo(cs.name)}.`;
+  const all=`1순위, ${cs.name}. `+rows.map(r=>`${r.tie?'공동 ':''}${r.pos}순위, ${SERVICES[r.svc].name}.`).join(' ');
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <section class="hero"><span class="eb">My service ranking</span><h1 class="h1">나에게 가장<br><em>필요한 서비스</em></h1><p>13번 골라서 찾았어요.</p></section>
+  <article class="win"><span class="stamp">1순위</span><span class="wp"><img src="${c.img}" alt="${DK.esc(c.text)}"></span><div class="wc"><h2>${DK.esc(cs.name)}</h2><p>${DK.esc(c.text)}</p></div></article>
+  ${DK.sayBig(line)}
+  <div class="ranks">${rows.map(r=>`<div class="rk${r.pos<=3?'':' sm'}"><span class="pi"><img src="${r.img}" alt=""></span><span class="pt"><small>${r.tie?'공동 ':''}${r.pos}순위</small><b>${DK.esc(SERVICES[r.svc].name)}</b></span></div>`).join('')}</div>
+  ${tie?'<p class="tie">순위가 같은 서비스가 있어요. 선생님과 이야기하며 더 필요한 순서를 직접 정해서 적어봐요.</p>':''}
+  <section class="note"><i class="tp"></i><h3>교재에 적어요</h3><p style="margin:0">나온 순위를 교재에 1순위부터 7순위까지 적어요.</p></section>
+  <div class="acts"><button class="btn line" data-act="listen">🔊 순위 다 듣기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="home">‹ 처음으로</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(all),again:()=>{newGame();match()}
+  });
+  DK.speak(line);
+}
+
+home();
+</script>
+</body>
+</html>

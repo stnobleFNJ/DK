@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우리집 한바퀴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 보드판: 그림 위에 말 올리기 (7-3과 같은 방식) */
+.board{margin:14px 0 0;padding:6px;background:#fff;box-shadow:0 6px 14px rgba(60,40,20,.18)}
+.board .bi{position:relative}
+.board img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.board .tok{position:absolute;width:24px;height:24px;font-size:11px;margin:-12px 0 0 -12px;transition:left .6s ease,top .6s ease;z-index:2}
+.board .tok.me{width:30px;height:30px;margin:-15px 0 0 -15px;font-size:13px;box-shadow:0 0 0 3px #fff,0 0 0 6px var(--tape);z-index:3}
+.board .ck{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--ok);color:#fff;font:700 11px/18px var(--fb);text-align:center;box-shadow:0 0 0 2px #fff;z-index:1}
+.board .ck.no{background:var(--tape);color:var(--ink)}
+.blg{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 2px 0;font-size:12px;color:var(--muted)}
+.blg i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px;background:var(--ok)}
+.blg i.no{background:var(--tape)}
+.turn{display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:14px 16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;font:var(--hw) 22px/1.35 var(--fh)}
+.turn .tok{flex:none;width:40px;height:40px;font-size:16px}
+.turn small{display:block;font:500 13px var(--fb);color:var(--muted)}
+/* 주사위 (1~3) */
+.dice{display:flex;align-items:center;justify-content:center;gap:16px;margin:16px 0 0}
+.die{width:84px;height:84px;border-radius:18px;background:#fff;border:2px solid var(--line);box-shadow:3px 4px 0 var(--line);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:12px}
+.die b{width:16px;height:16px;border-radius:50%;background:var(--ac);place-self:center;visibility:hidden}
+.die[data-v="1"] b:nth-child(5),.die[data-v="2"] b:nth-child(1),.die[data-v="2"] b:nth-child(9),.die[data-v="3"] b:nth-child(1),.die[data-v="3"] b:nth-child(5),.die[data-v="3"] b:nth-child(9){visibility:visible}
+.die.roll{animation:roll .12s linear infinite}
+@keyframes roll{50%{transform:rotate(14deg) scale(.94)}}
+.dmsg{font:var(--hw) 22px/1.35 var(--fh);max-width:12em}
+.dmsg em{font-style:normal;color:var(--ac)}
+/* 문제 머리: 칸 공간 사진 + 칸 이름 */
+.qh{display:flex;align-items:center;gap:12px;margin:16px 0 0}
+.qh .sp{flex:none;width:96px;background:#fff;padding:4px;box-shadow:0 3px 8px rgba(60,40,20,.18);transform:rotate(-2deg)}
+.qh .sp img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.qn{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.qn .tok{width:22px;height:22px;font-size:11px;border-width:1px}
+.qh .q{margin:6px 0 0;font-size:24px}
+.picks{grid-template-columns:1fr}
+@media (min-width:520px){.picks{grid-template-columns:1fr 1fr}}
+.pick.photo .ct{font-size:20px}
+.pick:disabled{opacity:1}
+.pick.ok{box-shadow:0 0 0 4px var(--ok),0 10px 22px rgba(60,40,20,.24)}
+.pick.bad{box-shadow:0 0 0 4px var(--no),0 10px 22px rgba(60,40,20,.24)}
+.pick .mk{position:absolute;left:12px;top:14px;z-index:2;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.big{margin:22px 0 0;text-align:center;font:var(--hw) 28px/1.35 var(--fh)}
+.big em{font-style:normal;color:var(--ac)}
+.pc{margin:14px 0 0;text-align:center;font-size:14px;color:var(--muted)}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.plist li:last-child{border:0}
+.plist .tok{flex:none}
+.plist b{font-size:15px}
+.plist p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.plist p span{color:var(--ok);font-weight:700}
+.plist .rk{margin-left:auto;flex:none;font:var(--hw) 20px var(--fh);color:var(--ac)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>함께 할 사람 수를 골라요. (1~4명)</li><li>내 차례에 주사위를 굴려요. (1~3)</li><li>멈춘 칸에서 알맞은 행동 그림을 골라요.</li><li>지나친 칸과 틀린 칸은 도착하기 전에 다시 풀어요.</li><li>8칸 문제를 모두 맞히면 도착이에요!</li></ol><p>가장 먼저 도착한 사람이 승리해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'집',html:'우리집 <b>한바퀴</b>'};
+const SP={living:['거실','img/sp-living.jpg'],room:['내 방','img/sp-room.jpg'],kitchen:['주방(식탁)','img/sp-kitchen.jpg'],bath:['화장실','img/sp-bath.jpg']};
+// 칸 1~8 (교재 보드판 순서). 보기 그림 2장: ok=true가 알맞은 행동.
+// q1·q3·q4·q6·q8의 알맞은 행동 그림(*-good.jpg)은 임시생성 그림 — 진짜 사진이 오면 같은 이름으로 덮어쓰기.
+// 임시: 칸별 안내(hint)·보기 이름(t)·설명(why) 문구는 교재에 없어 임시로 작성.
+const Q=[
+  {sp:'living',hint:'거실은 가족이 함께 쓰는 곳이에요.',a:[
+    {img:'img/q1-good.jpg',t:'소파에 함께 나눠 앉아요',ok:true,why:'거실 소파는 가족이 같이 써요. 자리를 나눠 앉아요.'},
+    {img:'img/q1-bad.jpg',t:'소파에 혼자 길게 누워 있어요',why:'혼자 다 차지하면 가족이 앉을 곳이 없어요.'}]},
+  {sp:'room',hint:'내 방은 나만 쓰는 곳이에요.',a:[
+    {img:'img/q2-a.jpg',t:'내 방에서 옷을 갈아입어요',ok:true,why:'옷은 내 방에서 갈아입어요.'},
+    {img:'img/q2-b.jpg',t:'가족과 소파에 앉아 TV를 봐요',why:'이건 거실에서 하는 일이에요.'}]},
+  {sp:'kitchen',hint:'식탁은 가족이 밥을 먹는 곳이에요.',a:[
+    {img:'img/q3-good.jpg',t:'식탁 위 내 물건을 치워요',ok:true,why:'내 가방과 책은 내 방에 두어요.'},
+    {img:'img/q3-bad.jpg',t:'식탁 위에 가방과 책을 두어요',why:'물건이 있으면 가족이 밥상을 차릴 수 없어요.'}]},
+  {sp:'living',hint:'거실에는 다른 가족도 있어요.',a:[
+    {img:'img/q4-good.jpg',t:'이어폰을 끼고 음악을 들어요',ok:true,why:'이어폰을 쓰면 가족이 불편하지 않아요.'},
+    {img:'img/q4-bad.jpg',t:'스피커로 음악을 크게 틀어요',why:'큰 소리는 가족을 불편하게 해요.'}]},
+  {sp:'room',hint:'내 방에서 하기 알맞은 일은 무엇일까요?',a:[
+    {img:'img/q5-a.jpg',t:'침대 위에서 밥을 먹어요',why:'침대가 더러워져요. 밥은 식탁에서 먹어요.'},
+    {img:'img/q5-b.jpg',t:'내 방에서 전화를 해요',ok:true,why:'내 방에서는 편하게 통화할 수 있어요.'}]},
+  {sp:'bath',hint:'화장실은 가족이 같이 써요.',a:[
+    {img:'img/q6-good.jpg',t:'화장실을 빨리 쓰고 나와요',ok:true,why:'기다리는 가족을 생각해요.'},
+    {img:'img/q6-bad.jpg',t:'화장실에서 휴대폰을 오래 봐요',why:'밖에서 가족이 오래 기다려요.'}]},
+  {sp:'room',hint:'내 방에서 하기 알맞은 일은 무엇일까요?',a:[
+    {img:'img/q7-a.jpg',t:'내 방에서 음악을 들어요',ok:true,why:'내 방에서는 편하게 쉴 수 있어요.'},
+    {img:'img/q7-b.jpg',t:'프라이팬으로 요리를 해요',why:'요리는 주방에서 해요.'}]},
+  {sp:'kitchen',hint:'밥을 다 먹었어요.',a:[
+    {img:'img/q8-good.jpg',t:'먹은 그릇을 치워요',ok:true,why:'다 먹은 그릇은 싱크대에 갖다 놓아요.'},
+    {img:'img/q8-bad.jpg',t:'그릇을 그대로 두고 가요',why:'남은 그릇은 다른 가족이 치워야 해요.'}]}
+];
+const N=Q.length,GOAL=N+1,DIE=3; // 임시: 주사위는 1~3 (8칸이라 많이 건너뛰지 않게)
+// 보드판 칸 위치(%) — 0 출발, 1~8 칸, 9 도착 (board.jpg 기준)
+const SQ=[[10.2,41],[30.1,41],[50.2,41],[70.2,41],[89.7,41],[10.2,85],[30.2,85],[50.2,85],[70.2,85],[89.7,85]];
+const OFF=[[-4,-6],[4,-6],[-4,6],[4,6]];
+
+const root=document.getElementById('app');
+let n=1,P=[],cur=0,order=0,timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const who=i=>n===1?'나':`${i+1}번 사람`;
+const tok=(i,cls='')=>`<i class="tok t${i+1} ${cls}" aria-hidden="true">${i+1}</i>`;
+const left=()=>P.filter(p=>!p.rank).length;
+const rest=p=>Q.map((_,k)=>k+1).filter(c=>!p.done.has(c));          // 아직 못 맞힌 칸
+const cname=c=>`${c}번 칸 ${SP[Q[c-1].sp][0]}`;
+const die=v=>`<div class="die" data-v="${v}" aria-hidden="true">${'<b></b>'.repeat(9)}</div>`;
+
+function board(me){
+  const p=P[me];
+  const marks=p?Q.map((_,k)=>{const c=k+1,[x,y]=SQ[c];return p.done.has(c)?`<i class="ck" style="left:${x+7.5}%;top:${y+6}%">✓</i>`:p.seen.has(c)?`<i class="ck no" style="left:${x+7.5}%;top:${y+6}%">!</i>`:''}).join(''):'';
+  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="우리집 한바퀴 보드판: 출발, 1 거실, 2 내 방, 3 주방, 4 거실, 5 내 방, 6 화장실, 7 내 방, 8 주방, 도착">${marks}
+  ${P.map((q,i)=>{const [x,y]=SQ[q.pos],[dx,dy]=n>1?OFF[i]:[0,0];return `<i class="tok t${i+1}${i===me?' me':''}" data-p="${i}" style="left:${x+dx}%;top:${y+dy}%">${i+1}</i>`}).join('')}</div></div>
+  ${p?`<p class="blg"><span><i></i>맞힌 칸</span><span><i class="no"></i>다시 풀 칸</span><span>${n>1?`${me+1}번 사람 · `:''}남은 문제 ${rest(p).length}개</span></p>`:''}`;
+}
+
+function home(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Around my home</span><h1 class="h1">우리집 <em>한바퀴</em></h1><p>주사위를 굴려 우리집을 한 바퀴 돌아요. 거실, 내 방, 주방, 화장실에서 알맞은 행동을 골라 보세요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="우리집 한바퀴 보드판"></span><span class="ct">출발에서 도착까지<small>8칸 문제를 모두 맞히면 도착해요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:people});
+  DK.speak('우리집 한바퀴. 주사위를 굴려 우리집을 한 바퀴 돌아요.');
+}
+
+function people(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">몇 명이 함께 할까요?</p><p class="qs">혼자 해도 되고, 친구와 같이 해도 돼요. (1~4명)</p>
+  <div class="people">${[1,2,3,4].map(k=>`<button class="${k===n?'on':''}" data-act="n" data-v="${k}" aria-label="${k}명">${k}명</button>`).join('')}</div>
+  <p class="pc" id="pc">${[0,1,2,3].slice(0,n).map(i=>tok(i)).join(' ')}</p>
+  <div class="acts"><button class="btn pri" data-act="go">게임 시작</button></div>${DK.DKU}`,{
+    home,go:newGame,
+    n:b=>{n=+b.dataset.v;root.querySelectorAll('[data-act=n]').forEach(x=>x.classList.toggle('on',x===b));root.querySelector('#pc').innerHTML=[0,1,2,3].slice(0,n).map(i=>tok(i)).join(' ');DK.speak(n+'명')}
+  });
+}
+
+// 기록: pos 말 위치, done 맞힌 칸, seen 풀었지만 틀린 칸, wrong 어려웠던 칸, back 남은 문제 풀기 단계
+function newGame(){P=Array.from({length:n},()=>({pos:0,done:new Set(),seen:new Set(),wrong:new Set(),back:false,rank:0}));cur=0;order=0;turn()}
+
+function turn(){
+  clear();
+  const p=P[cur],me=n===1?'내 차례예요!':`${cur+1}번 사람 차례예요!`;
+  if(p.back){
+    // 도착 전 남은 문제: 주사위 없이 남은 칸으로 가서 풀기
+    const c=rest(p)[0];
+    DK.mount(root,`${DK.hbar(BRAND,true)}${board(cur)}
+    <div class="turn">${tok(cur)}<span>${me}<small>도착하기 전에 남은 문제를 풀어요 · ${cname(c)}</small></span></div>
+    <div class="acts"><button class="btn pri" data-act="go">${c}번 칸 문제 풀기</button></div>${DK.DKU}`,{home,go:()=>goBack(c)});
+    DK.speak(me+' 남은 문제를 풀어요. '+cname(c));
+    return;
+  }
+  DK.mount(root,`${DK.hbar(BRAND,true)}${board(cur)}
+  <div class="turn">${tok(cur)}<span>${me}<small>주사위를 굴려서 앞으로 가요</small></span></div>
+  <div class="dice">${die(1)}<p class="dmsg" id="dm">주사위를<br>굴려 보세요</p></div>
+  <div class="acts" id="nx"><button class="btn pri" data-act="roll">🎲 주사위 굴리기</button></div>${DK.DKU}`,{home,roll});
+  DK.speak(me+' 주사위를 굴려 보세요.');
+}
+
+function roll(b){
+  b.disabled=true;
+  const d=root.querySelector('.die'),v=1+Math.floor(Math.random()*DIE);
+  if(reduced()){d.dataset.v=v;return later(()=>moved(v),200)}
+  d.classList.add('roll');
+  const iv=setInterval(()=>d.dataset.v=1+Math.floor(Math.random()*DIE),110);
+  later(()=>{clearInterval(iv);d.classList.remove('roll');d.dataset.v=v;moved(v)},900);
+}
+
+function slide(i,from){
+  const t=root.querySelector(`.board .tok[data-p="${i}"]`),[x,y]=SQ[from],[dx,dy]=n>1?OFF[i]:[0,0],to=[t.style.left,t.style.top];
+  t.style.transition='none';t.style.left=x+dx+'%';t.style.top=y+dy+'%';t.offsetWidth;t.style.transition='';
+  later(()=>{t.style.left=to[0];t.style.top=to[1]},120);
+}
+
+function moved(v){
+  const p=P[cur],from=p.pos,dm=root.querySelector('#dm'),nx=root.querySelector('#nx');
+  p.pos=Math.min(from+v,GOAL);
+  let msg,btn,go;
+  if(p.pos<GOAL){
+    msg=`<em>${v}</em>! ${cname(p.pos)}에 왔어요.`;btn='문제 풀기';go=()=>quiz(p.pos);
+  }else if(!rest(p).length){
+    p.pos=GOAL;return arrive(from);
+  }else{
+    // 도착 칸에 닿았지만 못 맞힌 칸이 있으면 → 남은 문제 풀기 단계
+    const r=rest(p);p.back=true;p.pos=r[0];
+    msg=`<em>${v}</em>! 아직 남은 문제가 ${r.length}개 있어요. ${r[0]}번 칸으로 돌아가요.`;btn=`${r[0]}번 칸 문제 풀기`;go=()=>quiz(p.pos);
+  }
+  const html=board(cur);root.querySelector('.board').outerHTML=html.slice(0,html.indexOf('<p class="blg"'));
+  slide(cur,from);
+  dm.innerHTML=msg;nx.innerHTML=`<button class="btn pri" id="go">${btn} ›</button>`;nx.querySelector('#go').onclick=go;
+  DK.speak(dm.textContent);
+}
+
+function goBack(c){const p=P[cur];p.pos=c;quiz(c)}
+
+function quiz(c){
+  clear();
+  const p=P[cur],q=Q[c-1],[sn,si]=SP[q.sp],opts=DK.shuffle(q.a),retry=p.seen.has(c);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(N,p.done.size)}
+  <div class="qh"><span class="sp"><img src="${si}" alt="${sn}"></span><div><span class="qn">${n>1?tok(cur)+' ':''}${c}번 칸 · ${sn}</span><p class="q">이곳에서 어떻게 행동하면 좋을까요?</p></div></div>
+  ${DK.sayBig(q.hint+' 알맞은 행동을 골라 보세요.')}
+  <div class="picks">${opts.map((o,k)=>`<button class="pick photo" data-act="pick" data-k="${k}"><i class="tp"></i><span class="cn">${k+1}</span><span class="cp"><img src="${o.img}" alt=""></span><span class="ct">${o.t}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div><div class="acts" id="nx"></div>${DK.DKU}`,{
+    home,
+    pick:b=>{
+      const o=opts[+b.dataset.k],fb=root.querySelector('#fb'),nx=root.querySelector('#nx');
+      root.querySelectorAll('.pick').forEach(x=>x.disabled=true);
+      b.classList.add(o.ok?'ok':'bad');b.insertAdjacentHTML('afterbegin',`<span class="mk" aria-hidden="true">${o.ok?'⭕':'❌'}</span>`);
+      let say,btn,go;
+      if(o.ok){
+        p.done.add(c);p.seen.delete(c);
+        const fin=!rest(p).length&&p.back;
+        fb.innerHTML=`<p class="fb ok"><span>⭕</span><span>맞아요!<small>${o.why}</small></span></p>`;
+        say='맞아요! '+o.why;
+        if(fin){btn='도착하기';go=()=>{p.pos=GOAL;arrive(c,true)}}
+        else{btn=n===1?'다음 ›':'다음 사람 차례 ›';go=next}
+      }else{
+        p.seen.add(c);p.wrong.add(c);
+        fb.innerHTML=`<p class="fb no"><span>🙂</span><span>아쉬워요!<small>${o.why} 이 칸은 도착하기 전에 다시 풀어요.</small></span></p>`;
+        say='아쉬워요! '+o.why+' 이 칸은 도착하기 전에 다시 풀어요.';
+        btn=n===1?'다음 ›':'다음 사람 차례 ›';go=next;
+      }
+      nx.innerHTML=`<button class="btn pri" id="nb">${btn}</button>`;nx.querySelector('#nb').onclick=go;
+      DK.speak(say);fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+  later(()=>DK.speak((retry?'다시 풀어 봐요. ':'')+sn+'. 이곳에서 어떻게 행동하면 좋을까요? '+q.hint+' 알맞은 행동을 골라 보세요.'),300);
+}
+
+function arrive(from,fresh){
+  clear();
+  const p=P[cur];p.rank=++order;
+  const msg=n===1?'도착했어요! 승리!':p.rank===1?`${cur+1}번 사람이 1등으로 도착! 승리했어요!`:`${cur+1}번 사람이 ${p.rank}등으로 도착했어요!`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}${board(cur)}
+  <p class="big">🎉 <em>${msg}</em></p>
+  <p class="pc">우리집 8칸 문제를 모두 맞혔어요.</p>
+  <div class="acts"><button class="btn pri" data-act="go">${left()?(n===1?'다음 ›':'다음 사람 차례 ›'):'결과 보기 ›'}</button></div>${DK.DKU}`,{home,go:()=>left()?next():result()});
+  slide(cur,from);
+  DK.speak(msg);
+}
+
+function next(){
+  if(!left())return result();
+  do{cur=(cur+1)%n}while(P[cur].rank);
+  turn();
+}
+
+function result(){
+  clear();
+  const rk=P.map((p,i)=>({p,i})).sort((a,b)=>a.p.rank-b.p.rank);
+  const say=n===1?'도착했어요! 우리집 공간을 바르게 쓸 수 있어요.':`모두 도착했어요! ${rk[0].i+1}번 사람이 승리했어요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="win"><span class="stamp">도착<br>승리!</span><span class="wp"><img src="img/board.jpg" alt="보드판"></span><div class="wc"><h2>${n===1?'도착했어요!':`${rk[0].i+1}번 사람 승리!`}</h2><p>우리집을 한 바퀴 돌았어요.</p></div></div>
+  ${DK.sayBig(say)}
+  <div class="note"><h3>🏠 어려웠던 문제</h3><ul class="plist">${rk.map(({p,i})=>`<li>${tok(i)}<div><b>${who(i)}</b><p>${p.wrong.size?[...p.wrong].sort((a,b)=>a-b).map(c=>`${cname(c)} → <span>${Q[c-1].a.find(o=>o.ok).t}</span>`).join('<br>'):'모두 한 번에 맞혔어요! 👍'}</p></div>${n>1?`<span class="rk">${p.rank===1?'🏆 ':''}${p.rank}등</span>`:''}</li>`).join('')}</ul>
+  <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">어려웠던 행동을 오늘 집에서 해 보세요.</p></div>
+  <div class="acts"><button class="btn pri" data-act="again">↻ 다시하기</button><button class="btn line" data-act="home">처음으로</button></div>${DK.DKU}`,{
+    home,again:people
+  });
+  DK.speak(say);
+}
+
+home();
+</script>
+</body>
+</html>

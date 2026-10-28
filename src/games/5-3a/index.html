@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>시우씨의 이야기 완성하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 상황 그림(가로로 긴 사진) */
+.photo .cp.wide{aspect-ratio:1218/552}
+.wp img.wide{object-fit:contain;background:#fff}
+/* 직접 입력: 사진 대신 종이 카드 */
+.ph{display:grid;place-items:center;width:100%;height:100%;padding:8px;text-align:center;background:var(--paper);background-image:repeating-linear-gradient(0deg,transparent 0 21px,var(--tx) 21px 22px);font:var(--hw) 22px/1.3 var(--fh);color:var(--muted)}
+.ph b{color:var(--ink);font-size:28px}
+.etcbox{margin-top:6px}
+.etcbox .lb{font:700 14px var(--fb);margin:0}
+.up{display:flex;align-items:center;gap:10px;margin-top:10px}
+.up label{flex:1;cursor:pointer;min-height:44px}
+.up img{width:64px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.upn{display:block;font-size:12px;color:var(--muted);margin-top:6px}
+/* 고른 것 확인 */
+.opt .ov{flex:1}
+.opt .ov small{display:block;font-size:12px;color:var(--muted)}
+.opt .ov b{font:var(--hw) 22px/1.3 var(--fh)}
+.opt .chg{flex:none;align-self:center;font:700 12px var(--fb);color:var(--ac)}
+/* 이야기 장면 */
+.pg{margin:16px 0 0;font:700 11px var(--fm);letter-spacing:.14em;color:var(--ac)}
+.pg+.q{margin-top:4px}
+.win.story{margin:22px 8px 18px}
+.win.story:nth-of-type(even){transform:rotate(1.6deg)}
+.stamp.sm{width:50px;height:50px;font-size:24px;top:-14px;right:-8px}
+.endnote{text-align:center;font:var(--hw) 19px/1.4 var(--fh);color:var(--muted);margin:16px 0 0}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>어머니가 시우 씨의 무엇을 보았는지 골라요.</li><li>시우 씨의 기분을 골라요.</li><li>시우 씨가 어떻게 했을지 골라요.</li><li>‘이야기 보기’를 눌러 시우 씨의 이야기 5장을 읽어요.</li></ol><p>기분에는 정답이 없어요. 고르고 싶은 것이 없으면 ‘직접 입력’에 써 보세요. 사진도 올릴 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'이',html:'시우씨의 <b>이야기</b>'};
+const STEPS=['물건','기분','행동','이야기'];
+// 선택 3단계 — hwpx(전5-3 도입) 기획 문구. s = 이야기에 들어갈 문장
+const Q=[
+  {key:'obj',q:'물건을 골라 보세요.',qs:'어머니가 무엇을 허락 없이 보았나요?',opts:[{v:'휴대폰',id:'phone'},{v:'편지',id:'letter'},{v:'가방',id:'bag'}]},
+  {key:'feel',q:'어떤 기분인가요?',qs:'시우 씨는 어떤 기분이었을까요? 정답은 없어요.',opts:[{v:'기분 나빠요',id:'upset',s:'시우 씨는 기분이 나빴습니다.'},{v:'부끄러워요',id:'shy',s:'시우 씨는 부끄러웠습니다.'},{v:'화나요',id:'angry',s:'시우 씨는 화가 났습니다.'}]},
+  {key:'act',q:'나라면 어떻게 할까요?',qs:'시우 씨는 어떻게 했을까요?',opts:[{v:'아무 말도 하지 않아요',id:'silent',s:'시우 씨는 아무 말도 하지 않았습니다.'},{v:'큰 소리로 화를 내요',id:'shout',s:'시우 씨는 큰 소리로 화를 냈습니다.'},{v:'울어요',id:'cry',s:'시우 씨는 울었습니다.'}]}
+];
+// 이야기 5장 제목 (1장 제목은 기획서에 없어 임시로 작성)
+const TITLES=['무슨 일이 있었나요?','어떤 기분이었을까요?','어떻게 했을까요?','어머니는 마음을 알 수 있을까요?','어떻게 말하면 좋을까요?'];
+const S4='어머니는 시우 씨가 무엇을 원하는지 정확히 알 수 없었습니다.';
+const S5='내 마음을 잘 전달하려면 어떻게 말하면 좋을까요?';
+
+const root=document.getElementById('app');
+let sel={},draft={},timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const freeImgs=()=>{Object.values(draft).forEach(d=>d.img&&URL.revokeObjectURL(d.img));draft={}};
+const reset=()=>{freeImgs();sel={}};
+
+// 직접 입력한 '~요' 말을 과거형 문장으로: 울어요→울었습니다, 속상해요→속상했습니다
+function past(v){
+  const ss=v.match(/(.)[어아]요$/);   // 이미 과거형(슬펐어요·갔어요)이면 '습니다'만
+  if(ss&&(ss[1].charCodeAt(0)-0xAC00)%28===20)return v.slice(0,-2)+'습니다';
+  if(/이에요$/.test(v))return v.replace(/이에요$/,'이었습니다');
+  if(/예요$/.test(v))return v.replace(/예요$/,'였습니다');
+  const m=v.match(/(.)요$/);if(!m)return null;
+  const c=m[1].charCodeAt(0);if(c<0xAC00||c>0xD7A3||(c-0xAC00)%28)return null;
+  return v.slice(0,-2)+String.fromCharCode(c+20)+'습니다';   // 받침 ㅆ 붙이기
+}
+const clean=v=>v.trim().replace(/\s+/g,' ').replace(/[.!?~。]+$/,'');
+function sentence(i){
+  const o=sel[Q[i].key];
+  if(i===0)return `어머니가 시우 씨의 ${o.v}${DK.eul(o.v)} 허락 없이 보았습니다.`;
+  if(!o.custom)return o.s;
+  const p=past(o.v);
+  if(p)return `시우 씨는 ${p}.`;
+  return i===1?`시우 씨는 ‘${o.v}’ 기분이었습니다.`:`시우 씨는 이렇게 했습니다. ‘${o.v}’`;
+}
+// 장면 사진: 고른 사진 → 올린 사진 → (물건) 상황 그림 / (기분·행동) 종이 카드
+function scene(i){
+  const o=sel[Q[i].key];
+  if(!o.custom)return `<img src="img/${i?'pick':'s1'}-${o.id}.jpg" alt="${DK.esc(o.v)}">`;
+  if(o.img)return `<img src="${o.img}" alt="${DK.esc(o.v)}">`;
+  if(i===0)return `<img class="wide" src="img/situation.jpg" alt="어머니가 시우 씨의 물건을 보는 모습">`;
+  return `<span class="ph"><b>${DK.esc(o.v)}</b></span>`;
+}
+
+function home(){
+  clear();reset();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Social story</span><h1 class="h1">시우씨의 이야기를<br><em>완성해 볼까요?</em></h1><p>물건, 기분, 행동을 하나씩 고르면 시우 씨의 이야기가 만들어져요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp wide"><img src="img/situation.jpg" alt="휴대폰을 보는 어머니와 놀란 시우 씨"></span><span class="ct">어머니가 시우 씨의 물건을 허락 없이 보았어요.<small>3번 고르면 이야기 5장이 나와요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>step(0)});
+}
+
+function step(i){
+  clear();
+  const s=Q[i],cur=sel[s.key],d=draft[s.key]||(draft[s.key]={text:'',img:null});
+  let etc=!!(cur&&cur.custom);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(3,i)}
+  <p class="q">${s.q}</p><p class="qs">${s.qs}</p>
+  <div class="picks two">${s.opts.map(o=>`<button class="pick photo${cur&&cur.id===o.id?' on':''}" data-act="pick" data-id="${o.id}" aria-label="${o.v} 고르기"><i class="tp"></i><span class="cp"><img src="img/pick-${o.id}.jpg" alt="${o.v}"></span><span class="ct">${o.v}</span></button>`).join('')}
+    <button class="pick photo${etc?' on':''}" data-act="etc" aria-label="직접 입력하기"><i class="tp"></i><span class="cp"><span class="ph">✎ 직접 쓰기</span></span><span class="ct">직접 입력</span></button></div>
+  <div class="etcbox" id="etcbox" ${etc?'':'hidden'}>
+    <p class="lb">${['어머니가 무엇을 보았나요?','시우 씨는 어떤 기분이었을까요?','시우 씨는 어떻게 했을까요?'][i]}</p>
+    <div class="etc"><input id="etcin" maxlength="20" autocomplete="off" placeholder="${['예) 일기장','예) 속상해요','예) 방으로 들어가요'][i]}" value="${DK.esc(d.text)}" aria-label="직접 입력"></div>
+    <div class="up"><label class="btn line">📷 사진 올리기 (안 해도 돼요)<input type="file" id="file" accept="image/*" hidden></label>${d.img?`<img src="${d.img}" alt="올린 사진">`:''}</div>
+    <small class="upn">사진은 이 화면에서만 보여요. 어디에도 저장하지 않아요.</small>
+  </div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${cur?'':'disabled'}>다음 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>i?step(i-1):home(),
+    next:()=>{
+      if(etc){const t=clean(d.text);if(!t)return;sel[s.key]={v:t,custom:true,img:d.img}}
+      if(sel[s.key])go();
+    },
+    pick:b=>{
+      const o=s.opts.find(o=>o.id===b.dataset.id);sel[s.key]=o;etc=false;
+      root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));
+      root.querySelector('#etcbox').hidden=true;nextBtn.disabled=false;
+      DK.speak(o.v);later(go,650);
+    },
+    etc:b=>{
+      clear();etc=true;delete sel[s.key];
+      root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));
+      root.querySelector('#etcbox').hidden=false;nextBtn.disabled=!clean(d.text);
+      inp.focus();
+    }
+  });
+  const go=()=>i<2?step(i+1):review();
+  const nextBtn=root.querySelector('[data-act=next]'),inp=root.querySelector('#etcin');
+  if(etc)nextBtn.disabled=!clean(d.text);
+  inp.oninput=()=>{d.text=inp.value;nextBtn.disabled=!clean(d.text)};
+  inp.onkeydown=e=>{if(e.key==='Enter'&&clean(d.text)){e.preventDefault();nextBtn.click()}};
+  root.querySelector('#file').onchange=e=>{
+    const f=e.target.files[0];if(!f||!/^image\//.test(f.type))return;
+    if(d.img)URL.revokeObjectURL(d.img);
+    d.img=URL.createObjectURL(f);
+    const box=root.querySelector('.up');let im=box.querySelector('img');
+    if(!im){im=document.createElement('img');im.alt='올린 사진';box.appendChild(im)}
+    im.src=d.img;
+  };
+  DK.speak(s.q);
+}
+
+function review(){
+  clear();
+  const L=['물건','기분','행동'];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,2)}
+  <p class="q">이렇게 골랐어요.</p><p class="qs">바꾸고 싶으면 눌러 보세요.</p>
+  <div class="opts">${Q.map((s,i)=>`<button class="opt" data-act="edit" data-i="${i}"><span class="no">${i+1}</span><span class="ov"><small>${L[i]}</small><b>${DK.esc(sel[s.key].v)}</b></span><span class="chg">바꾸기 ›</span></button>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="story">이야기 보기</button></div>${DK.DKU}`,{
+    home,edit:b=>step(+b.dataset.i),story:()=>story(0)
+  });
+}
+
+function story(p){
+  clear();
+  const txt=p<3?sentence(p):p===3?S4:S5,last=p===4;
+  const img=p<3?scene(p):`<img src="img/s${p+1}.jpg" alt="${p===3?'난처한 표정의 어머니':'마주 보고 이야기하는 시우 씨와 어머니'}">`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(5,p)}
+  <p class="pg">STORY ${p+1} / 5</p><p class="q">${TITLES[p]}</p>
+  <div class="win story"><i class="tp"></i><span class="stamp sm">${p+1}</span><span class="wp">${img}</span></div>
+  ${DK.sayBig(txt)}
+  ${last?`<p class="endnote">선생님, 친구와 함께 이야기해 보세요.</p>`:''}
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button>${last?'<span></span>':'<button class="btn pri" data-act="next">다음 ›</button>'}</div>
+  ${last?`<div class="acts"><button class="btn pri" data-act="other">다른 선택으로 만들기</button><button class="btn line" data-act="again">처음부터 다시하기</button></div>`:''}${DK.DKU}`,{
+    home,prev:()=>p?story(p-1):review(),next:()=>story(p+1),
+    other:()=>{clear();reset();step(0)},again:home
+  });
+  later(()=>DK.speak(txt),350);
+}
+
+home();
+</script>
+</body>
+</html>

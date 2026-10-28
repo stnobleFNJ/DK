@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4efdf">
+<title>내가 살고 싶은 집</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* ===== 두 사진 대결 화면 — 1-1 「오늘의 PICK」 reels(gal 라벨 + scr 배지)를 옮겼다 ===== */
+.vsv{display:flex;flex-direction:column;min-height:calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+.rrow{display:flex;align-items:center;gap:10px}
+.rrow .seg{flex:1;margin:0}
+.rbtn{flex:none;width:38px;height:38px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;font:700 18px var(--fb);color:var(--ink)}
+.rbtn[disabled]{opacity:.35}
+.rqrow{display:flex;align-items:center;gap:10px;margin:12px 0 0}
+.rq{flex:1;margin:0;font:var(--hw) 25px/1.25 var(--fh);letter-spacing:-.03em}
+.rq small{display:block;font:500 13px var(--fb);color:var(--muted);letter-spacing:0;margin-top:2px}
+.rq small b{color:var(--ac)}
+.duel{position:relative;flex:1;display:flex;flex-direction:column;gap:12px;margin-top:12px;min-height:440px}
+.half{position:relative;flex:1;min-height:210px;border-radius:10px;overflow:hidden;background:#222;box-shadow:0 6px 16px rgba(60,40,20,.16);transition:opacity .35s,filter .35s,box-shadow .2s}
+.half img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.half::before{content:"";position:absolute;inset:38% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.72));z-index:1;pointer-events:none}
+.half.off{opacity:.32;filter:grayscale(.7)}
+.half.on{box-shadow:0 0 0 4px var(--ac),0 10px 22px rgba(60,40,20,.24)}
+.half .nm{position:absolute;left:14px;right:78px;bottom:14px;z-index:2;color:#fff;font:var(--lw) 22px/1.3 var(--fl);letter-spacing:-.03em;text-shadow:0 1px 8px rgba(0,0,0,.55);text-align:left}
+.half .rail{position:absolute;right:12px;bottom:12px;z-index:2;display:grid;gap:4px;justify-items:center;color:#fff;font:700 16px var(--fh);text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.half .rail b{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:var(--paper);color:var(--ac);border:2px dashed var(--ac);transition:transform .25s,background .25s}
+.half.a .nm{bottom:36px}
+.half.a .rail{bottom:32px}
+.half .rail svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.1;transition:fill .2s}
+.half.on .rail b{transform:scale(1.14);background:var(--ac);color:#fff;border-color:transparent}
+.half.on .rail svg{fill:#fff;stroke:#fff}
+.vs{position:absolute;left:50%;top:50%;z-index:7;width:58px;height:58px;border-radius:50%;background:var(--ac);color:var(--on);font:700 22px var(--fh);display:grid;place-items:center;transform:translate(-50%,-50%) rotate(12deg);box-shadow:2px 3px 0 rgba(0,0,0,.2);pointer-events:none}
+.pk{position:absolute;left:50%;top:46%;z-index:4;display:none;pointer-events:none;white-space:nowrap;color:#fff;font:700 40px var(--fh);border:4px solid var(--ac);border-radius:50%;padding:4px 26px 8px;background:rgba(0,0,0,.25);text-shadow:0 2px 6px rgba(0,0,0,.4);--pr:-8deg;transform:translate(-50%,-50%) rotate(var(--pr))}
+.half.on .pk{display:block;animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(var(--pr))}to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(var(--pr))}}
+.vsv .dku{margin:12px 0 0}
+.vsv .dku img{width:84px}
+/* 대결 화면 위 유형별 점수 */
+.score{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 0}
+.score span{display:flex;align-items:center;justify-content:center;gap:4px;font:700 12px var(--fb);background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:4px 2px;white-space:nowrap}
+.score b{font:700 13px var(--fb);color:var(--ac);min-width:12px;text-align:center}
+.score span.up{border-color:var(--ac);animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.12)}}
+
+/* 처음 화면: 주거 유형 4가지 */
+.types{display:grid;gap:8px;margin:18px 0 0}
+.ty{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:2px 2px 0 var(--line)}
+.ty i{flex:none;font-style:normal;font-size:26px;width:40px;text-align:center}
+.ty b{display:block;font:var(--hw) 21px/1.2 var(--fh)}
+.ty small{display:block;font-size:13px;color:var(--muted)}
+
+/* 결과 */
+.win .stamp{font-size:19px}
+.win .em{font-size:30px;margin-right:4px}
+.bars{display:grid;gap:10px;margin:0}
+.bar{display:grid;grid-template-columns:96px 1fr 26px;align-items:center;gap:8px;font:700 14px var(--fb)}
+.bar .tr{height:12px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar .tr i{display:block;height:100%;border-radius:99px;background:var(--muted)}
+.bar.top .tr i{background:var(--ac)}
+.bar.top{color:var(--ac)}
+.bar em{font-style:normal;text-align:right}
+.tie{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#fff7e0;font-size:14px;font-weight:700;color:#7a5a12}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 골라요!</h2><ol><li>위·아래 사진 2장 중에서 <b>더 마음에 드는 쪽</b>을 눌러요.</li><li>모두 12문제예요.</li><li>마지막에 나에게 어울리는 주거유형이 나와요.</li></ol><p>정답은 없어요. ↶ 버튼으로 이전 선택으로 돌아갈 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'집',html:'살고 싶은 <b>집</b>'};
+// 주거 유형 4가지 · 12문항 — 프로토타입 「중6-2 주거이상형월드컵 4유형판.html」 그대로
+// short = 점수판에 쓰는 짧은 이름(프로토타입 점수판과 같음)
+const TYPES={
+  I:{name:'자립홈',short:'자립홈',emoji:'🏘️',desc:'담당자와 따로 살면서, 필요할 때만 도움을 받아요.',img:'img/h03.jpg'},
+  G:{name:'공동생활가정 (그룹홈)',short:'그룹홈',emoji:'👥',desc:'4~6명이 담당자와 함께 살며 서로 도와요.',img:'img/h10.jpg'},
+  F:{name:'거주시설',short:'거주시설',emoji:'🏢',desc:'많은 사람들과 함께, 24시간 도와주는 사람과 살아요.',img:'img/h06.jpg'},
+  D:{name:'독립생활',short:'독립생활',emoji:'🔑',desc:'혼자, 스스로의 힘으로 살아요.',img:'img/h08.jpg'}
+};
+// 임시: 결과 화면 대표 그림(TYPES[].img)은 프로토타입에 없어 유형별 그림 중 하나로 정함(③ 자립홈, ⑩ 그룹홈, ⑥ 거주시설, ⑧ 독립생활)
+// 보기 문구 → 그림: 원본 그림 파일 이름의 ①~⑫ 문구와 맞춰 연결(img/hNN.jpg)
+const H=n=>`img/h${String(n).padStart(2,'0')}.jpg`;
+// 4유형 라운드로빈: I-G, I-F, I-D, G-F, G-D, F-D 를 각각 2문항씩 = 12문항
+const QUESTIONS=[
+  {a:{type:'I',txt:'필요할 때만 도움 요청하기',img:H(1)},  b:{type:'G',txt:'선생님과 함께 살기',img:H(2)}},
+  {a:{type:'I',txt:'내 방 쓰고 공용공간만 같이',img:H(3)}, b:{type:'G',txt:'4~6명과 방까지 같이',img:H(4)}},
+  {a:{type:'I',txt:'소수의 사람과 살기',img:H(5)},         b:{type:'F',txt:'30명 이상과 함께 살기',img:H(6)}},
+  {a:{type:'I',txt:'필요할 때만 도움받기',img:H(1)},       b:{type:'F',txt:'24시간 도움받기',img:H(7)}},
+  {a:{type:'I',txt:'다른 사람과 함께 살기',img:H(5)},      b:{type:'D',txt:'혼자 살기',img:H(8)}},
+  {a:{type:'I',txt:'필요하면 도움 요청하기',img:H(1)},     b:{type:'D',txt:'모든 걸 스스로 하기',img:H(9)}},
+  {a:{type:'G',txt:'4~6명과 살기',img:H(10)},              b:{type:'F',txt:'30명 이상과 살기',img:H(6)}},
+  {a:{type:'G',txt:'직접 요리해서 먹기',img:H(11)},        b:{type:'F',txt:'식당에서 다같이 식사하기',img:H(12)}},
+  {a:{type:'G',txt:'선생님과 함께 살기',img:H(2)},         b:{type:'D',txt:'혼자, 선생님 없이 살기',img:H(8)}},
+  {a:{type:'G',txt:'여러 사람과 함께 살기',img:H(10)},     b:{type:'D',txt:'혼자 살기',img:H(8)}},
+  {a:{type:'F',txt:'24시간 도움받기',img:H(7)},            b:{type:'D',txt:'스스로 다 하기',img:H(9)}},
+  {a:{type:'F',txt:'많은 사람과 함께 살기',img:H(6)},      b:{type:'D',txt:'혼자 살기',img:H(8)}}
+];
+const KEYS=Object.keys(TYPES);
+const Q='더 마음에 드는 쪽을 골라주세요';
+const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.4-4.4-9.2-8.9C1.5 8 3.6 4.6 7.1 4.6c2 0 3.4 1 4.9 2.8 1.5-1.8 2.9-2.8 4.9-2.8 3.5 0 5.6 3.4 4.3 6.8-1.8 4.5-9.2 8.9-9.2 8.9z"/></svg>';
+
+const root=document.getElementById('app');
+let order=[],round=0,scores={},hist=[],locked=false,timer=null,last=null;
+const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}};
+
+function home(){
+  quiet();clearTimeout(timer);locked=false;
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Housing world cup</span><h1 class="h1">내가 살고 싶은 집<br><em>주거 이상형 월드컵</em></h1>
+  <p>자립홈 · 공동생활가정 · 거주시설 · 독립생활<br>둘 중 더 마음에 드는 모습을 골라보세요.<br>모두 12문제예요.</p></section>
+  <div class="types">${KEYS.map(k=>`<div class="ty"><i aria-hidden="true">${TYPES[k].emoji}</i><span><b>${TYPES[k].name}</b><small>${TYPES[k].desc}</small></span></div>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start});
+}
+function start(){
+  order=DK.shuffle(QUESTIONS);round=0;hist=[];last=null;
+  scores={};KEYS.forEach(k=>scores[k]=0);
+  vs();
+}
+
+function vs(){
+  const q=order[round],pair=[q.a,q.b];
+  const say=`${Q}. ${q.a.txt}. 아니면, ${q.b.txt}.`;
+  DK.mount(root,`<div class="vsv">
+  <div class="rtop"><div class="rrow"><button class="rbtn" data-act="home" aria-label="처음으로">‹</button>${DK.seg(order.length,round)}<button class="rbtn" data-act="undo" aria-label="이전 선택으로" ${hist.length?'':'disabled'}>↶</button></div>
+  <div class="rqrow"><p class="rq">${Q}<small><b>${round+1} / ${order.length}</b> 번째 문제</small></p><button class="spk" data-say="${DK.esc(say)}" aria-label="소리로 듣기">${DK.SPK}</button></div>
+  <div class="score" aria-label="유형별 점수">${KEYS.map(k=>`<span class="${k===last?'up':''}">${TYPES[k].emoji} ${TYPES[k].short} <b>${scores[k]}</b></span>`).join('')}</div></div>
+  <div class="duel">${pair.map((c,i)=>`<button class="half ${i?'b':'a'}" data-act="pick" data-i="${i}" aria-label="${DK.esc(c.txt)} 고르기"><img src="${c.img}" alt=""><span class="nm">${DK.esc(c.txt)}</span><span class="rail"><b>${HEART}</b><span>좋아</span></span><span class="pk">이거!</span></button>`).join('')}
+  <span class="vs" aria-hidden="true">VS</span></div>${DK.DKU}</div>`,{
+    home,
+    undo:()=>{if(!hist.length||locked)return;const h=hist.pop();round=h.round;scores=h.scores;last=null;vs()},
+    pick:b=>{
+      if(locked)return;locked=true;
+      const i=+b.dataset.i,chosen=pair[i];
+      root.querySelectorAll('.half').forEach((h,j)=>h.classList.add(j===i?'on':'off'));
+      root.querySelectorAll('[data-act=undo]').forEach(u=>u.disabled=true);
+      timer=setTimeout(()=>{
+        hist.push({round,scores:{...scores}});
+        scores[chosen.type]++;last=chosen.type;round++;locked=false;quiet();
+        round>=order.length?result():vs();
+      },matchMedia('(prefers-reduced-motion: reduce)').matches?150:700);
+    }
+  });
+}
+
+function result(){
+  quiet();
+  // 가장 많이 고른 유형. 점수가 같으면 자립홈 → 그룹홈 → 거주시설 → 독립생활 순으로 앞의 것(프로토타입과 같음)
+  let best='I';KEYS.forEach(k=>{if(scores[k]>scores[best])best=k});
+  const t=TYPES[best],max=Math.max(1,...KEYS.map(k=>scores[k]));
+  // 임시: 같은 점수 유형 안내 문구는 프로토타입에 없어 추가함
+  const ties=KEYS.filter(k=>k!==best&&scores[k]===scores[best]);
+  const line=`나에게 어울리는 주거유형은 「${t.name}」`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <section class="hero"><span class="eb">My home type</span><h1 class="h1">나에게 어울리는<br><em>주거유형은</em></h1><p>12번 고른 답 중에서 가장 많이 고른 유형이에요.</p></section>
+  <article class="win"><span class="stamp">${scores[best]}번<br>골랐어요</span><span class="wp"><img src="${t.img}" alt="${DK.esc(t.name)} 모습"></span><div class="wc"><h2><span class="em" aria-hidden="true">${t.emoji}</span>「${DK.esc(t.name)}」</h2><p>${DK.esc(t.desc)}</p></div></article>
+  ${DK.sayBig(line)}
+  <section class="note"><i class="tp"></i><h3>내가 고른 횟수</h3>
+  <div class="bars">${KEYS.map(k=>`<div class="bar${k===best?' top':''}"><span>${TYPES[k].emoji} ${TYPES[k].short}</span><span class="tr"><i style="width:${scores[k]/max*100}%"></i></span><em>${scores[k]}</em></div>`).join('')}</div>
+  ${ties.length?`<p class="tie">${ties.map(k=>TYPES[k].short).join(', ')}도 같은 횟수예요. 선생님과 이야기해 봐요.</p>`:''}</section>
+  <div class="acts two"><button class="btn sec" data-act="home">‹ 처음으로</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,again:start
+  });
+  DK.speak(line);
+}
+
+home();
+</script>
+</body>
+</html>

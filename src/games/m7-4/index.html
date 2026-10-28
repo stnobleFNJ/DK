@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>이건 학대일까요?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--emo:#b8506f;--eco:#b9780d;--sex:#3f6fa8}
+.types{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.tg{display:inline-block;font:700 13px var(--fb);border-radius:999px;padding:3px 12px;color:#fff}
+.tg.emo{background:var(--emo)}.tg.eco{background:var(--eco)}.tg.sex{background:var(--sex)}
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.photo.qp{margin:14px 6px 0}
+.photo.qp .cp{aspect-ratio:4/3}
+/* O · X 버튼 */
+.ox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 0}
+.ox button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 14px;background:var(--paper);border:2.5px solid var(--line);border-radius:16px;box-shadow:3px 3px 0 var(--line);font:700 16px var(--fb);color:var(--ink);transition:border-color .15s,background .15s}
+.ox button b{font:900 54px/1 var(--fb)}
+.ox .o b{color:#3f6fa8}.ox .x b{color:var(--no)}
+.ox button:active{transform:scale(.97)}
+.ox button.ok{border-color:var(--ok);background:#f2f6ea}
+.ox button.wrong{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.ox button.right{border-color:var(--ok);border-style:dashed}
+.ox button:disabled{opacity:1}
+.ox button.dim{opacity:.45}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.score .n{font:var(--lw) 46px/1.1 var(--fl);letter-spacing:-.03em;margin:4px 0 0}
+.score .n small{font-size:24px;color:var(--muted)}
+.score p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.bars{display:grid;gap:12px;margin:18px 0 0}
+.bar{display:flex;align-items:center;gap:10px}
+.bar .bl{flex:none;width:60px;font-weight:700}
+.bar .bt{flex:1;height:14px;border-radius:999px;background:var(--soft);overflow:hidden}
+.bar .bt i{display:block;height:100%;border-radius:999px}
+.bar .bc{flex:none;width:58px;text-align:right;font-size:13px;color:var(--muted)}
+.focus{margin:18px 0 0;padding:14px 16px;border-radius:14px;background:#fbeee9;border:1px solid #e9c3b8;line-height:1.65;font-size:15px}
+.focus b{color:var(--ac)}
+.wl{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.wl li{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:8px;padding:7px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.wl img{flex:none;width:34%;aspect-ratio:4/3;object-fit:cover;border-radius:4px}
+.wl span{flex:1;font-size:14px;line-height:1.45}
+.wl small{display:block;margin-top:3px;color:var(--muted);font-size:13px}
+.wh{display:flex;align-items:center;gap:8px;margin:16px 0 0;font-weight:700}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>그림과 상황을 잘 봐요.</li><li>학대라고 생각하면 <b>O</b>, 아니라고 생각하면 <b>X</b>를 눌러요.</li><li>12문제를 다 풀면 맞힌 개수와 헷갈린 학대 유형을 알려 줘요.</li><li>틀린 문제만 다시 풀 수 있어요.</li></ol><p>불편한 일이 있으면 믿을 수 있는 사람에게 꼭 이야기해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'O',html:'이건 <b>학대일까요?</b>'};
+// 문항·정답·유형·설명은 프로토타입(중7-4 학대알아차리기 게임 12문항) 그대로. 바꾸지 않는다.
+// 그림 q01~q12는 원본 '중7-4 활용 그림'의 같은 번호 그림(tools/gen_m7_4.py). abuse:true = O(학대), false = X(학대 아님).
+const ALL=[
+  {id:1,type:'emo',text:'동료들이 제가 싫어하는 별명으로 부르며 놀려요.',abuse:true,
+   explain:'싫어하는 별명으로 부르며 놀리는 것은 정서적 학대예요.'},
+  {id:2,type:'emo',text:'밥 먹을 때 저만 빼고 다른 사람들끼리 모여서 먹어요.',abuse:true,
+   explain:'일부러 따돌리는 것은 정서적 학대예요.'},
+  {id:3,type:'emo',text:'손님이 큰소리로 욕을 하고, 화가 나서 물건을 던졌어요.',abuse:true,
+   explain:'소리 지르기, 물건 던지기로 겁을 주는 것은 정서적 학대예요.'},
+  {id:4,type:'emo',text:"제가 실수를 했을 때, 팀장님이 '잘못했네요. 수정하세요.'라고 차분한 목소리로 말했어요.",abuse:false,
+   explain:'모욕이나 겁주기 없이 차분하게 알려주는 것은 정당한 안내예요.'},
+  {id:5,type:'eco',text:'몇 달 동안 일을 시켰는데, 월급을 제대로 주지 않았어요.',abuse:true,
+   explain:'일을 시키고 정당한 대가를 주지 않는 것은 경제적 착취(학대)예요.'},
+  {id:6,type:'eco',text:"동네 형이 '안 쓰는 통장 빌려주면 100만 원 줄게'라며 통장과 비밀번호를 받아갔어요.",abuse:true,
+   explain:'통장·비밀번호를 이용해 이익을 취하는 것은 경제적 착취예요. 범죄에 이용될 수도 있어요.'},
+  {id:7,type:'eco',text:'활동지원사가 제 허락 없이 통장에서 돈을 빼서 마음대로 썼어요.',abuse:true,
+   explain:'허락 없이 돈을 가져가 쓰는 것은 명백한 경제적 학대예요.'},
+  {id:8,type:'eco',text:'평생교육센터 프로그램을 듣기 위해 정해진 수강료를 냈어요.',abuse:false,
+   explain:'강요나 속임 없이 정해진 비용을 내는 것은 정당한 거래예요.'},
+  {id:9,type:'sex',text:'채팅에서 알게 된 사람이 몸 사진을 계속 요구했어요.',abuse:true,
+   explain:'원치 않는 몸 사진을 계속 요구하는 것은 성적 학대예요.'},
+  {id:10,type:'sex',text:'직장 동료가 제 외모나 몸에 대해 성적인 말을 자꾸 했어요.',abuse:true,
+   explain:'원치 않는 성적인 말을 반복하는 것도 성적 학대예요.'},
+  {id:11,type:'sex',text:"사장님이 '정리하는 자세를 알려줄게요' 하며 다가와서 제 허리를 감싸듯 손을 올렸어요.",abuse:true,
+   explain:'정리하는 자세는 말로도 알려줄 수 있어요. 굳이 허리를 만질 필요가 없는 접촉은 성적 학대예요.'},
+  {id:12,type:'sex',text:"활동지원사님이 '팔을 여기로 넣어볼까요?' 하며 옷 입는 걸 도와줬어요.",abuse:false,
+   explain:'옷 입기처럼 실제로 필요한 도움을 주는 접촉은 학대가 아니에요.'}
+].map(q=>({...q,img:`img/q${DK.pad(q.id)}.jpg`}));
+const TYPE={emo:'정서적',eco:'경제적',sex:'성적'};
+const ORDER=['emo','eco','sex'];
+
+const root=document.getElementById('app');
+let qs=[],cur=0,answers=[],retry=false,wrongIds=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const tg=t=>`<i class="tg ${t}">${TYPE[t]}</i>`;
+
+function home(){
+  clear();
+  const say='이건 학대일까요? 12가지 상황을 보고 알맞은 답을 골라보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Is this abuse?</span><h1 class="h1">이건<br><em>학대일까요?</em></h1><p>12가지 상황을 보고 알맞은 답을 골라보세요</p></section>
+  <div class="note"><i class="tp"></i>
+    <p style="margin:0"><b>정서적 · 경제적 · 성적</b> 상황이 섞여서 나와요.<br>각 상황을 읽고 <b>학대예요(O) / 아니에요(X)</b> 중에서 골라보세요.</p>
+    <p style="margin:10px 0 0">마지막에 내가 <b>가장 많이 틀린 유형</b>을 알려주고,<br>틀린 문제만 다시 풀어볼 수 있어요.</p>
+    <div class="types">${ORDER.map(tg).join('')}</div>
+  </div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:()=>start(ALL,false)
+  });
+  DK.speak(say);
+}
+
+function start(list,isRetry){qs=DK.shuffle(list);cur=0;answers=[];retry=isRetry;ask()}
+
+function ask(){
+  clear();
+  const q=qs[cur],last=cur===qs.length-1;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(qs.length,cur)}
+  <span class="qn">${retry?'다시 풀기 · ':''}${cur+1} / ${qs.length}</span>
+  <div class="photo qp tilt-l"><i class="tp"></i><span class="cp"><img src="${q.img}" alt="상황 그림"></span></div>
+  ${DK.sayBig(q.text)}
+  <p class="q">이건 학대일까요?</p><p class="qs">학대이면 O, 아니면 X를 눌러요.</p>
+  <div class="ox"><button class="o" data-act="pick" data-v="1" aria-label="O, 학대예요"><b>O</b>학대예요</button><button class="x" data-act="pick" data-v="0" aria-label="X, 아니에요"><b>X</b>아니에요</button></div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 문제 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>{cur++;cur<qs.length?ask():result()},
+    pick:b=>{
+      const chose=b.dataset.v==='1',ok=chose===q.abuse;
+      root.querySelectorAll('.ox button').forEach(x=>{
+        x.disabled=true;
+        if(x===b)x.classList.add(ok?'ok':'wrong');
+        else if(!ok)x.classList.add('right');
+        else x.classList.add('dim');
+      });
+      answers.push({id:q.id,type:q.type,correct:ok});
+      const head=ok?'✅ 맞았어요!':'❌ 다시 생각해볼까요.';   // 프로토타입 문구
+      const ans=q.abuse?'정답은 O(학대예요)':'정답은 X(아니에요)';
+      root.querySelector('#fb').innerHTML=`<p class="fb ${ok?'ok':'no'}"><span>${head}${ok?'':` <small style="display:inline">${ans}</small>`}<small>${q.explain}</small></span></p>`;
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      DK.speak(`${ok?'맞았어요!':'다시 생각해볼까요. '+ans+'.'} ${q.explain}`);
+      later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  later(()=>DK.speak(q.text+' 이건 학대일까요?'),300);
+}
+
+function result(){
+  clear();
+  const total=answers.length,right=answers.filter(a=>a.correct).length;
+  const wrong={emo:0,eco:0,sex:0},all={emo:0,eco:0,sex:0};
+  answers.forEach(a=>{all[a.type]++;if(!a.correct)wrong[a.type]++});
+  const max=Math.max(...ORDER.map(t=>wrong[t]));
+  wrongIds=answers.filter(a=>!a.correct).map(a=>a.id);
+  // 프로토타입 문구 그대로
+  const focus=max===0?'모든 유형을 잘 구분했어요! 앞으로도 불편한 상황이 있으면 꼭 이야기해주세요. 😊'
+    :`<b>${ORDER.filter(t=>wrong[t]===max).map(t=>TYPE[t]).join(', ')} 학대</b> 관련 문제를 조금 더 헷갈려했어요.<br>아래 버튼으로 틀린 문제만 다시 풀어볼까요?`;
+  const wq=ALL.filter(q=>wrongIds.includes(q.id));
+  const groups=ORDER.filter(t=>wq.some(q=>q.type===t));
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">${max===0?'모두<br>맞힘':'잘<br>했어요'}</i><div aria-hidden="true" style="font-size:40px">🎉</div><p class="n">${right} <small>/ ${total}</small></p><p>맞혔어요</p>
+    <div class="bars">${ORDER.map(t=>{const p=all[t]?Math.round(wrong[t]/all[t]*100):0;return `<div class="bar"><span class="bl">${TYPE[t]}</span><span class="bt"><i style="width:${p}%;background:var(--${t})"></i></span><span class="bc">${wrong[t]}개 틀림</span></div>`}).join('')}</div>
+    <div class="focus" style="text-align:left">${focus}</div>
+  </div>
+  ${groups.length?`<div class="note"><h3>다시 살펴볼 문제</h3>${groups.map(t=>`<p class="wh">${tg(t)} 학대 · ${wq.filter(q=>q.type===t).length}문제</p><ul class="wl">${wq.filter(q=>q.type===t).map(q=>`<li><img src="${q.img}" alt=""><span>${q.text}<small>${q.abuse?'O 학대예요':'X 아니에요'} · ${q.explain}</small></span></li>`).join('')}</ul>`).join('')}</div>`:''}
+  <div class="acts">${wrongIds.length?`<button class="btn pri" data-act="retry">↻ 틀린 문제 ${wrongIds.length}개 다시 풀기</button>`:''}<button class="btn ${wrongIds.length?'line':'pri'}" data-act="restart">처음부터 다시 하기</button></div>${DK.DKU}`,{
+    home,restart:home,retry:()=>start(wq,true)
+  });
+  DK.speak(`${total}문제 중 ${right}개 맞혔어요. `+(max===0?'모든 유형을 잘 구분했어요!':`${ORDER.filter(t=>wrong[t]===max).map(t=>TYPE[t]).join(', ')} 학대 관련 문제를 조금 더 헷갈려했어요.`));
+}
+
+home();
+</script>
+</body>
+</html>

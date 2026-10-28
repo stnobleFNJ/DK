@@ -1,0 +1,13 @@
+# cafe24(Apache) 설정: src 폴더 안의 파일을 웹 루트(www)에 그대로 올린다.
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+Options -Indexes
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType text/css "access plus 1 day"
+  ExpiresByType application/javascript "access plus 1 day"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>

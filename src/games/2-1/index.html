@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>소비기한 확인하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--use:#3f6fa8;--eat:#c0632a}
+/* 기한 설명 */
+.defs{display:grid;gap:8px;margin:12px 0 0}
+.def{display:flex;gap:10px;align-items:center;background:#fff;border-radius:10px;padding:9px 12px;border:2px solid var(--line)}
+.def b{flex:none;font:700 14px var(--fb);color:#fff;border-radius:6px;padding:3px 9px}
+.def.use{border-color:#bcd0ea}.def.use b{background:var(--use)}
+.def.eat{border-color:#efc6a8}.def.eat b{background:var(--eat)}
+.def span{font-size:14px;line-height:1.45}
+/* 1단계: 찾기 */
+.qn{display:inline-flex;align-items:center;gap:6px;margin:14px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.photo.prod{margin:16px 4px 0}
+.prod .cp{position:relative;cursor:pointer}
+.hot{position:absolute;border:4px solid transparent;border-radius:8px;pointer-events:none;transition:border-color .2s,box-shadow .2s}
+.hot.hint{border-color:#f1c96b;animation:pulse 1s ease-in-out infinite}
+.hot.found{border-color:var(--ok);box-shadow:0 0 0 999px rgba(0,0,0,.28)}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(241,201,107,.6)}}
+.miss{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(185,84,60,.88);color:#fff;display:grid;place-items:center;font:900 18px var(--fb);pointer-events:none;animation:fade 1.2s forwards}
+@keyframes fade{70%{opacity:1}to{opacity:0}}
+/* 2단계: 날짜 읽기 */
+.zoom{position:relative;background:#fff;padding:8px;box-shadow:0 6px 14px rgba(60,40,20,.18);margin:16px 6px 0}
+.zoom img{width:100%;border-radius:4px}
+.kind{display:inline-block;font:700 14px var(--fb);color:#fff;border-radius:6px;padding:2px 10px}
+.kind.use{background:var(--use)}.kind.eat{background:var(--eat)}
+.dopts{display:grid;gap:10px}
+.dopt{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--paper);border:2.5px solid var(--line);border-radius:14px;padding:14px;font:var(--hw) 26px var(--fh);box-shadow:2px 2px 0 var(--line)}
+.dopt.ok{border-color:var(--ok);background:#f2f6ea}
+.dopt.wrong{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.dopt:disabled{opacity:1}.dopt.dim{opacity:.4}
+/* 3단계: 비교 */
+.cmp{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:16px 0 0}
+.cal{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 5px 12px rgba(60,40,20,.16);text-align:center}
+.cal i{display:block;font:700 14px var(--fb);color:#fff;font-style:normal;padding:5px 0}
+.cal b{display:block;font:var(--hw) 34px/1.1 var(--fh);padding:8px 0 2px}
+.cal small{display:block;font-size:12px;color:var(--muted);padding:0 0 8px}
+.cal.today i{background:var(--ink)}
+.cal.use i{background:var(--use)}.cal.eat i{background:var(--eat)}
+.cmp .vs{font:900 18px var(--fb);color:var(--muted)}
+.ox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 0}
+.ox button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 6px 14px;background:var(--paper);border:2.5px solid var(--line);border-radius:16px;box-shadow:3px 3px 0 var(--line);font:700 16px var(--fb);color:var(--ink)}
+.ox button b{font:900 46px/1 var(--fb)}
+.ox .y b{color:var(--ok)}.ox .n b{color:var(--no)}
+.ox button.ok{border-color:var(--ok);background:#f2f6ea}
+.ox button.wrong{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.ox button.right{border-color:var(--ok);border-style:dashed}
+.ox button:disabled{opacity:1}.ox button.dim{opacity:.45}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.score .n{font:var(--lw) 46px/1.1 var(--fl);letter-spacing:-.03em;margin:4px 0 0}
+.score .n small{font-size:24px;color:var(--muted)}
+.score p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.rl{display:grid;gap:10px;margin:10px 0 0}
+.ri{display:flex;gap:10px;align-items:center;background:#fff;padding:7px;border-radius:8px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.ri img{flex:none;width:34%;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
+.ri .rt{flex:1;min-width:0;font-size:13px;line-height:1.45}
+.ri .rt b{display:block;font-size:15px}
+.ri .rt em{font-style:normal;font-weight:700}
+.ri .rt em.y{color:var(--ok)}.ri .rt em.n{color:var(--no)}
+.ri .mk{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:900 15px var(--fb);color:#fff}
+.ri .mk.o{background:var(--ok)}.ri .mk.x{background:var(--no)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>그림에서 날짜가 쓰인 곳을 손가락으로 눌러 찾아요.</li><li>날짜가 언제까지인지 골라요.</li><li>오늘 날짜와 비교해서 먹을 수 있는지 골라요.</li></ol><p>날짜가 지나지 않았으면 먹을 수 있어요. 마지막 날까지는 괜찮아요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'기',html:'소비기한 <b>확인하기</b>'};
+// 기한 설명 = 교재 15쪽 문구.
+const DEF={use:{name:'유통기한',text:'가게에서 팔 수 있는 마지막 날짜'},eat:{name:'소비기한',text:'보관 방법을 지키면 먹을 수 있는 마지막 날짜'}};
+// 제품 그림·기한 종류·날짜 = 원본 그림(tools/gen_2_1.py). 연도는 그림처럼 20XX로 둔다.
+// box = 그림에서 날짜가 쓰인 곳(가로·세로 %: 왼쪽, 위, 너비, 높이), ar = 그림 비율.
+// 임시: 문항별 '오늘 날짜'와 날짜 보기(오답 2개)는 자료에 없어 만들었다. 먹을 수 있어요 3 · 없어요 2가 섞이게 했다.
+const Q=[
+  {id:'milk',name:'신선 우유',kind:'use',m:5,d:11,box:[31.7,87.9,29.7,6.4],ar:'4/3',today:10,wrong:[[5,1],[5,17]]},
+  {id:'sprout',name:'신선한 콩나물',kind:'eat',m:5,d:14,box:[29.8,73.0,40.5,9.9],ar:'4/3',today:16,wrong:[[5,4],[4,15]]},
+  {id:'pie',name:'아몬드 미니 파이',kind:'eat',m:5,d:12,box:[65.6,33.6,24.3,28.8],ar:'16/9',today:12,wrong:[[5,21],[12,5]]},
+  {id:'snack',name:'바삭 감자스낵',kind:'eat',m:5,d:30,box:[28.5,75.3,44.4,6.8],ar:'4/3',today:20,wrong:[[5,3],[3,5]]},
+  {id:'tofu',name:'찌개용 두부',kind:'eat',m:5,d:13,box:[57.4,57.4,38.1,16.3],ar:'4/3',today:15,wrong:[[5,3],[5,31]]}
+].map(q=>({...q,ok:q.today<=q.d}));
+const STEPS=['찾기','날짜 읽기','비교하기'];
+const ymd=(m,d)=>`20XX.${DK.pad(m)}.${DK.pad(d)}.`;
+const md=(m,d)=>`${m}월 ${d}일`;
+
+const root=document.getElementById('app');
+let timers=[],score=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const defsHtml=()=>`<div class="defs">${['use','eat'].map(k=>`<div class="def ${k}"><b>${DEF[k].name}</b><span>${DEF[k].text}</span></div>`).join('')}</div>`;
+const head=(i,step)=>`${DK.hbar(BRAND,true)}${DK.seg(Q.length,i)}<span class="qn">${i+1} / ${Q.length} · ${Q[i].name}</span><div style="margin-top:12px">${DK.steps(STEPS,step)}</div>`;
+
+function home(){
+  clear();
+  const say='소비기한 확인하기. 그림에서 날짜를 찾고, 오늘 날짜와 비교해서 먹을 수 있는지 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Check the date</span><h1 class="h1">먹어도 될까요?<br><em>날짜를 확인해요</em></h1><p>제품 5개의 날짜를 찾아요. 오늘 날짜와 비교해서 먹을 수 있는지 골라요.</p></section>
+  <div class="note"><i class="tp"></i><h3>두 가지 날짜</h3>${defsHtml()}
+    <p style="margin:12px 0 0;font-size:14px">날짜가 <b>지나지 않았으면</b> 먹을 수 있어요.<br>날짜가 <b>지났으면</b> 먹으면 안 돼요.</p></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:()=>{score=[];find(0)}
+  });
+}
+
+/* 1단계: 그림에서 날짜가 쓰인 곳 찾기 */
+function find(i){
+  clear();
+  const q=Q[i],[x,y,w,h]=q.box;
+  const say=`${q.name}${DK.eun(q.name)} 날짜가 어디에 쓰여 있을까요? 그림에서 날짜를 찾아 눌러 보세요.`;
+  DK.mount(root,`${head(i,0)}
+  <p class="q">날짜가 어디에 있을까요?</p><p class="qs">그림에서 날짜가 쓰인 곳을 눌러요.</p>
+  <div class="photo prod tilt-l"><i class="tp"></i><span class="cp" style="aspect-ratio:${q.ar}" data-act="tap" role="button" aria-label="${DK.esc(q.name)} 그림, 날짜가 쓰인 곳을 눌러요"><img src="img/${q.id}.jpg" alt="${DK.esc(q.name)}"><i class="hot" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i></span><span class="ct">${q.name}</span></div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">날짜 읽기 ›</button></div>${DK.DKU}`,{
+    home,next:()=>read(i),
+    tap:(el,e)=>{
+      if(el.dataset.done)return;
+      const r=el.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*100,py=(e.clientY-r.top)/r.height*100;
+      const pad=4,fb=root.querySelector('#fb'),hot=el.querySelector('.hot');
+      if(px>=x-pad&&px<=x+w+pad&&py>=y-pad&&py<=y+h+pad){
+        el.dataset.done=1;hot.className='hot found';
+        fb.innerHTML=`<p class="fb ok">✓<span>찾았어요!<small>여기에 ${DEF[q.kind].name}${DK.iga(DEF[q.kind].name)} 쓰여 있어요.</small></span></p>`;
+        DK.speak(`찾았어요! 여기에 ${DEF[q.kind].name}${DK.iga(DEF[q.kind].name)} 쓰여 있어요.`);
+        const nx=root.querySelector('#nx');nx.hidden=false;
+        later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+        return;
+      }
+      const m=document.createElement('i');m.className='miss';m.textContent='✕';m.style.left=px+'%';m.style.top=py+'%';el.appendChild(m);
+      later(()=>m.remove(),1300);
+      const miss=(+el.dataset.miss||0)+1;el.dataset.miss=miss;
+      if(miss>=2)hot.classList.add('hint');
+      const t=miss>=2?'노란 네모 안을 눌러 보세요.':'여기에는 날짜가 없어요. 다시 찾아 보세요.';
+      fb.innerHTML=`<p class="fb no">✕<span>${t}</span></p>`;DK.speak(t);
+    }
+  });
+  later(()=>DK.speak(say),300);
+}
+
+/* 2단계: 날짜 읽기 */
+function read(i){
+  clear();
+  const q=Q[i],K=DEF[q.kind];
+  const opts=DK.shuffle([[q.m,q.d,1],...q.wrong.map(([m,d])=>[m,d,0])]);
+  const say=`${K.name}${DK.eun(K.name)} 언제까지예요?`;
+  DK.mount(root,`${head(i,1)}
+  <div class="zoom tilt-r"><i class="tp"></i><img src="img/${q.id}-date.jpg" alt="${K.name} ${ymd(q.m,q.d)}까지"></div>
+  <p class="q"><span class="kind ${q.kind}">${K.name}</span> 언제까지예요?</p><p class="qs">그림의 날짜를 잘 보고 골라요.</p>
+  <div class="dopts">${opts.map(([m,d,ok])=>`<button class="dopt" data-act="pick" data-ok="${ok}">${md(m,d)}까지</button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">오늘 날짜와 비교하기 ›</button></div>${DK.DKU}`,{
+    home,next:()=>compare(i),
+    pick:b=>{
+      const fb=root.querySelector('#fb');
+      if(b.dataset.ok!=='1'){
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        fb.innerHTML=`<p class="fb no">✕<span>다시 보세요.<small>그림에서 숫자를 하나씩 읽어 봐요.</small></span></p>`;DK.speak('다시 보세요.');
+        return;
+      }
+      root.querySelectorAll('.dopt').forEach(o=>{o.disabled=true;if(o!==b)o.classList.add('dim')});
+      b.classList.add('ok');
+      fb.innerHTML=`<p class="fb ok">✓<span>맞아요!<small>${K.name}${DK.eun(K.name)} ${md(q.m,q.d)}까지예요. (${ymd(q.m,q.d)}까지)</small></span></p>`;
+      DK.speak(`맞아요! ${K.name}${DK.eun(K.name)} ${md(q.m,q.d)}까지예요.`);
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  later(()=>DK.speak(say),300);
+}
+
+/* 3단계: 오늘 날짜와 비교 */
+function why(q){
+  const K=DEF[q.kind].name,lim=md(q.m,q.d),t=md(q.m,q.today);
+  if(q.today>q.d)return `오늘(${t})은 ${K}(${lim})${DK.iga(lim)} 지났어요. 먹으면 안 돼요.`;
+  if(q.today===q.d)return `오늘(${t})이 ${K} 마지막 날이에요. 오늘까지는 먹을 수 있어요.`;
+  return `${K}(${lim})${DK.iga(lim)} 아직 지나지 않았어요. 먹을 수 있어요.`;
+}
+function compare(i){
+  clear();
+  const q=Q[i],K=DEF[q.kind],last=i===Q.length-1;
+  const say=`오늘은 ${md(q.m,q.today)}이에요. ${K.name}${DK.eun(K.name)} ${md(q.m,q.d)}까지예요. ${q.name}, 먹어도 될까요?`;
+  DK.mount(root,`${head(i,2)}
+  <div class="cmp"><div class="cal today"><i>오늘</i><b>${md(q.m,q.today)}</b><small>${ymd(q.m,q.today)}</small></div><span class="vs">VS</span><div class="cal ${q.kind}"><i>${K.name}</i><b>${md(q.m,q.d)}</b><small>${ymd(q.m,q.d)}까지</small></div></div>
+  <p class="q">${q.name}, 먹어도 될까요?</p><p class="qs">오늘 날짜와 ${K.name}${DK.eul(K.name)} 비교해요.</p>
+  <div class="ox"><button class="y" data-act="pick" data-v="1"><b>O</b>먹을 수 있어요</button><button class="n" data-act="pick" data-v="0"><b>X</b>먹을 수 없어요</button></div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 제품 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>last?result():find(i+1),
+    pick:b=>{
+      const ok=(b.dataset.v==='1')===q.ok;
+      root.querySelectorAll('.ox button').forEach(x=>{x.disabled=true;if(x===b)x.classList.add(ok?'ok':'wrong');else x.classList.add(ok?'dim':'right')});
+      score[i]=ok;
+      const ans=q.ok?'먹을 수 있어요':'먹을 수 없어요';
+      root.querySelector('#fb').innerHTML=`<p class="fb ${ok?'ok':'no'}">${ok?'✓':'✕'}<span>${ok?'맞았어요!':'정답은 「'+ans+'」예요.'}<small>${why(q)}</small></span></p>`;
+      DK.speak(`${ok?'맞았어요!':'정답은 '+ans+'.'} ${why(q)}`);
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  later(()=>DK.speak(say),300);
+}
+
+function result(){
+  clear();
+  const right=score.filter(Boolean).length,all=right===Q.length;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">${all?'모두<br>맞힘':'잘<br>했어요'}</i><div aria-hidden="true" style="font-size:40px">🥛</div><p class="n">${right} <small>/ ${Q.length}</small></p><p>맞혔어요</p></div>
+  <div class="note"><i class="tp"></i><h3>날짜, 이렇게 봐요</h3>${defsHtml()}
+    <ul style="margin-top:10px;font-size:14px"><li>날짜가 지나지 않았으면 먹을 수 있어요.</li><li>마지막 날까지는 먹을 수 있어요.</li><li>날짜가 지났으면 먹지 않아요.</li></ul></div>
+  <p class="sl" style="margin:20px 0 0">내가 확인한 제품</p>
+  <div class="rl">${Q.map((q,i)=>`<div class="ri"><img src="img/${q.id}.jpg" alt=""><span class="rt"><b>${q.name}</b>${DEF[q.kind].name} ${md(q.m,q.d)}<br>오늘 ${md(q.m,q.today)} → <em class="${q.ok?'y':'n'}">${q.ok?'먹을 수 있어요':'먹을 수 없어요'}</em></span><span class="mk ${score[i]?'o':'x'}" aria-label="${score[i]?'맞힘':'틀림'}">${score[i]?'O':'X'}</span></div>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="home">처음으로</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,again:()=>{score=[];find(0)}
+  });
+  DK.done({score:right+'/'+Q.length});
+  later(()=>DK.speak(`${Q.length}개 중 ${right}개 맞혔어요. 먹기 전에 꼭 날짜를 확인해요.`),400);
+}
+
+home();
+</script>
+</body>
+</html>

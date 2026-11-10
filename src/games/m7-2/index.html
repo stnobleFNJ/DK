@@ -171,6 +171,7 @@ function finish(){
   <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
     home,again:newGame,listen:()=>DK.speak(`${order.length}개 중에서 ${n}개를 맞혔어요. ${DONE}.`)
   });
+  DK.done({score:n+'/'+order.length});
   later(()=>DK.speak(`${order.length}개 중에서 ${n}개를 맞혔어요. ${DONE}.`),400);
 }
 

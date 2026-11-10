@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>약 먹은 다음 이상 증상</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one symptom card at a time (picture → name → how it feels → "나도 있어요" check), big controls; second tab lays every card on one printable sheet. Single light look, matching the textbook's green. */
+:root{
+  --paper:#f5f8f1; --card:#ffffff; --ink:#23302a; --muted:#5f6b63;
+  --green:#3f7d2c; --green-soft:#e2eed7; --red:#d23f2f; --red-soft:#fbe4e0; --line:#cfd9c6;
+  --display:"Jua","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:14px;color:var(--green);font-weight:700;letter-spacing:.04em}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:2px 0 0;text-wrap:balance}
+.tabs{display:flex;gap:6px;background:var(--green-soft);padding:4px;border-radius:999px}
+.tabs button{border:0;background:transparent;font:inherit;font-weight:700;font-size:15px;color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--green);color:#fff}
+button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+
+.stage{background:var(--card);border:3px solid var(--ink);border-radius:6px;overflow:hidden}
+.panel svg{display:block;width:100%;height:auto}
+.info{border-top:3px solid var(--ink);padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.info .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.num{flex:none;font-family:var(--display);font-size:22px;background:var(--ink);color:#fff;border-radius:999px;width:44px;height:44px;display:grid;place-items:center}
+.info h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(30px,5vw,42px);line-height:1.2;color:var(--red)}
+.info ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.info li{font-family:var(--display);font-size:clamp(21px,3.4vw,27px);line-height:1.4;padding-left:30px;position:relative}
+.info li::before{content:"";position:absolute;left:6px;top:.55em;width:12px;height:12px;border-radius:50%;background:var(--green)}
+.mine{align-self:flex-start;font-family:var(--display);font-size:22px;border:3px solid var(--ink);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:56px}
+.mine .box{width:28px;height:28px;border:3px solid var(--ink);border-radius:6px;display:grid;place-items:center;background:#fff}
+.mine[aria-pressed="true"]{background:var(--green-soft);border-color:var(--green)}
+.mine[aria-pressed="true"] .box::after{content:"✔";color:var(--red);font-size:22px;line-height:1}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.navbtn{font-family:var(--display);font-size:24px;border:3px solid var(--ink);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 22px;min-height:60px;cursor:pointer}
+.navbtn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.navbtn:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.dots button{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);background:transparent;padding:0;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--ink)}
+.toggles{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font:inherit;font-weight:700;font-size:15px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+
+.playing .pop{animation:pop .55s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:var(--d,0s)}
+.playing .wobble{animation:wob 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.playing .shake{animation:shk .18s linear infinite;transform-box:fill-box}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes wob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes shk{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+.pop{transform-box:fill-box;transform-origin:center bottom}
+@media (prefers-reduced-motion:reduce){.playing .pop,.playing .wobble,.playing .shake{animation:none}}
+
+/* ending */
+.ending{padding:24px 20px;display:flex;flex-direction:column;gap:18px}
+.ending h2{font-family:var(--display);font-weight:400;font-size:clamp(30px,5vw,42px);margin:0;text-align:center;color:var(--green)}
+.mylist{border:3px dashed var(--line);border-radius:12px;padding:12px 16px;font-family:var(--display);font-size:22px;line-height:1.5}
+.mylist span{display:inline-block;background:var(--red-soft);color:var(--red);border-radius:999px;padding:2px 14px;margin:4px 6px 0 0}
+.todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.do{border:3px solid var(--ink);border-radius:12px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;background:var(--card)}
+.do svg{width:76px;height:76px}
+.do strong{font-family:var(--display);font-weight:400;font-size:26px;line-height:1.25}
+.do span{font-size:17px;line-height:1.5}
+.do.urgent{border-color:var(--red);background:var(--red-soft)}
+.do.urgent strong{color:var(--red)}
+
+/* sheet */
+.sheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cell{background:var(--card);border:3px solid var(--ink);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.cell .cap{border-top:3px solid var(--ink);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.cell .cap b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--red);display:flex;align-items:center;gap:10px}
+.cell .cap b i{margin-left:auto;font-style:normal;font-size:17px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.cell .cap b i::before{content:"";width:22px;height:22px;border:3px solid var(--ink);border-radius:4px}
+.cell .cap small{font-size:16px;color:var(--muted);line-height:1.5}
+.cell .todo{grid-template-columns:1fr}
+.cell .do{flex-direction:row;text-align:left;padding:10px}
+.cell .do svg{width:52px;height:52px;flex:none}
+.sheet-note{font-size:15px;color:var(--muted);margin:0}
+@media (max-width:620px){
+  .todo{grid-template-columns:1fr}
+  .sheet{grid-template-columns:1fr}
+  .navbtn{font-size:20px;padding:8px 14px}
+  .info{padding:12px 14px}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">약 먹은 다음 이상 증상 기록하기</div>
+      <h1>약 먹은 다음 이상 증상</h1>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-play" aria-selected="true">하나씩 보기</button>
+      <button role="tab" id="tab-sheet" aria-selected="false">한 장에 모아 보기</button>
+    </div>
+  </header>
+
+  <section id="view-play"><div class="stage" id="stage"></div></section>
+  <div class="controls" id="controls">
+    <button class="navbtn" id="prev">◀ 이전</button>
+    <div class="dots" id="dots"></div>
+    <button class="navbtn primary" id="next">다음 ▶</button>
+  </div>
+  <div class="toggles" id="toggles">
+    <button class="chip" id="tts" aria-pressed="false">🔊 읽어 주기</button>
+    <button class="chip" id="auto" aria-pressed="false">▶ 저절로 넘기기</button>
+    <button class="chip" id="restart">처음부터</button>
+  </div>
+
+  <section id="view-sheet" hidden>
+    <p class="sheet-note">8가지 증상을 한 장에 모았어요. 인쇄해서 겪어 본 증상의 네모 칸에 ✔표 할 수 있어요.</p>
+    <div class="sheet" id="sheet"></div>
+  </section>
+</div>
+
+<script>
+const INK='#23302a', SKIN='#f3cfae', W='#ffffff', RED='#d23f2f', GREEN='#3f7d2c', BLUE='#7fc1e6';
+const FONT='Jua, "Noto Sans KR", sans-serif';
+
+/* ---------- drawing helpers ---------- */
+function arm(a,b,c,col,skin){
+  const d=`M${a} Q${b} ${c}`, [hx,hy]=c.split(',');
+  return `<path d="${d}" fill="none" stroke="${INK}" stroke-width="26" stroke-linecap="round"/>
+          <path d="${d}" fill="none" stroke="${col}" stroke-width="20" stroke-linecap="round"/>
+          <circle cx="${hx}" cy="${hy}" r="12" fill="${skin}" stroke="${INK}" stroke-width="3"/>`;
+}
+function face(f){
+  const st=`fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"`;
+  const dots=`<circle cx="-18" cy="-302" r="5" fill="${INK}"/><circle cx="18" cy="-302" r="5" fill="${INK}"/>`;
+  const wb=`<path d="M-28,-318 L-10,-326" ${st}/><path d="M10,-326 L28,-318" ${st}/>`;
+  switch(f){
+    case 'worried': return dots+wb+`<path d="M-14,-270 Q0,-282 14,-270" ${st}/>`;
+    case 'dizzy': return `<path d="M-18,-302 m-2,0 a2,2 0 1,1 4,0 a5,5 0 1,1 -9,0 a8,8 0 1,1 15,0" ${st} stroke-width="3"/><path d="M18,-302 m-2,0 a2,2 0 1,1 4,0 a5,5 0 1,1 -9,0 a8,8 0 1,1 15,0" ${st} stroke-width="3"/>`+wb+`<path d="M-14,-272 Q-7,-279 0,-272 Q7,-265 14,-272" ${st}/>`;
+    case 'sick': return `<path d="M-28,-306 L-10,-300 L-28,-294" ${st}/><path d="M28,-306 L10,-300 L28,-294" ${st}/>`+wb;
+    case 'hot': return dots+wb+`<circle cx="-32" cy="-284" r="11" fill="${RED}" opacity=".45"/><circle cx="32" cy="-284" r="11" fill="${RED}" opacity=".45"/><ellipse cx="0" cy="-272" rx="8" ry="10" fill="${INK}"/>`;
+    case 'itchy': return `<path d="M-27,-304 L-9,-300" ${st}/><path d="M9,-300 L27,-304" ${st}/>`+wb+`<path d="M-12,-272 L12,-272" ${st}/>`;
+  }
+}
+const HAIR='M-52,-310 Q-58,-368 0,-363 Q58,-368 52,-310 Q46,-336 18,-341 Q-10,-327 -40,-337 Q-50,-326 -52,-310Z';
+function person(o){
+  const sh='#3b5f8f', skin=o.skin||SKIN, pants='#5b5146';
+  const L={down:['-56,-238','-82,-190','-72,-140'],belly:['-56,-238','-80,-170','-22,-164'],
+           out:['-56,-238','-80,-200','-104,-176'],fore:['-56,-238','-70,-190','-14,-196']};
+  const R={down:['56,-238','82,-190','72,-140'],belly:['56,-238','80,-170','22,-164'],
+           head:['56,-238','100,-282','36,-336'],mouth:['56,-238','80,-226','14,-272'],
+           out:['56,-238','80,-200','104,-176'],scratch:['56,-238','52,-200','4,-206']};
+  let g='';
+  if(o.swollen){
+    g+=`<rect x="-46" y="-132" width="40" height="64" rx="12" fill="${pants}" stroke="${INK}" stroke-width="3"/><rect x="6" y="-132" width="40" height="64" rx="12" fill="${pants}" stroke="${INK}" stroke-width="3"/>
+        <path d="M-44,-70 Q-64,-40 -54,-8 L-2,-8 Q8,-40 -8,-70Z" fill="${skin}" stroke="${INK}" stroke-width="3"/>
+        <path d="M8,-70 Q-8,-40 2,-8 L54,-8 Q64,-40 44,-70Z" fill="${skin}" stroke="${INK}" stroke-width="3"/>
+        <ellipse cx="-30" cy="-6" rx="34" ry="11" fill="#8a9bb0" stroke="${INK}" stroke-width="3"/><ellipse cx="30" cy="-6" rx="34" ry="11" fill="#8a9bb0" stroke="${INK}" stroke-width="3"/>`;
+  }else{
+    g+=`<rect x="-46" y="-132" width="40" height="126" rx="14" fill="${pants}" stroke="${INK}" stroke-width="3"/><rect x="6" y="-132" width="40" height="126" rx="14" fill="${pants}" stroke="${INK}" stroke-width="3"/>
+        <ellipse cx="-28" cy="-6" rx="26" ry="10" fill="${INK}"/><ellipse cx="28" cy="-6" rx="26" ry="10" fill="${INK}"/>`;
+  }
+  g+=`<rect x="-12" y="-266" width="24" height="24" fill="${skin}" stroke="${INK}" stroke-width="3"/>
+      <path d="M-58,-122 L-62,-214 Q-60,-252 -20,-256 L20,-256 Q60,-252 62,-214 L58,-122 Z" fill="${sh}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M-18,-255 Q0,-238 18,-255" fill="none" stroke="${INK}" stroke-width="3"/>
+      <circle cx="-50" cy="-302" r="10" fill="${skin}" stroke="${INK}" stroke-width="3"/><circle cx="50" cy="-302" r="10" fill="${skin}" stroke="${INK}" stroke-width="3"/>
+      <circle cx="0" cy="-305" r="50" fill="${skin}" stroke="${INK}" stroke-width="3"/>
+      <path d="${HAIR}" fill="#2b2420" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  g+=face(o.face||'worried');
+  const la=L[o.left||'down'], ra=R[o.right||'down'];
+  const armsSvg=arm(la[0],la[1],la[2],sh,skin)+arm(ra[0],ra[1],ra[2],sh,skin);
+  g+= o.shakeArms ? `<g class="shake">${armsSvg}</g>` : armsSvg;
+  const t=`translate(${o.x},${o.y}) scale(${o.s||1})${o.rot?` rotate(${o.rot})`:''}`;
+  return `<g transform="${t}">${g}</g>`;
+}
+const pop=(d,inner)=>`<g class="pop" style="--d:${d}s">${inner}</g>`;
+const txt=(x,y,s,c,t,extra='')=>`<text x="${x}" y="${y}" font-family='${FONT}' font-size="${s}" fill="${c}" ${extra}>${t}</text>`;
+const drop=(x,y,s=1)=>`<path transform="translate(${x},${y}) scale(${s})" d="M0,-14 Q10,0 0,10 Q-10,0 0,-14Z" fill="${BLUE}" stroke="${INK}" stroke-width="2"/>`;
+function room(col='#eaf1e4'){
+  return `<rect width="800" height="480" fill="${col}"/><rect y="410" width="800" height="70" fill="#d6dfcc"/>
+    <rect x="610" y="50" width="150" height="120" rx="6" fill="#d9ecf4" stroke="${INK}" stroke-width="3"/><path d="M685,50 V170 M610,110 H760" stroke="${INK}" stroke-width="3"/>`;
+}
+const P=(o)=>person({x:400,y:462,s:1,...o});
+
+/* ---------- symptom cards ---------- */
+const CARDS=[
+{ name:'어지러워요', feel:['머리가 빙빙 돌아요.','눈앞이 흐려 보여요.','걸을 때 쓰러질 것 같아요.'],
+  svg:()=>room()+P({face:'dizzy',right:'head',rot:-6})
+   +pop(.3,`<g class="wobble"><path d="M340,70 m-6,0 a6,6 0 1,1 12,0 a14,14 0 1,1 -26,0 a24,24 0 1,1 46,0 a34,34 0 1,1 -66,0" fill="none" stroke="#7a56b8" stroke-width="5" stroke-linecap="round"/></g>`)
+   +pop(.6,`<path d="M470,80 l7,15 l15,6 l-15,6 l-7,15 l-7,-15 l-15,-6 l15,-6Z M520,140 l5,10 l10,4 l-10,4 l-5,10 l-5,-10 l-10,-4 l10,-4Z" fill="#f1c94b" stroke="${INK}" stroke-width="2"/>`)
+   +pop(.9,txt(100,200,40,'#7a56b8','빙글빙글'))
+},
+{ name:'설사를 해요', feel:['화장실에 자주 가요.','변이 물처럼 나와요.','배가 아프고 급해요.'],
+  svg:()=>room()+P({x:330,face:'worried',left:'belly',right:'belly'})
+   +pop(.3,`<g transform="translate(600,250)"><rect x="-10" y="-40" width="90" height="70" rx="10" fill="${W}" stroke="${INK}" stroke-width="3"/><path d="M-20,30 h110 q0,60 -55,70 h-6 q-49,-10 -49,-70Z" fill="${W}" stroke="${INK}" stroke-width="3"/><ellipse cx="35" cy="30" rx="55" ry="12" fill="#eef2f6" stroke="${INK}" stroke-width="3"/><rect x="10" y="100" width="50" height="60" fill="${W}" stroke="${INK}" stroke-width="3"/></g>`)
+   +pop(.7,txt(120,260,36,RED,'꾸르륵'))
+   +pop(1,`<path d="M250,300 l14,-10 l-4,14 l14,-8" fill="none" stroke="${RED}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M412,290 l14,-10 l-4,14 l14,-8" fill="none" stroke="${RED}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`)
+},
+{ name:'식은땀이 나요', feel:['덥지 않은데 땀이 나요.','몸이 차갑고 축축해요.','운동하고 나는 땀은 식은땀이 아니에요.'],
+  svg:()=>room('#e6eef2')+P({face:'worried'})
+   +pop(.2,drop(330,120,1.4)+drop(470,110,1.6)+drop(310,190,1.1))
+   +pop(.5,drop(490,190,1.3)+drop(350,250,1)+drop(456,262,1.1))
+   +pop(.9,`<g><rect x="520" y="60" width="230" height="70" rx="22" fill="${W}" stroke="${INK}" stroke-width="3.5"/><path d="M548,130 L500,170 L578,130" fill="${W}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><line x1="550" y1="130" x2="576" y2="130" stroke="${W}" stroke-width="6"/>${txt(635,106,26,INK,'덥지 않은데…','text-anchor="middle"')}</g>`)
+},
+{ name:'속이 울렁거려요', feel:['토할 것 같아요.','음식 냄새를 맡으면 더 심해요.','배가 꽉 차고 더부룩해요.'],
+  svg:()=>room()+P({face:'sick',skin:'#d9dcae',right:'mouth',left:'belly'})
+   +pop(.3,`<path d="M220,330 q15,-14 30,0 q15,14 30,0 M220,356 q15,-14 30,0 q15,14 30,0" fill="none" stroke="#6f9a3a" stroke-width="5" stroke-linecap="round"/>`)
+   +pop(.6,txt(480,240,38,'#6f9a3a','울렁울렁'))
+   +pop(.9,`<g transform="translate(600,330)"><ellipse cx="0" cy="30" rx="70" ry="16" fill="${W}" stroke="${INK}" stroke-width="3"/><path d="M-50,30 q0,-40 50,-40 q50,0 50,40" fill="#f1c27a" stroke="${INK}" stroke-width="3"/><path d="M-20,-20 q-8,-20 0,-40 M0,-24 q-8,-20 0,-40 M20,-20 q-8,-20 0,-40" fill="none" stroke="#9aa39c" stroke-width="4" stroke-linecap="round"/></g>`)
+},
+{ name:'붉은 점이 생겨요', feel:['피부에 작고 빨간 점이 생겨요.','가려울 수 있어요.','긁으면 더 많아질 수 있어요.'],
+  svg:()=>room()+P({x:320,face:'itchy',left:'fore',right:'scratch'})
+   +pop(.3,`<g><line x1="330" y1="270" x2="530" y2="210" stroke="${INK}" stroke-width="3" stroke-dasharray="6 6"/><circle cx="610" cy="190" r="100" fill="${SKIN}" stroke="${INK}" stroke-width="5"/>
+      ${[[570,150],[620,140],[650,180],[590,200],[640,230],[560,230],[610,250],[680,150],[540,190]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${7+(i%3)*2}" fill="${RED}" opacity=".85"/>`).join('')}</g>`)
+   +pop(.8,txt(90,190,36,RED,'가려워요'))
+},
+{ name:'다리가 부어요', feel:['발과 종아리가 퉁퉁 부어요.','신발이 꽉 끼어요.','손가락으로 누르면 자국이 남아요.'],
+  svg:()=>room()+P({face:'worried',swollen:true})
+   +pop(.3,`<circle cx="430" cy="430" r="40" fill="none" stroke="${RED}" stroke-width="5" stroke-dasharray="10 7"/>`)
+   +pop(.6,`<g><rect x="510" y="300" width="276" height="70" rx="22" fill="${W}" stroke="${INK}" stroke-width="3.5"/>${txt(648,345,24,INK,'누르면 자국이 남아요','text-anchor="middle"')}<path d="M540,370 L470,410" stroke="${INK}" stroke-width="3.5"/></g>`)
+   +pop(.9,txt(150,380,38,RED,'퉁퉁'))
+},
+{ name:'열이 나요', feel:['몸이 뜨겁고 얼굴이 빨개요.','체온계로 열을 재요.','37.5도보다 높으면 열이 있어요.'],
+  svg:()=>room('#f6ece4')+P({x:330,face:'hot',skin:'#f4b49c'})
+   +pop(.3,`<path d="M280,80 q10,-15 0,-30 q-10,-15 0,-30 M330,74 q10,-15 0,-30 q-10,-15 0,-30 M380,80 q10,-15 0,-30 q-10,-15 0,-30" fill="none" stroke="${RED}" stroke-width="5" stroke-linecap="round"/>`)
+   +pop(.6,`<g transform="translate(600,90)"><rect x="-26" y="0" width="52" height="250" rx="26" fill="${W}" stroke="${INK}" stroke-width="4"/><circle cx="0" cy="268" r="40" fill="${RED}" stroke="${INK}" stroke-width="4"/><rect x="-10" y="60" width="20" height="200" fill="${RED}"/>
+      <path d="M26,60 h18 M26,110 h12 M26,160 h18 M26,210 h12" stroke="${INK}" stroke-width="3"/>${txt(52,68,26,RED,'38.5')}${txt(52,168,22,'#5f6b63','37')}</g>`)
+},
+{ name:'손발이 떨려요', feel:['손이나 다리가 저절로 떨려요.','멈추려고 해도 잘 안 멈춰요.'],
+  svg:()=>room()+P({face:'worried',left:'out',right:'out',shakeArms:true})
+   +pop(.3,`<path d="M268,260 q-10,10 0,20 M254,250 q-16,20 0,40 M532,260 q10,10 0,20 M546,250 q16,20 0,40 M330,440 q-10,10 0,20 M470,440 q10,10 0,20" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`)
+   +pop(.6,txt(110,180,38,'#7a56b8','덜덜덜'))
+}
+];
+
+const ICON_TELL=`<svg viewBox="0 0 80 80"><circle cx="26" cy="28" r="13" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><path d="M8,72 q0,-26 18,-26 q18,0 18,26Z" fill="#3b5f8f" stroke="${INK}" stroke-width="3"/><path d="M46,10 h28 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-16 l-8,8 v-8 h-4 a4,4 0 0 1 -4,-4 v-18 a4,4 0 0 1 4,-4Z" fill="${W}" stroke="${INK}" stroke-width="3"/><path d="M60,16 v10 M60,31 v1" stroke="${RED}" stroke-width="4" stroke-linecap="round"/></svg>`;
+const ICON_ASK=`<svg viewBox="0 0 80 80"><path d="M14,22 h52 l-4,50 h-44Z" fill="${W}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><rect x="10" y="14" width="60" height="10" rx="3" fill="${GREEN}" stroke="${INK}" stroke-width="3"/><path d="M40,36 v24 M28,48 h24" stroke="${RED}" stroke-width="6" stroke-linecap="round"/></svg>`;
+const ICON_119=`<svg viewBox="0 0 80 80"><rect x="6" y="14" width="68" height="52" rx="12" fill="${RED}" stroke="${INK}" stroke-width="3"/><text x="40" y="52" text-anchor="middle" font-family='${FONT}' font-size="30" fill="${W}">119</text></svg>`;
+const DOS=`<div class="todo">
+  <div class="do">${ICON_TELL}<strong>바로 알려요</strong><span>혼자 참지 않아요.<br>가족, 활동지원사, 복지사 선생님에게 말해요.</span></div>
+  <div class="do">${ICON_ASK}<strong>의사·약사에게 물어봐요</strong><span>약 봉투를 가지고 가요.<br>다음 약을 먹기 전에 물어봐요.</span></div>
+  <div class="do urgent">${ICON_119}<strong>위험하면 119</strong><span>숨쉬기 힘들 때, 얼굴이나 입술이 부을 때, 정신이 흐려질 때</span></div>
+</div>`;
+const END_SAY=['이럴 땐 이렇게 해요.','바로 알려요. 혼자 참지 않아요. 가족, 활동지원사, 복지사 선생님에게 말해요.','의사나 약사에게 물어봐요. 약 봉투를 가지고 가요. 다음 약을 먹기 전에 물어봐요.','위험하면 119에 전화해요. 숨쉬기 힘들 때, 얼굴이나 입술이 부을 때, 정신이 흐려질 때요.'];
+
+/* ---------- viewer ---------- */
+const total=CARDS.length+1, mine=new Set();
+let idx=0, ttsOn=false, autoOn=false, timer=null;
+const stage=document.getElementById('stage'), dots=document.getElementById('dots');
+const svgOf=c=>`<svg viewBox="0 0 800 480" role="img" aria-label="${c.name}">${c.svg()}</svg>`;
+for(let i=0;i<total;i++){const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'번째');b.onclick=()=>go(i);dots.appendChild(b)}
+
+function endingHtml(){
+  const list=[...mine].sort((a,b)=>a-b).map(i=>`<span>${CARDS[i].name}</span>`).join('');
+  return `<div class="ending"><h2>이럴 땐 이렇게 해요</h2>
+    <div class="mylist">내가 겪어 본 증상: ${list||'아직 표시하지 않았어요.'}</div>${DOS}</div>`;
+}
+function render(){
+  clearTimeout(timer);
+  if(idx===CARDS.length){ stage.innerHTML=endingHtml(); }
+  else{
+    const c=CARDS[idx], on=mine.has(idx);
+    stage.innerHTML=`<div class="panel">${svgOf(c)}</div>
+      <div class="info"><div class="top"><span class="num">${idx+1}</span><h2>${c.name}</h2></div>
+      <ul>${c.feel.map(f=>`<li>${f}</li>`).join('')}</ul>
+      <button class="mine" id="mine" aria-pressed="${on}"><span class="box"></span>나도 이런 적 있어요</button></div>`;
+    stage.querySelector('svg').classList.add('playing');
+    document.getElementById('mine').onclick=e=>{
+      const b=e.currentTarget, v=!mine.has(idx);
+      v?mine.add(idx):mine.delete(idx); b.setAttribute('aria-pressed',v);
+    };
+  }
+  [...dots.children].forEach((b,i)=>b.setAttribute('aria-current',i===idx));
+  document.getElementById('prev').disabled=idx===0;
+  const nx=document.getElementById('next'); nx.disabled=idx===total-1;
+  nx.textContent=idx===CARDS.length-1?'정리 ▶':'다음 ▶';
+  speak();
+}
+function go(i){idx=Math.max(0,Math.min(total-1,i));render()}
+function scheduleNext(ms){ if(autoOn&&idx<total-1){clearTimeout(timer);timer=setTimeout(()=>go(idx+1),ms)} }
+function speak(){
+  const lines= idx===CARDS.length ? END_SAY : [CARDS[idx].name+'.',...CARDS[idx].feel];
+  try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch(e){}
+  if(!ttsOn){ scheduleNext(7000); return; }
+  try{
+    const u=new SpeechSynthesisUtterance(lines.join(' ... '));
+    u.lang='ko-KR'; u.rate=0.85;
+    const v=speechSynthesis.getVoices().find(v=>/ko/i.test(v.lang)); if(v) u.voice=v;
+    u.onend=()=>scheduleNext(1500); u.onerror=()=>scheduleNext(7000);
+    speechSynthesis.speak(u);
+  }catch(e){ scheduleNext(7000); }
+}
+document.getElementById('prev').onclick=()=>go(idx-1);
+document.getElementById('next').onclick=()=>go(idx+1);
+document.getElementById('restart').onclick=()=>go(0);
+document.getElementById('tts').onclick=e=>{ttsOn=!ttsOn;e.currentTarget.setAttribute('aria-pressed',ttsOn);speak()};
+document.getElementById('auto').onclick=e=>{autoOn=!autoOn;e.currentTarget.setAttribute('aria-pressed',autoOn);if(autoOn)speak();else clearTimeout(timer)};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(idx+1);if(e.key==='ArrowLeft')go(idx-1)});
+
+document.getElementById('sheet').innerHTML=CARDS.map((c,i)=>`<div class="cell"><div class="panel">${svgOf(c)}</div>
+  <div class="cap"><b>${i+1}. ${c.name}<i>있어요</i></b><small>${c.feel.join(' ')}</small></div></div>`).join('')
+  +`<div class="cell" style="grid-column:1/-1"><div class="ending"><h2>이럴 땐 이렇게 해요</h2>${DOS}</div></div>`;
+const tPlay=document.getElementById('tab-play'), tSheet=document.getElementById('tab-sheet');
+function tab(sheet){
+  tPlay.setAttribute('aria-selected',!sheet); tSheet.setAttribute('aria-selected',sheet);
+  ['view-play','controls','toggles'].forEach(id=>document.getElementById(id).hidden=sheet);
+  document.getElementById('view-sheet').hidden=!sheet;
+  if(sheet){clearTimeout(timer);try{speechSynthesis.cancel()}catch(e){}}
+}
+tPlay.onclick=()=>tab(false); tSheet.onclick=()=>tab(true);
+render();
+</script>
+
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="4dff187c-d11f-445c-aa82-af1365369885" data-app-host="app.netlify.com" data-account-tier="free"></script>

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>지석 씨의 요금제 고르기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 만화 한 컷 = 스크랩북 사진 카드 */
+.cut{margin:18px 4px 0}
+.scn{position:relative;aspect-ratio:4/3;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:10px}
+.scn.store{background:linear-gradient(180deg,#e7efe0 0 74%,#cad6be 74%)}
+.scn.home{background:linear-gradient(180deg,#f6eadb 0 74%,#e0cdb6 74%)}
+.scn.call{background:linear-gradient(90deg,#dceaf2 0 50%,#f6eadb 50%)}
+.scn .place{position:absolute;top:8px;left:8px;font:700 12px var(--fb);background:rgba(255,255,255,.85);border-radius:999px;padding:3px 10px;color:#444}
+.scn .if{position:absolute;inset:0 0 auto;background:var(--dark);color:#fff;font:var(--hw) 19px var(--fh);padding:6px 12px;z-index:2}
+.cut.imagine .photo{filter:sepia(.35);outline:3px dashed #9a8a72;outline-offset:-8px}
+.cast{display:flex;justify-content:space-around;align-items:flex-end;gap:6px}
+.who{display:flex;flex-direction:column;align-items:center;gap:2px}
+.who i{font-style:normal;font-size:66px;line-height:1}
+.who b{font:700 12px var(--fb);background:#fff;border-radius:999px;padding:1px 8px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.prop{flex:none;align-self:center}
+.cast.tight .who i{font-size:50px}.cast.tight .plan{width:82px;font-size:12px}.cast.tight .plan .won{font-size:13px}.cast.tight .form{width:96px}
+/* 소품: 요금제 카드·고지서·멈춤·신청서 */
+.plan{width:104px;background:#fff;border:2px solid #444;border-radius:10px;overflow:hidden;text-align:center;font:700 13px/1.45 var(--fb);color:#333}
+.plan h4{margin:0;padding:3px 0;color:#fff;font:var(--hw) 17px var(--fh)}
+.plan p{margin:0;padding:4px 2px 6px}
+.plan .won{font-size:15px;color:var(--ac)}
+.plan.a h4{background:#3f6fa8}.plan.b h4{background:var(--ok)}.plan.hot h4{background:#c0392b}
+.plans{display:flex;gap:6px}
+.bill{width:120px;background:#fff;border:2px solid #444;border-radius:6px;padding:6px;text-align:center;font:700 12px var(--fb);color:#555}
+.bill b{display:block;font:900 22px var(--fb);color:#c0392b;margin-top:2px}
+.stop{width:74px;height:74px;display:grid;place-items:center;background:#c0392b;color:#fff;font:var(--hw) 21px var(--fh);clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.form{width:110px;background:#fff;border:2px solid #444;border-radius:6px;padding:6px;font:700 12px/1.6 var(--fb);color:#333}
+.form u{text-decoration:none;color:#c0392b}
+.qs3{position:absolute;top:34px;left:10px;display:flex;flex-direction:column;gap:3px;z-index:1}
+.qs3 span{font:var(--hw) 17px var(--fh);background:#fff;border:1.5px solid #444;border-radius:10px;padding:0 8px;color:#444;width:max-content}
+/* 말풍선 */
+.talk{display:grid;gap:8px;margin:14px 2px 0}
+.bub{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:9px 12px;font:500 16px/1.5 var(--fb);box-shadow:0 2px 6px rgba(60,40,20,.08)}
+.bub small{display:block;font:700 12px var(--fb);color:var(--ac)}
+.bub em{font-style:normal;color:var(--ac);font-weight:800}
+.cap{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;font:var(--hw) 21px/1.45 var(--fh)}
+.cap .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font:700 14px var(--fb);margin-top:2px}
+.cap span{flex:1}
+.cap b{color:var(--ac)}
+/* 고르기 문제 안의 요금제 카드 버튼 */
+.pp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.pp button{background:#fff;border:2.5px solid var(--line);border-radius:14px;overflow:hidden;text-align:center;box-shadow:2px 3px 0 var(--line)}
+.pp h4{margin:0;padding:6px 0;color:#fff;font:var(--hw) 22px var(--fh)}
+.pp .a h4{background:#3f6fa8}.pp .b h4{background:var(--ok)}
+.pp p{margin:0;padding:8px 4px 12px;font:500 15px/1.7 var(--fb)}
+.pp p b{font:900 19px var(--fb);color:var(--ink)}
+.pp button.right{border-color:var(--ok);background:#f2f6ea}
+.pp button.miss{border-color:var(--no);animation:shake .4s}
+.need{display:flex;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:500 15px/1.5 var(--fb)}
+.need i{font-style:normal;font-size:30px}
+/* 정리 */
+.rules{display:grid;gap:10px;margin-top:6px}
+.rule{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.rule i{flex:none;font-style:normal;font-size:34px}
+.rule b{display:block;font:var(--hw) 23px/1.2 var(--fh)}
+.rule span{font-size:14px;color:var(--muted)}
+.helpers{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.helpers span{font:700 14px var(--fb);background:#fff;border:1.5px solid var(--ac);color:var(--ac);border-radius:999px;padding:4px 12px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>지석 씨의 이야기를 한 장면씩 봐요.</li><li>‘다음’을 누르면 다음 장면으로 가요. 🔊를 누르면 읽어 줘요.</li><li>중간에 나오는 질문에 답해 봐요.</li><li>마지막에 기억할 것 3가지를 함께 읽어요.</li></ol><p>틀려도 괜찮아요. 왜 그런지 함께 생각해 봐요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'요',html:'요금제 <b>고르기</b>'};
+// 장면·말·정리 문구는 프로토타입(m-p13.html, quiet-pie-74c09d.netlify.app, 교재 13쪽 QR '함부로 서명하지 말아요') 그대로.
+// 프로토타입의 SVG 만화 그림은 가져오지 않고 이모지와 CSS 소품으로 다시 그렸다.
+const J={n:'지석 씨'},S={n:'직원',e:'💁'},M={n:'어머니',e:'👩'};
+const who=(o,face)=>`<span class="who"><i aria-hidden="true">${face||o.e}</i><b>${o.n}</b></span>`;
+const PLAN_HOT=`<div class="plan hot"><h4>★ 인기 ★</h4><p>프리미엄<br><span class="won">월 89,000원</span><br><small>약정 24개월<br>부가서비스 포함</small></p></div>`;
+const PLAN_A=`<div class="plan a"><h4>A 요금제</h4><p><span class="won">월 25,000원</span><br>데이터 5GB<br>통화 무제한</p></div>`;
+const PLAN_B=`<div class="plan b"><h4>B 요금제</h4><p><span class="won">월 39,000원</span><br>데이터 20GB<br>통화 무제한</p></div>`;
+
+// 7컷. cap(설명)·talk(말풍선)·say(읽어 주기)는 프로토타입 CUTS 그대로.
+const CUTS=[
+ {bg:'store',place:'📱 휴대폰 가게',cap:'지석 씨는 요금제를 바꾸려고 <b>휴대폰 가게</b>에 갔어요.',
+  scene:()=>`<div class="cast">${who(J,'😄')}${who(S)}</div>`,
+  talk:[[J,'요금제를 바꾸고 싶어요.'],[S,'어서 오세요!']]},
+ {bg:'store',place:'📱 휴대폰 가게',cap:'직원이 <b>비싼 요금제</b>를 권했어요. 어려운 말이 많아서 잘 모르겠어요.',
+  scene:()=>`<div class="qs3" aria-hidden="true"><span>약정?</span><span>위약금?</span><span>부가서비스?</span></div><div class="cast">${who(J,'😕')}<span class="prop">${PLAN_HOT}</span>${who(S)}</div>`,
+  talk:[[S,'이게 제일 좋아요! 지금 서명하면 선물도 드려요!']]},
+ {bg:'home',imagine:1,place:'🏠 집',cap:'만약에… 잘 모르고 바로 서명하면, 나중에 <b>돈을 많이</b> 낼 수 있어요.',
+  scene:()=>`<div class="if">만약에… 잘 모르고 바로 서명하면?</div><div class="cast">${who(J,'😱')}<span class="prop"><div class="bill">휴대폰 요금 고지서<br>이번 달 낼 돈<b>89,000원</b></div></span></div>`,
+  talk:[[J,'요금이 이렇게 많이 나왔어요?!']]},
+ {bg:'store',place:'📱 휴대폰 가게',cap:'지석 씨는 서명하지 않았어요. <b>“잠깐만요”</b>라고 말했어요.',
+  scene:()=>`<div class="cast"><span class="prop"><div class="stop">멈춤</div></span>${who(J,'🙅')}<span class="prop" style="font-size:34px" aria-hidden="true">❗</span>${who(S)}</div>`,
+  talk:[[J,'잠깐만요! 잘 모르겠어요. 생각해 보고 올게요.']]},
+ {bg:'call',place:'📞 전화',cap:'어려운 일은 <b>도와 달라고</b> 해요. 지석 씨는 어머니에게 전화했어요.',
+  scene:()=>`<div class="cast">${who(J,'😟')}<span class="prop" style="font-size:40px" aria-hidden="true">📞</span>${who(M)}</div>`,
+  talk:[[J,'어머니, 요금제 고르는 것 좀 도와주세요.'],[M,'그래, 같이 알아보자.']]},
+ {bg:'home',place:'🏠 집',cap:'어머니와 함께 요금제를 <b>비교</b>했어요. 내가 휴대폰을 어떻게 쓰는지 생각해요.',
+  scene:()=>`<div class="cast tight">${who(J,'🙂')}<span class="prop plans">${PLAN_A}${PLAN_B}</span>${who(M)}</div>`,
+  talk:[[M,'지석 씨는 휴대폰으로 무엇을 많이 해요?'],[J,'전화를 많이 해요. 영상은 조금 봐요.']]},
+ {bg:'store',place:'📱 휴대폰 가게',cap:'결정은 지석 씨가 했어요. <b>도움을 받아도, 결정은 내가</b> 해요.',
+  scene:()=>`<div class="cast tight">${who(M)}${who(J,'😄')}<span class="prop"><div class="form">가입 신청서<br>☑ <u>A 요금제</u><br>서명 ✍️</div></span>${who(S)}</div>`,
+  talk:[[J,'제가 고를게요. <em>A 요금제</em>로 할게요!'],[M,'잘 정했어!']]}
+];
+CUTS.forEach(c=>c.say=c.cap.replace(/<[^>]+>/g,'').replace(/[“”]/g,'')+' '+c.talk.map(([p,t])=>`${p.n}: ${t.replace(/<[^>]+>/g,'')}`).join(' '));
+
+// 임시: 프로토타입은 넘겨 보기만 하는 만화라 질문이 없다. 이야기에 나온 내용으로 질문 2개를 끼워 넣었다(기획자 확인 필요).
+// 질문 1은 2컷 뒤(서명하라고 할 때), 질문 2는 6컷 뒤(교재 13쪽 '쓰고 싶은 요금제를 하나 골라 보세요'와 같은 A·B 비교).
+const Q1={after:1,q:'지석 씨는 어떻게 하면 좋을까요?',say:'이게 제일 좋아요! 지금 서명하면 선물도 드려요!',
+  opts:['바로 서명해요.','“잠깐만요” 하고 멈춰요.'],ans:1,
+  ok:'잘 모르면 멈춰요. 함부로 서명하지 않아요.',no:'바로 서명하면 나중에 돈을 많이 낼 수 있어요. 잘 모르면 멈춰요.'};
+const Q2={after:5,q:'지석 씨에게 맞는 요금제는 무엇일까요?',
+  need:'전화를 많이 해요. 영상은 조금 봐요.',ans:0,
+  ok:'통화는 둘 다 무제한이에요. 영상은 조금 보니까 데이터 5GB면 돼요. A 요금제가 더 싸요.',
+  no:'B 요금제는 데이터가 많지만 월 39,000원으로 비싸요. 영상을 조금 보면 A 요금제(월 25,000원)로 충분해요.'};
+
+// 정리 화면: 프로토타입 ENDING 그대로
+const RULES=[['🛑','모르면 멈춰요','함부로 서명하지 않아요'],['🤝','도와 달라고 해요','믿을 수 있는 사람에게'],['✅','결정은 내가 해요','다른 사람 말만 따르지 않아요']];
+const HELPERS=['부모님','활동지원사','복지사 선생님','기타'];
+const TALK=['지석 씨는 왜 “잠깐만요”라고 말했나요?','나는 어려울 때 누구에게 도와 달라고 할 수 있나요?'];
+const DONE='도움을 받아도, 결정은 내가 해요';
+
+const root=document.getElementById('app');
+let timers=[],score=0;
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const TOTAL=CUTS.length+3;   // 컷 7 + 질문 2 + 정리 1
+const STEPS=[];CUTS.forEach((_,i)=>{STEPS.push(['cut',i]);if(i===Q1.after)STEPS.push(['q1']);if(i===Q2.after)STEPS.push(['q2'])});STEPS.push(['end']);
+
+function home(){
+  clear();
+  const say='지석 씨의 요금제 고르기. 지석 씨는 휴대폰 요금제를 바꾸고 싶어요. 지석 씨의 이야기를 함께 봐요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Help, then I decide</span><h1 class="h1">지석 씨의<br><em>요금제 고르기</em></h1><p>지석 씨는 휴대폰 요금제를 바꾸고 싶어요. 가게에서 어떤 일이 생길까요? 이야기를 한 장면씩 보고, 질문에 답해 보세요.</p></section>
+  <div class="cut"><div class="photo tilt-l"><span class="tp"></span><div class="scn store"><span class="place">📱 휴대폰 가게</span><div class="cast">${who(J,'🙂')}<span class="prop plans">${PLAN_A}${PLAN_B}</span></div></div><span class="ct">어떤 요금제가 좋을까?<small>도움을 받아도 내가 결정하기</small></span></div></div>
+  <div class="acts"><button class="btn pri" data-act="start">이야기 보기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>{score=0;go(0)}});
+}
+
+function go(k){
+  const [t,i]=STEPS[k];
+  if(t==='cut')cut(k,i);else if(t==='q1')q1(k);else if(t==='q2')q2(k);else end(k);
+}
+
+function cut(k,i){
+  clear();
+  const c=CUTS[i];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(TOTAL,k)}
+  <div class="cut${c.imagine?' imagine':''}"><div class="photo ${i%2?'tilt-r':'tilt-l'}"><span class="tp"></span><div class="scn ${c.bg}" role="img" aria-label="${DK.esc(c.cap.replace(/<[^>]+>/g,''))}"><span class="place">${c.place}</span>${c.scene()}</div></div></div>
+  <p class="cap"><span class="n">${i+1}</span><span>${c.cap}</span><button class="spk" data-say="${DK.esc(c.say)}" aria-label="소리로 듣기">${DK.SPK}</button></p>
+  <div class="talk">${c.talk.map(([p,t])=>`<p class="bub" style="margin:0"><small>${p.n}</small>${t}</p>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">다음 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>k?go(k-1):home(),next:()=>go(k+1)
+  });
+  DK.speak(c.say);
+}
+
+function feedback(ok,txt){
+  root.querySelector('#fb').innerHTML=`<p class="fb ${ok?'ok':'no'}">${ok?'✓':'✕'}<span>${ok?'맞아요!':'다시 생각해 봐요.'}<small>${txt}</small></span></p>`;
+  DK.speak(txt);
+  root.querySelector('#nx').hidden=false;
+  later(()=>root.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+}
+
+function q1(k){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(TOTAL,k)}
+  <div class="talk"><p class="bub" style="margin:0"><small>직원 💁</small>${Q1.say}</p></div>
+  <p class="q">${Q1.q}</p><p class="qs">하나를 골라 눌러요.</p>
+  <div class="opts">${Q1.opts.map((o,j)=>`<button class="opt" data-act="pick" data-j="${j}"><span class="no">${j+1}</span><span>${o}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">다음 장면 ›</button></div>${DK.DKU}`,{
+    home,next:()=>go(k+1),
+    pick:b=>{
+      if(root.querySelector('.opt.ok'))return;
+      const j=+b.dataset.j,ok=j===Q1.ans;
+      if(ok&&!root.querySelector('.opt.wrong'))score++;
+      root.querySelectorAll('.opt').forEach(x=>x.classList.remove('wrong'));
+      b.classList.add(ok?'ok':'wrong');
+      feedback(ok,ok?Q1.ok:Q1.no);
+      if(!ok)root.querySelector('#nx').hidden=true;
+    }
+  });
+  DK.speak(`직원이 말해요. ${Q1.say} ${Q1.q}`);
+}
+
+function q2(k){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(TOTAL,k)}
+  <p class="q">${Q2.q}</p>
+  <div class="need"><i aria-hidden="true">🙂</i><span><b>지석 씨:</b> “${Q2.need}”</span></div>
+  <p class="qs" style="margin-top:10px">지석 씨에게 맞는 요금제를 눌러요.</p>
+  <div class="pp"><button class="a" data-act="pick" data-j="0" aria-label="A 요금제, 월 2만 5천 원, 데이터 5기가, 통화 문자 무제한"><h4>A 요금제</h4><p><b>월 25,000원</b><br>데이터 5GB<br>통화·문자 무제한</p></button><button class="b" data-act="pick" data-j="1" aria-label="B 요금제, 월 3만 9천 원, 데이터 20기가, 통화 문자 무제한"><h4>B 요금제</h4><p><b>월 39,000원</b><br>데이터 20GB<br>통화·문자 무제한</p></button></div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">다음 장면 ›</button></div>${DK.DKU}`,{
+    home,next:()=>go(k+1),
+    pick:b=>{
+      if(root.querySelector('.pp .right'))return;
+      const j=+b.dataset.j,ok=j===Q2.ans;
+      if(ok&&!root.querySelector('.pp .miss'))score++;
+      root.querySelectorAll('.pp button').forEach(x=>x.classList.remove('miss'));
+      b.classList.add(ok?'right':'miss');
+      feedback(ok,ok?Q2.ok:Q2.no);
+      if(!ok)root.querySelector('#nx').hidden=true;
+    }
+  });
+  DK.speak(`${Q2.q} 지석 씨는 ${Q2.need}`);
+}
+
+function end(k){
+  clear();
+  const say=`기억해요. 하나. 모르면 멈춰요. 함부로 서명하지 않아요. 둘. 도와 달라고 해요. 셋. 결정은 내가 해요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(TOTAL,k)}
+  <div class="res" style="position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px"><i class="stamp" style="font-size:17px">내가<br>결정</i><div style="font-size:54px;line-height:1" aria-hidden="true">📱✅</div><h2 style="font:var(--lw) 24px/1.4 var(--fl);letter-spacing:-.04em;margin:12px 0 0">「${DONE}」</h2><p style="font-size:14px;color:var(--muted);margin:8px 0 0">질문 2개 중 ${score}개를 한 번에 맞혔어요.</p></div>
+  <p class="sl" style="margin:18px 0 8px">기억해요</p>
+  <div class="rules">${RULES.map(([e,b,s])=>`<div class="rule"><i aria-hidden="true">${e}</i><span><b>${b}</b><span>${s}</span></span></div>`).join('')}</div>
+  <div class="note"><h3>누가 도와줄 수 있나요?</h3><div class="helpers">${HELPERS.map(h=>`<span>${h}</span>`).join('')}</div></div>
+  <div class="note"><h3>함께 이야기해요</h3><ol>${TALK.map(t=>`<li>${t}</li>`).join('')}</ol></div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 처음부터</button></div>${DK.DKU}`,{
+    home,again:()=>{score=0;go(0)},listen:()=>DK.speak(say)
+  });
+  DK.done();
+  later(()=>DK.speak(say),300);
+}
+
+home();
+</script>
+</body>
+</html>

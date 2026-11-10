@@ -9,15 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../common/paper.css">
 <style>
-/* 방: 배경(1200x900) 위에 가구를 % 좌표로 올린다 */
-.room{position:relative;aspect-ratio:4/3;overflow:hidden;background:#f1e9dc;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* 방: 빈 방 사진(1672x941 비율) 위에 가구를 % 좌표로 올린다. 가구 크기는 원근에 따라 바뀐다 */
+.room{position:relative;aspect-ratio:1672/941;overflow:hidden;background:#f1e9dc;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .room img{position:absolute;pointer-events:none;-webkit-user-drag:none}
 .room .bg{inset:0;width:100%;height:100%}
-.room .cur{left:31.667%;top:6.667%;width:36.667%}
-.fu{position:absolute;transform:translateX(-50%);touch-action:none;filter:drop-shadow(0 3px 2px rgba(60,40,20,.28))}
+.room .cur{left:31.56%;top:4.33%;width:37.02%}   /* tools/gen_4_2.py가 출력한 값: 커튼 사진 속 창문을 방 창문에 맞춤 */
+.fu{position:absolute;transform:translateX(-50%);touch-action:none;padding:0;border:0;background:none}
 .fu img{position:static!important;width:100%;height:auto}
 .fu.on{outline:2.5px dashed var(--ac);outline-offset:3px;border-radius:4px}
-.fu.drag{filter:drop-shadow(0 10px 8px rgba(60,40,20,.35));cursor:grabbing}
+.fu.drag{filter:drop-shadow(0 8px 6px rgba(60,40,20,.3));cursor:grabbing}
 .room.frame{margin:0 -8px;border:6px solid #fff;box-shadow:0 6px 14px rgba(60,40,20,.18)}
 .room.still .fu{pointer-events:none}
 .room.still .fu.on{outline:0}
@@ -25,10 +25,8 @@
 /* 가구 보기 3개 */
 .picks.three{grid-template-columns:repeat(3,1fr);gap:16px 10px}
 .picks.three .photo{padding:6px 6px 10px}
-.picks.three .photo .cp{aspect-ratio:1;background:#f6efe2;padding:8px}
+.picks.three .photo .cp{aspect-ratio:1;background:#fff;padding:8px}
 .picks.three .photo .cp img{object-fit:contain}
-.picks.three .photo .cp.win{background:linear-gradient(#d6e6ee,#d6e6ee) 50% 60%/70% 72% no-repeat,#f6efe2}
-.picks.three .photo .ct{font-size:18px;text-align:center}
 .qrow{display:flex;align-items:center;gap:10px;margin:18px 0 4px}
 .qrow .q{margin:0;flex:1}
 .qrow.sm .q{font-size:22px}
@@ -60,23 +58,24 @@
 <script>
 const BRAND={mark:'방',html:'나의 <b>공간 꾸미기</b>'};
 const STEPS=['가구 고르기','가구 놓기','완성'];
-const RW=1200,RH=900;               // 방 배경 크기(px). 가구 그림은 이 크기에 맞춰 그렸다.
-// 가구 7종(요청서 순서). size = 그림 크기(px), at = 처음 놓이는 자리 [가운데 x%, 바닥 y%]
-// 임시: 디자인 이름(원목·화이트 등)은 요청서에 없어 임시로 지었다. 그림도 모두 임시생성.
+// 가구 7종(요청서 순서). 이름은 원본 사진 파일 이름(색·재질) 그대로. 그림 = img/<k>-<1~3>.png (tools/gen_4_2.py)
+// m = 가구의 겉보기 너비(m), asp = 그림 세로/가로 비율, at = 처음 놓이는 자리 [가운데 x%, 바닥 y%]
 const TYPES=[
-  {k:'curtain',n:'커튼',size:[440,380],opts:['베이지 커튼','체크무늬 커튼','꽃무늬 커튼']},
-  {k:'shelf',n:'책꽂이',size:[200,340],at:[28.5,63],opts:['원목 책꽂이','화이트 책꽂이','사다리 책꽂이']},
-  {k:'bed',n:'침대',size:[460,260],at:[58,90],opts:['원목 침대','네이비 침대','화이트 침대']},
-  {k:'desk',n:'책상',size:[300,210],at:[22,92],opts:['원목 책상','화이트 책상','민트 책상']},
-  {k:'closet',n:'옷장',size:[230,400],at:[11,64],opts:['원목 옷장','화이트 옷장','거울 옷장']},
-  {k:'table',n:'테이블',size:[210,130],at:[88,97],opts:['원목 테이블','화이트 테이블','노랑 테이블']},
-  {k:'chair',n:'의자',size:[150,190],at:[30,98],opts:['원목 의자','핑크 소파 의자','블루 의자']}
+  {k:'curtain',n:'커튼',opts:['블랙 커튼','와인 커튼','화이트 커튼']},
+  {k:'shelf',n:'책꽂이',at:[70,39.5],m:[.9,.85,.85],asp:[800/555,800/536,800/521],opts:['블랙 책꽂이','원목 책꽂이','화이트 책꽂이']},
+  {k:'bed',n:'침대',at:[80,88],m:[1.8,1.8,1.8],asp:[637/800,613/800,647/800],opts:['블랙 침대','빨간 꽃무늬 침대','원목 침대']},
+  {k:'desk',n:'책상',at:[50,41],m:[1.6,1.5,1.6],asp:[398/800,459/800,413/800],opts:['블랙 책상','원목 책상','화이트 책상']},
+  {k:'closet',n:'옷장',at:[31,40],m:[1.3,1.6,1.4],asp:[800/552,800/682,800/598],opts:['블랙 옷장','원목 옷장','화이트 옷장']},
+  {k:'table',n:'테이블',at:[22,80],m:[1.1,.9,1.4],asp:[511/800,565/800,346/800],opts:['블랙 테이블','원목 테이블','화이트 테이블']},
+  {k:'chair',n:'의자',at:[51,52],m:[.75,.6,.65],asp:[800/597,800/573,800/625],opts:['블랙 의자','원목 의자','화이트 의자']}
 ];
+// 원근: 빈 방 사진의 뒷벽 아래 선(BACK, y%)에서 1m = PM(%, 방 너비 기준). 앞으로 올수록 (y-HOR)/(BACK-HOR)배 커진다.
+// 임시: HOR(소실선 높이)·PM은 사진을 보고 눈으로 맞춘 값(실제보다 조금 작게 잡아 방이 덜 붐비게 함)
+const BACK=36.8,HOR=10,PM=7.2,ASPR=941/1672;
 const FURN=TYPES.filter(t=>t.at);   // 방에 놓는 6개 (커튼은 창문에 바로 걸린다)
 const T=k=>TYPES.find(t=>t.k===k);
 const src=(k,d)=>`img/${k}-${d}.png`;
 const nameOf=k=>T(k).opts[pick[k]-1];
-const FLOOR=60;                     // 가구 바닥은 이 높이(%)보다 아래(마룻바닥)에
 
 const root=document.getElementById('app');
 let pick={},pos={},cur=null,timers=[],dragEnd={k:null,t:0};
@@ -91,7 +90,7 @@ function home(){
   DK.mount(root,`${DK.hbar(BRAND)}
   <section class="hero"><span class="eb">My beautiful room</span><h1 class="h1">나의 공간을<br><em>아름답게 꾸며요!</em></h1><p>마음에 드는 커튼과 가구를 골라, 내 방에 놓아 보세요.</p></section>
   ${DK.steps(STEPS,0)}
-  <div class="photo tilt-l"><i class="tp"></i><span class="cp" style="aspect-ratio:4/3"><img src="img/room.jpg" alt="창문과 문이 있는 빈 방"></span><span class="ct">아직 비어 있는 방<small>가구 7가지를 골라 꾸며요</small></span></div>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp" style="aspect-ratio:1672/941"><img src="img/room.jpg" alt="창문과 문이 있는 빈 방"></span><span class="ct">아직 비어 있는 방<small>가구 7가지를 골라 꾸며요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>choose(0)});
 }
 
@@ -103,7 +102,7 @@ function choose(i,back){
   ${DK.steps(STEPS,0)}${back?'':DK.seg(TYPES.length,i)}
   <div class="qrow"><p class="q">${q}</p><button class="spk" data-say="${q}" aria-label="소리로 듣기">${DK.SPK}</button></div>
   <p class="qs">${t.k==='curtain'?'커튼은 창문에 걸려요.':'3개 중 1개를 골라요.'}</p>
-  <div class="picks three">${t.opts.map((n,d)=>`<button class="pick photo${pick[t.k]===d+1?' on':''}" data-act="pick" data-d="${d+1}" aria-label="${n} 고르기"><span class="cp${t.k==='curtain'?' win':''}"><img src="${src(t.k,d+1)}" alt="${n}"></span><span class="ct">${n}</span></button>`).join('')}</div>
+  <div class="picks three">${t.opts.map((n,d)=>`<button class="pick photo${pick[t.k]===d+1?' on':''}" data-act="pick" data-d="${d+1}" aria-label="${n} 고르기"><span class="cp"><img src="${src(t.k,d+1)}" alt="${n}"></span></button>`).join('')}</div>
   <div class="acts two"><button class="btn sec" data-act="prev">‹ ${back?'돌아가기':'이전'}</button><button class="btn pri" data-act="next" ${pick[t.k]?'':'disabled'}>${back?'바꾸기 ›':'다음 ›'}</button></div>${DK.DKU}`,{
     home,
     prev:()=>back?place():i?choose(i-1):home(),
@@ -115,14 +114,16 @@ function choose(i,back){
 }
 
 /* ---- 방 그리기 ---- */
-const wPct=t=>t.size[0]/RW*100, hPct=t=>t.size[1]/RH*100;
-function clamp(k,x,y){const t=T(k),w=wPct(t)/2;return {x:Math.min(100-w,Math.max(w,x)),y:Math.min(100,Math.max(FLOOR,hPct(t),y))}}
+const grow=y=>(y-HOR)/(BACK-HOR);
+const wPct=(k,y)=>{const t=T(k);return t.m[pick[k]-1]*PM*grow(y)};             // 방 너비 대비 %
+const hPct=(k,y)=>wPct(k,y)*T(k).asp[pick[k]-1]/ASPR;                           // 방 높이 대비 %
+function clamp(k,x,y){y=Math.min(100,Math.max(BACK+.5,y));const w=wPct(k,y)/2;return {x:Math.min(100-w,Math.max(w,x)),y}}
 function roomHTML(still){
   const items=FURN.filter(t=>pos[t.k]).sort((a,b)=>pos[a.k].y-pos[b.k].y);
   return `<div class="room${still?' still':''}" id="room">
     <img class="bg" src="img/room.jpg" alt="">
     ${pick.curtain?`<img class="cur" src="${src('curtain',pick.curtain)}" alt="">`:''}
-    ${items.map(t=>`<button class="fu${cur===t.k?' on':''}" data-k="${t.k}" style="left:${pos[t.k].x}%;bottom:${100-pos[t.k].y}%;width:${wPct(t)}%" aria-label="${nameOf(t.k)}${still?'':', 화살표 키로 옮겨요'}"><img src="${src(t.k,pick[t.k])}" alt=""></button>`).join('')}
+    ${items.map(t=>`<button class="fu${cur===t.k?' on':''}" data-k="${t.k}" style="left:${pos[t.k].x}%;bottom:${100-pos[t.k].y}%;width:${wPct(t.k,pos[t.k].y)}%" aria-label="${nameOf(t.k)}${still?'':', 화살표 키로 옮겨요'}"><img src="${src(t.k,pick[t.k])}" alt=""></button>`).join('')}
   </div>`;
 }
 const roomAlt=()=>{const c=nameOf('curtain'),n=FURN.filter(t=>pos[t.k]).length;return `${c}${DK.wa(c)} 가구 ${n}개가 있는 방`};
@@ -155,7 +156,7 @@ function draw(){
   room.addEventListener('click',e=>{                 // 빈 곳 누르기 → 고른 가구를 그리로
     if(e.target.closest('.fu')||dragged())return;
     if(!cur){say('먼저 아래에서 가구를 눌러요.');return}
-    const p=toRoom(e);pos[cur]=clamp(cur,p.x,p.y+hPct(T(cur))/2);draw();
+    const p=toRoom(e);pos[cur]=clamp(cur,p.x,p.y+hPct(cur,p.y)/2);draw();
   });
   room.querySelectorAll('.fu').forEach(b=>roomItem(b,room));
   root.querySelectorAll('.ti').forEach(b=>{b.classList.toggle('in',!!pos[b.dataset.k]);b.classList.toggle('on',cur===b.dataset.k)});
@@ -187,7 +188,7 @@ function roomItem(b,room){
     const p0=toRoom(e),start={...pos[k]};let moved=false;
     b.setPointerCapture(e.pointerId);
     b.onpointermove=ev=>{const p=toRoom(ev);if(!moved&&Math.hypot(p.x-p0.x,p.y-p0.y)<2)return;moved=true;b.classList.add('drag');
-      const q=clamp(k,start.x+p.x-p0.x,start.y+p.y-p0.y);pos[k]=q;b.style.left=q.x+'%';b.style.bottom=(100-q.y)+'%'};
+      const q=clamp(k,start.x+p.x-p0.x,start.y+p.y-p0.y);pos[k]=q;b.style.left=q.x+'%';b.style.bottom=(100-q.y)+'%';b.style.width=wPct(k,q.y)+'%'};
     b.onpointerup=b.onpointercancel=()=>{b.onpointermove=b.onpointerup=b.onpointercancel=null;if(moved){dragOver(k);cur=k;draw()}};
   };
 }
@@ -203,7 +204,7 @@ function trayItem(b){
     b.setPointerCapture(e.pointerId);
     b.onpointermove=ev=>{if(!g){if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<8)return;g=document.createElement('img');g.className='ghost';g.src=src(k,pick[k]);g.alt='';document.body.appendChild(g)}
       g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px'};
-    b.onpointerup=ev=>{end();if(!g)return;g.remove();dragOver(k);const p=toRoom(ev);if(p.inside){pos[k]=clamp(k,p.x,p.y+hPct(t)/2);cur=k;draw();DK.speak(nameOf(k))}};
+    b.onpointerup=ev=>{end();if(!g)return;g.remove();dragOver(k);const p=toRoom(ev);if(p.inside){pos[k]=clamp(k,p.x,p.y+hPct(k,p.y)/2);cur=k;draw();DK.speak(nameOf(k))}};
     b.onpointercancel=()=>{end();g&&g.remove()};
     const end=()=>{b.onpointermove=b.onpointerup=b.onpointercancel=null};
   };
@@ -220,6 +221,7 @@ function done(){
   <div class="acts" style="margin-top:8px"><button class="btn pri" data-act="again">↻ 다시 꾸미기</button></div>${DK.DKU}`,{
     home,move:place,again:()=>{reset();choose(0)}
   });
+  DK.done();
   const r=root.querySelector('#room');r.setAttribute('role','img');r.setAttribute('aria-label',roomAlt());
   DK.speak(msg);
 }

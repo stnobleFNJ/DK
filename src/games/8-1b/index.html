@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>기관 이용 시 준비물 선택하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--bag:#efe3c8;--bagl:#cdb88f}
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+/* 기관 카드 */
+.inst{position:relative;display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:10px 12px;margin:16px 4px 0;box-shadow:0 5px 12px rgba(60,40,20,.16);border-left:8px solid var(--c)}
+.inst .em{flex:none;width:58px;height:58px;border-radius:12px;display:grid;place-items:center;font-size:36px;background:#f1f4f7}
+.inst b{display:block;font:800 21px var(--fb);letter-spacing:-.03em;color:var(--c)}
+.inst span{font-size:14px;color:var(--muted)}
+/* 가방(종이 에코백) — 화면 위에 붙어 있다 */
+.bagwrap{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;margin:6px -2px 0}
+.bag{position:relative;margin:22px 8px 0;background:var(--bag);border:2px solid var(--bagl);border-radius:6px 6px 14px 14px;padding:10px 10px 10px;box-shadow:0 5px 10px rgba(60,40,20,.15)}
+.bag::before,.bag::after{content:"";position:absolute;top:-24px;width:46px;height:30px;border:5px solid var(--bagl);border-bottom:0;border-radius:24px 24px 0 0}
+.bag::before{left:22%}.bag::after{right:22%}
+.bag .bl{display:flex;justify-content:space-between;align-items:center;font:700 14px var(--fb);margin:0 2px 8px}
+.bag .bl i{font-style:normal;background:#fff;border-radius:999px;padding:1px 10px;font-size:13px}
+.slots{display:flex;flex-wrap:wrap;gap:8px;min-height:64px}
+.slot{width:64px;height:64px;border:2.5px dashed var(--bagl);border-radius:10px;background:rgba(255,255,255,.45);display:grid;place-items:center;font:700 22px var(--fb);color:var(--bagl)}
+.slot.in{border:2px solid var(--ok);background:#fff;padding:2px;animation:drop .45s ease}
+.slot.in img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+@keyframes drop{from{transform:translateY(-30px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+/* 물건 고르기 */
+.items{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 0}
+.item{position:relative;display:flex;flex-direction:column;background:#fff;border:3px solid transparent;border-radius:10px;padding:4px 4px 6px;box-shadow:0 4px 10px rgba(60,40,20,.14);transition:border-color .15s,opacity .2s}
+.item img{width:100%;aspect-ratio:1;object-fit:contain}
+.item b{display:block;text-align:center;font:700 14px/1.25 var(--fb);color:var(--ink);margin-top:2px}
+.item:active{transform:scale(.96)}
+.item.wrong{border-color:var(--no);animation:shake .4s}
+.item.wrong::after{content:"✕";position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:50%;background:var(--no);color:#fff;display:grid;place-items:center;font:900 13px var(--fb)}
+.item.ok{border-color:var(--ok);opacity:.45}
+.item.ok::after{content:"✓";position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font:900 13px var(--fb)}
+.item:disabled{opacity:1}.item.ok:disabled{opacity:.45}
+.msg:empty{display:none}
+.msg .fb{margin:8px 0 0;padding:8px 12px;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.score .n{font:var(--lw) 40px/1.1 var(--fl);letter-spacing:-.03em;margin:4px 0 0}
+.score p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.rbags{display:grid;gap:30px;margin:14px 0 0}
+.rb .inst{margin:0 0 4px}
+.rb .bag{margin-top:26px}
+.rb .slot{width:auto;height:auto;flex:1 1 80px;max-width:110px;display:flex;flex-direction:column;padding:4px;animation:none}
+.rb .slot img{aspect-ratio:1;height:auto}
+.rb .slot b{font:700 13px var(--fb);color:var(--ink);text-align:center;margin-top:2px}
+.rb .miss{margin:6px 2px 0;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>오늘 갈 기관을 봐요.</li><li>그 기관에 갈 때 필요한 물건을 눌러 가방에 담아요.</li><li>필요한 물건을 모두 담으면 다음 기관으로 가요.</li></ol><p>필요 없는 물건을 누르면 알려 줘요. 다시 고르면 돼요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'가',html:'무엇을 <b>챙겨야 할까요?</b>'};
+// 물건 12개 = 원본 '기관 방문 시 준비물 챙기기' 그림(tools/gen_8_1b.py).
+const IT={
+  snack:'과자',librarycard:'대출카드',stamp:'도장',money:'돈',phone:'스마트폰',slime:'슬라임',
+  idcard:'신분증',dumbbell:'아령',umbrella:'우산',photo:'증명사진',ball:'축구공',toothbrush:'칫솔'
+};
+// 은행 준비물(돈·신분증·도장)은 교재 83쪽 활동 그대로.
+// 임시: 도서관·행정복지센터·병원의 준비물과 '하는 일' 문구는 자료에 없어 상식에 맞게 정했다.
+//       행정복지센터(신분증 만들기)는 아직 신분증이 없는 상황이라 신분증을 넣지 않았다.
+const PL=[
+  {k:'bank',n:'은행',e:'🏦',c:'#2f5fa8',job:'통장을 만들고 돈을 넣어요',need:['money','idcard','stamp']},
+  {k:'lib',n:'도서관',e:'📚',c:'#8a5a2b',job:'책을 빌려요',need:['librarycard']},
+  {k:'gov',n:'행정복지센터',e:'🏢',c:'#24577a',job:'신분증을 만들어요',need:['photo','stamp']},
+  {k:'hosp',n:'병원',e:'🏥',c:'#3f8f6a',job:'진료를 받아요',need:['idcard','money']}
+];
+const KEYS=Object.keys(IT);
+
+const root=document.getElementById('app');
+let cur=0,miss=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const instHtml=p=>`<div class="inst" style="--c:${p.c}"><span class="em" aria-hidden="true">${p.e}</span><span><b>${p.n}</b><span>${p.job}</span></span></div>`;
+
+function home(){
+  clear();
+  const say='기관 이용 시 준비물 선택하기. 기관에 갈 때 필요한 물건을 골라 가방에 담아 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Pack your bag</span><h1 class="h1">기관에 갈 때<br><em>무엇을 챙겨야 할까요?</em></h1><p>기관 ${PL.length}곳에 가요. 필요한 물건을 골라 가방에 담아요.</p></section>
+  <div class="note"><i class="tp"></i><h3>오늘 갈 곳</h3><div style="display:grid;gap:10px">${PL.map(p=>instHtml(p).replace('class="inst"','class="inst" style="margin:0;box-shadow:none;border:1px solid var(--line);border-left:8px solid '+p.c+'"')).join('')}</div></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:()=>{cur=0;miss=[];play()}
+  });
+}
+
+function play(){
+  clear();
+  const p=PL[cur],last=cur===PL.length-1;
+  const got=[];miss[cur]=0;
+  const say=`${p.n}에 가요. ${p.job}. 무엇을 챙겨야 할까요? 필요한 물건을 모두 골라 가방에 담아요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(PL.length,cur)}
+  <span class="qn">${cur+1} / ${PL.length}</span>
+  ${instHtml(p)}
+  <div class="bagwrap"><div class="bag"><p class="bl">내 가방 <i id="cnt">0 / ${p.need.length}</i></p><div class="slots">${p.need.map(()=>`<span class="slot">?</span>`).join('')}</div></div><div class="msg" id="msg" aria-live="polite"></div></div>
+  <p class="q" style="margin-top:10px">무엇을 챙겨야 할까요?</p><p class="qs">필요한 물건 ${p.need.length}개를 모두 눌러요.</p>
+  <div class="items">${KEYS.map(k=>`<button class="item" data-act="pick" data-k="${k}" aria-label="${IT[k]}"><img src="img/${k}.jpg" alt=""><b>${IT[k]}</b></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 기관 ›'}</button></div>
+${DK.DKU}`,{
+    home,next:()=>{cur++;cur<PL.length?play():result()},
+    pick:b=>{
+      if(b.disabled)return;
+      const k=b.dataset.k,n=IT[k],toast=root.querySelector('#msg');   // 안내는 화면 위에 붙은 가방 바로 아래에 뜬다
+      const show=(cls,html,t)=>{toast.innerHTML=`<p class="fb ${cls}">${html}</p>`;DK.speak(t);timers.forEach(clearTimeout);timers=[];later(()=>toast.innerHTML='',2600)};
+      if(!p.need.includes(k)){
+        miss[cur]++;
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        show('no',`✕<span>이건 필요 없어요.<small>${p.n}에 갈 때 ${n}${DK.eun(n)} 필요 없어요.</small></span>`,`이건 필요 없어요. ${p.n}에 갈 때 ${n}${DK.eun(n)} 필요 없어요.`);
+        return;
+      }
+      b.classList.add('ok');b.disabled=true;got.push(k);
+      const slot=root.querySelectorAll('.slot')[got.length-1];
+      slot.className='slot in';slot.innerHTML=`<img src="img/${k}.jpg" alt="${n}">`;
+      root.querySelector('#cnt').textContent=`${got.length} / ${p.need.length}`;
+      if(got.length<p.need.length){
+        show('ok',`✓<span>좋아요! ${n}${DK.eul(n)} 담았어요.<small>${p.need.length-got.length}개 더 찾아요.</small></span>`,`좋아요! ${n}${DK.eul(n)} 담았어요.`);
+        return;
+      }
+      toast.innerHTML='';
+      root.querySelectorAll('.item').forEach(x=>x.disabled=true);
+      const list=p.need.map(x=>IT[x]).join(', ');
+      root.querySelector('#fb').innerHTML=`<p class="fb ok">✓<span>가방을 다 챙겼어요!<small>${p.n}에 갈 때는 ${list}${DK.eul(IT[p.need[p.need.length-1]])} 챙겨요.</small></span></p>`;
+      DK.speak(`가방을 다 챙겼어요! ${p.n}에 갈 때는 ${list}${DK.eul(IT[p.need[p.need.length-1]])} 챙겨요.`);
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      later(()=>root.querySelector('#fb').scrollIntoView({behavior:'smooth',block:'center'}),400);
+    }
+  });
+  later(()=>DK.speak(say),300);
+}
+
+function result(){
+  clear();
+  const total=miss.reduce((a,b)=>a+b,0);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">${total?'잘<br>했어요':'완벽<br>해요'}</i><div aria-hidden="true" style="font-size:40px">👜</div><p class="n">가방 ${PL.length}개 완성!</p><p>${total?`필요 없는 물건을 ${total}번 골랐어요.`:'필요한 물건만 쏙쏙 골랐어요.'}</p></div>
+  <p class="sl" style="margin:20px 0 0">기관별 내 가방</p>
+  <div class="rbags">${PL.map((p,i)=>`<div class="rb">${instHtml(p)}<div class="bag"><p class="bl">${p.n} 가방 <i>${p.need.length}개</i></p><div class="slots">${p.need.map(k=>`<span class="slot in"><img src="img/${k}.jpg" alt=""><b>${IT[k]}</b></span>`).join('')}</div></div>${miss[i]?`<p class="miss">필요 없는 물건을 ${miss[i]}번 골랐어요.</p>`:''}</div>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,again:()=>{cur=0;miss=[];play()},
+    listen:()=>DK.speak(PL.map(p=>`${p.n}에 갈 때는 ${p.need.map(x=>IT[x]).join(', ')}${DK.eul(IT[p.need[p.need.length-1]])} 챙겨요.`).join(' '))
+  });
+  DK.done({miss:total});
+  later(()=>DK.speak(`가방 ${PL.length}개를 모두 챙겼어요!`),400);
+}
+
+home();
+</script>
+</body>
+</html>

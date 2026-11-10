@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4efdf">
+<title>지석 씨의 영화 약속</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 메신저 창 — m7-2 「위험한 연락 구분하기」의 채팅 창을 옮기고 내 말풍선(오른쪽)을 더했다 */
+.chat{position:relative;margin:4px 2px 0;background:#e8eef4;border-radius:18px;box-shadow:0 6px 16px rgba(60,40,20,.18);overflow:hidden}
+.chat .ch{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #ece6da}
+.chat .av{flex:none;width:42px;height:42px;border-radius:50%;background:#f1ece2;display:grid;place-items:center;font:800 18px var(--fb);color:#6b5f50}
+.chat .who{flex:1;min-width:0}
+.chat .who b{display:block;font:800 17px var(--fb);color:#222}
+.chat .who small{display:block;font-size:12px;color:#888}
+.chat .kind{flex:none;font:700 11px var(--fb);color:#fff;background:#7b8a99;border-radius:999px;padding:3px 9px}
+.chat .cb{padding:12px 12px 16px;display:flex;flex-direction:column;gap:8px;min-height:180px}
+.chat .day{align-self:center;font-size:11px;color:#777;background:rgba(0,0,0,.06);border-radius:999px;padding:2px 10px}
+.row{display:flex;align-items:flex-end;gap:6px;max-width:88%;animation:enter .3s ease}
+.row .nm{display:block;font-size:12px;color:#666;margin:0 0 2px 2px}
+.bub{margin:0;background:#fff;color:#222;border-radius:4px 16px 16px 16px;padding:10px 13px;font:500 16px/1.5 var(--fb);overflow-wrap:anywhere}
+.row.me{align-self:flex-end;flex-direction:row-reverse}
+.row.me .bub{background:#fde58a;border-radius:16px 4px 16px 16px}
+.row.new .bub{box-shadow:0 0 0 3px var(--ac)}
+.row .tm{flex:none;font-size:10.5px;color:#888;white-space:nowrap}
+.typing{align-self:flex-start;font-size:13px;color:#777;padding:4px 8px}
+/* 지석 씨의 생각 */
+.think{position:relative;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:18px 16px 14px;margin:20px 4px 0;font:var(--hw) 21px/1.5 var(--fh)}
+.think .lb{display:inline-block;font:700 12px var(--fb);color:var(--on);background:var(--ac);border-radius:999px;padding:2px 10px;margin-bottom:6px}
+.think .spk{position:absolute;right:12px;top:12px}
+/* 해설 */
+.mean{position:relative;background:#fff;border-radius:14px;box-shadow:0 4px 12px rgba(60,40,20,.14);padding:16px 16px 14px;margin-top:16px}
+.mean .tg{display:inline-block;font:700 13px var(--fb);color:#7a5a12;background:#fff3cf;border-radius:999px;padding:2px 10px}
+.mean h3{margin:8px 0 4px;font:var(--hw) 23px/1.3 var(--fh)}
+.mean p{margin:0;font-size:15px;line-height:1.65}
+.tried{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tried span{font:700 12px var(--fb);color:var(--muted);background:var(--soft);border-radius:999px;padding:3px 10px}
+/* 정리 */
+.sum{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.sum li{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.sum li.me{box-shadow:0 0 0 3px var(--ac),0 3px 8px rgba(60,40,20,.12)}
+.sum li q{display:block;font:500 15px/1.5 var(--fb);quotes:"“" "”"}
+.sum li b{display:block;font-size:13px;color:var(--ac);margin-top:6px}
+.sum li.me b::after{content:" · 내가 고른 메시지";color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>지석 씨와 민호가 주고받은 메시지를 하나씩 읽어요.</li><li>지석 씨가 쉬고 난 뒤 어떤 생각을 했는지 살펴봐요.</li><li>지석 씨가 민호에게 보낼 <b>마지막 메시지</b>를 4개 중에서 골라요.</li><li>고른 메시지가 어떤 마음인지 설명을 읽어요.</li></ol><p>마음에는 정답이 없어요. 다른 메시지도 골라 볼 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'영',html:'지석 씨의 <b>영화 약속</b>'};
+const STEPS=['대화 보기','쉬고 난 뒤','메시지 고르기','정리'];
+// 대화·생각·해설은 프로토타입 「중기 온라인 프로토타입/m1-3.html」 그대로.
+const TALK=[
+  {me:0,time:'오전 9:02',text:'지석아, 좋은 아침! 오늘 저녁에 영화 보러 갈래? 요즘 재밌다는 영화가 있더라.'},
+  {me:1,time:'오전 9:04',text:'영화? 어떤 영화인데?'},
+  {me:0,time:'오전 9:05',text:'액션 영화야. 사람들이 재밌다고 하던데, 시간 괜찮으면 같이 보자. 표는 내가 예매할게!'},
+  {me:1,time:'오전 9:07',text:'같이 보자고 해줘서 고마워. 그런데 오늘은 몸이 좀 피곤해서 집에서 쉬고 싶어.'},
+  {me:0,time:'오전 9:08',text:'아, 그렇구나. 알겠어! 오늘은 푹 쉬어. 영화는 다음에 같이 보자.'},
+  {me:1,time:'오전 9:09',text:'응, 고마워. 다음에 보자!'}
+];
+// 임시: '토요일 오후', 보낸 시각(오후 4:30), 정리 화면의 '이야기해 볼까요?' 질문은 지어냄
+const THINK='잠깐 누워 쉬고 한숨 자고 일어났어요. 아, 쉬고 났더니 개운하네. 아까 민호가 영화 보자고 했었지. 그 영화 재밌다고 하던데…';
+// 요청서: '카톡 대화 확인 후 최종 메시지 선택하기(4개 중 하나)'.
+// 프로토타입의 '지석 씨의 마음' 4개를 민호에게 보내는 메시지로 바꿨다. 해설(why)은 프로토타입 피드백 문구 그대로.
+// 임시: 메시지 문장(msg)·이름표(tag)·민호의 답장(reply)·핵심 한 줄(point)은 마음 4개를 바탕으로 지어냄 — 기획자 확인 필요
+const CHOICES=[
+  {tag:'선택을 바꿔요',msg:'민호야, 쉬고 나니까 괜찮아졌어! 아직 늦지 않았으면 오늘 같이 영화 볼래?',
+   reply:'좋아! 저녁 7시 영화 아직 자리 있어. 내가 예매할게 😊',
+   why:'아직 늦지 않았다면 같이 영화를 보고 싶다는 마음이 있군요. 쉬고 난 뒤 마음이 달라질 수 있어요.',
+   point:'상황이 바뀌면 선택을 바꿔도 괜찮아요. 바뀐 마음을 솔직하게 말해요.'},
+  {tag:'처음 선택을 지켜요',msg:'민호야, 오늘은 푹 쉬었어. 영화는 다음에 꼭 같이 보자!',
+   reply:'응! 푹 쉬었다니 다행이다. 다음 주에 같이 보자.',
+   why:'오늘은 쉬기로 한 선택이 괜찮게 느껴지는군요. 영화는 다음에 같이 볼 수도 있어요.',
+   point:'처음 한 선택이 지금도 좋다면 그대로 지켜도 괜찮아요.'},
+  {tag:'아쉬운 마음을 말해요',msg:'아까 같이 보자고 했을 때 좋다고 할걸. 조금 아쉽다. 다음엔 꼭 같이 보자!',
+   reply:'괜찮아! 다음 주말에 같이 보면 되지 🙂',
+   why:'그때 같이 보자고 할걸 하는 아쉬움이 있군요. 다음에 비슷한 일이 있으면 그때 마음을 말해도 괜찮아요.',
+   point:'아쉬운 마음도 말로 표현할 수 있어요. 다음 약속으로 이어 갈 수 있어요.'},
+  {tag:'내 몸을 살펴요',msg:'민호야, 고마워. 나는 아직 피곤해서 오늘은 조금 더 쉴게.',
+   reply:'그래, 몸이 먼저야. 푹 쉬어!',
+   why:'아직 몸이 피곤하거나 더 쉬고 싶은 마음일 수 있어요. 지금 내 몸 상태를 살펴봐도 좋아요.',
+   point:'내 몸 상태를 살피고, 쉬고 싶은 마음을 말하는 것도 좋은 선택이에요.'}
+];
+const NUM=['①','②','③','④'];
+
+const root=document.getElementById('app');
+let shown=0,pick=-1,tried=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+
+const bubble=(m,isNew)=>`<div class="row${m.me?' me':''}${isNew?' new':''}"><div>${m.me?'':'<span class="nm">민호</span>'}<p class="bub">${DK.esc(m.text)}</p></div><span class="tm">${m.time}</span></div>`;
+const phone=(list,sub)=>`<div class="chat" aria-label="민호와 지석 씨의 메신저 대화"><div class="ch"><span class="av" aria-hidden="true">민</span><span class="who"><b>민호</b><small>${sub||'친구'}</small></span><span class="kind">메신저</span></div>
+  <div class="cb" aria-live="polite"><span class="day">토요일 오전</span>${list.join('')}</div></div>`;
+
+function home(){
+  clear();
+  const say='지석 씨의 영화 약속. 지석 씨와 민호가 주고받는 메시지를 살펴보고, 지석 씨가 보낼 마지막 메시지를 골라 봐요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">A week of Jiseok</span><h1 class="h1">지석 씨의<br><em>영화 약속</em></h1>
+  <p>친구 민호가 지석 씨에게 영화를 보자고 했어요.<br>두 사람의 메시지를 한 장면씩 살펴보고, 지석 씨가 보낼 <b>마지막 메시지</b>를 골라 봐요.</p></section>
+  ${phone([bubble(TALK[0])])}
+  <div class="acts"><button class="btn pri" data-act="start">대화 시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>{shown=1;pick=-1;tried=[];talk()}});
+}
+
+function talk(){
+  clear();
+  const done=shown>=TALK.length,m=TALK[shown-1];
+  DK.mount(root,`${DK.hbar(BRAND,true)}${DK.steps(STEPS,0)}
+  <p class="q" style="margin-top:0">메시지를 하나씩 읽어요</p><p class="qs">${shown} / ${TALK.length}번째 메시지</p>
+  ${phone(TALK.slice(0,shown).map((x,k)=>bubble(x,k===shown-1)))}
+  <div class="acts two"><button class="btn sec" data-act="say">🔊 다시 듣기</button><button class="btn pri" data-act="next">${done?'잠깐 쉬고 난 뒤 ›':'다음 메시지 ›'}</button></div>${DK.DKU}`,{
+    home,say:()=>DK.speak(`${m.me?'지석':'민호'}. ${m.text}`),
+    next:()=>{if(done)rest();else{shown++;talk()}}
+  });
+  later(()=>{const r=root.querySelector('.row.new');r&&r.scrollIntoView({behavior:'smooth',block:'nearest'})},80);
+  DK.speak(`${m.me?'지석':'민호'}. ${m.text}`);
+}
+
+function rest(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}${DK.steps(STEPS,1)}
+  <p class="q" style="margin-top:0">잠깐 쉬고 난 뒤</p><p class="qs">오후가 되었어요. 지석 씨는 어떤 생각을 할까요?</p>
+  <div class="photo tilt-l" style="margin:18px 6px 0"><i class="tp"></i><span class="cp" style="display:grid;place-items:center;font-size:64px;background:#e9e3f3" aria-hidden="true">🛏️💤</span><span class="ct">한숨 자고 일어난 지석 씨<small>토요일 오후</small></span></div>
+  <div class="think"><span class="lb">지석 씨의 생각</span><button class="spk" data-say="${THINK}" aria-label="소리로 듣기">${DK.SPK}</button><div>${THINK}</div></div>
+  <div class="acts"><button class="btn pri" data-act="next">민호에게 메시지 보내기 ›</button></div>${DK.DKU}`,{
+    home,next:choose
+  });
+  DK.speak(THINK);
+}
+
+function choose(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}${DK.steps(STEPS,2)}
+  <p class="q" style="margin-top:0">지석 씨는 민호에게 어떤 메시지를 보낼까요?</p><p class="qs">지석 씨의 마음과 가장 가까운 메시지를 하나 골라요. 정답은 없어요.</p>
+  <div class="opts">${CHOICES.map((c,i)=>`<button class="opt" data-act="pick" data-i="${i}" aria-label="${i+1}번 메시지: ${DK.esc(c.msg)}"><span class="no">${i+1}</span><span>${DK.esc(c.msg)}</span></button>`).join('')}</div>
+  ${tried.length?`<div class="tried">${tried.map(i=>`<span>✓ ${i+1}번 골라 봤어요</span>`).join('')}</div>`:''}
+  <div class="acts"><button class="btn sec" data-say="지석 씨는 민호에게 어떤 메시지를 보낼까요? ${CHOICES.map((c,i)=>`${i+1}번. ${c.msg}`).join(' ')}">🔊 메시지 4개 듣기</button></div>${DK.DKU}`,{
+    home,pick:b=>{pick=+b.dataset.i;if(!tried.includes(pick))tried.push(pick);sent()}
+  });
+  DK.speak('지석 씨는 민호에게 어떤 메시지를 보낼까요?');
+}
+
+function sent(){
+  clear();
+  const c=CHOICES[pick];
+  const after=[bubble(TALK[TALK.length-1]),'<span class="day">토요일 오후</span>',bubble({me:1,time:'오후 4:30',text:c.msg},true)];
+  DK.mount(root,`${DK.hbar(BRAND,true)}${DK.steps(STEPS,2)}
+  <p class="q" style="margin-top:0">메시지를 보냈어요</p><p class="qs">${pick+1}번 메시지를 골랐어요.</p>
+  ${phone(after)}
+  <div id="mean" hidden><div class="mean"><span class="tg">${NUM[pick]} ${c.tag}</span><h3>그런 마음이 들 수 있어요.</h3><p>${c.why}</p></div>
+  ${DK.sayBig(c.point)}
+  <div class="acts two"><button class="btn sec" data-act="again">↺ 다른 메시지 고르기</button><button class="btn pri" data-act="end">정리하기 ›</button></div></div>${DK.DKU}`,{
+    home,again:choose,end:finish
+  });
+  const cb=root.querySelector('.cb');
+  later(()=>{cb.insertAdjacentHTML('beforeend','<span class="typing">민호가 답장을 쓰고 있어요…</span>')},700);
+  later(()=>{cb.querySelector('.typing').remove();cb.insertAdjacentHTML('beforeend',bubble({me:0,time:'오후 4:31',text:c.reply}));
+    const m=root.querySelector('#mean');m.hidden=false;
+    DK.speak(`민호의 답장. ${c.reply} 그런 마음이 들 수 있어요. ${c.why}`)},1900);
+  DK.speak(c.msg);
+}
+
+function finish(){
+  clear();
+  const line='상황이 바뀌면 선택을 바꿀 수 있어요. 내 마음을 솔직하게 말해요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}${DK.steps(STEPS,3)}
+  <section class="hero" style="padding-top:4px"><span class="eb">What I learned</span><h1 class="h1">마음은<br><em>바뀔 수 있어요</em></h1><p>마음에는 정답이 없어요. 지석 씨처럼 상황이 바뀌면 다시 생각해 보고, 내 마음을 말로 표현해요.</p></section>
+  ${DK.sayBig(line)}
+  <p class="sl" style="margin:20px 0 0">메시지 4개의 뜻</p>
+  <ul class="sum">${CHOICES.map((c,i)=>`<li class="${i===pick?'me':''}"><q>${DK.esc(c.msg)}</q><b>${NUM[i]} ${c.tag}</b></li>`).join('')}</ul>
+  <section class="note"><i class="tp"></i><h3>💡 이야기해 볼까요?</h3><p style="margin:0">내가 지석 씨라면 어떤 메시지를 보낼까요?<br>나도 마음이 바뀐 적이 있나요? 그때 어떻게 말했나요?</p></section>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(line),again:()=>{shown=1;pick=-1;tried=[];talk()}
+  });
+  DK.done();
+  DK.speak(line);
+}
+
+home();
+</script>
+</body>
+</html>

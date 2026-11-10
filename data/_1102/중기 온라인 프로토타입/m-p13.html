@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지석 씨의 요금제 고르기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one comic panel at a time, big narration underneath, large controls; second tab lays all cuts on one sheet. Deliberately single light "printed comic" look. */
+:root{
+  --paper:#f5f8f1; --card:#ffffff; --ink:#23302a; --muted:#5f6b63;
+  --green:#3f7d2c; --green-soft:#e2eed7; --red:#d23f2f; --line:#cfd9c6;
+  --display:"Jua","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.cell .rules{grid-template-columns:1fr}.cell .rule{flex-direction:row;text-align:left;padding:10px}.cell .rule svg{width:52px;height:52px;flex:none}.cell .rule strong br{display:none}.cell .rule strong{font-size:22px}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:14px;color:var(--green);font-weight:700;letter-spacing:.04em}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,40px);line-height:1.2;margin:2px 0 0;text-wrap:balance}
+.tabs{display:flex;gap:6px;background:var(--green-soft);padding:4px;border-radius:999px}
+.tabs button{border:0;background:transparent;font:inherit;font-weight:700;font-size:15px;color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--green);color:#fff}
+button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+
+.stage{background:var(--card);border:3px solid var(--ink);border-radius:6px;overflow:hidden}
+.panel svg{display:block;width:100%;height:auto}
+.panel.imagine{filter:saturate(.35) sepia(.25)}
+.caption{border-top:3px solid var(--ink);padding:16px 20px;display:flex;gap:14px;align-items:flex-start;min-height:104px}
+.num{flex:none;font-family:var(--display);font-size:22px;background:var(--ink);color:#fff;border-radius:999px;width:44px;height:44px;display:grid;place-items:center}
+.caption p{margin:0;font-family:var(--display);font-size:clamp(22px,3.6vw,30px);line-height:1.45;text-wrap:balance;min-width:0}
+.caption p b{color:var(--red);font-weight:400}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.navbtn{font-family:var(--display);font-size:24px;border:3px solid var(--ink);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 22px;min-height:60px;cursor:pointer}
+.navbtn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.navbtn:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.dots button{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);background:transparent;padding:0;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--ink)}
+.toggles{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font:inherit;font-weight:700;font-size:15px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+
+/* pop-in when a panel plays */
+.playing .pop{animation:pop .55s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:var(--d,0s)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+.pop{transform-box:fill-box;transform-origin:center bottom}
+@media (prefers-reduced-motion:reduce){.playing .pop{animation:none}}
+
+/* ending card */
+.ending{padding:24px 20px;display:flex;flex-direction:column;gap:20px}
+.ending h2{font-family:var(--display);font-weight:400;font-size:clamp(30px,5vw,42px);margin:0;text-align:center;color:var(--green)}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rule{border:3px solid var(--ink);border-radius:12px;padding:16px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.rule svg{width:76px;height:76px}
+.rule strong{font-family:var(--display);font-weight:400;font-size:26px;line-height:1.25}
+.rule span{font-size:16px;color:var(--muted)}
+.helpers{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-family:var(--display);font-size:22px}
+.helpers em{font-style:normal;background:var(--green-soft);border-radius:999px;padding:4px 16px}
+.talk{border-top:2px dashed var(--line);padding-top:14px}
+.talk h3{margin:0 0 6px;font-size:15px;color:var(--muted);letter-spacing:.04em}
+.talk ol{margin:0;padding-left:1.4em;font-size:19px}
+.rule-box{background:var(--card)}
+
+/* sheet view */
+.sheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cell{background:var(--card);border:3px solid var(--ink);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.cell .cap{border-top:3px solid var(--ink);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-family:var(--display);font-size:19px;line-height:1.4}
+.cell .cap .num{width:32px;height:32px;font-size:17px}
+.sheet-note{font-size:15px;color:var(--muted);margin:0}
+@media (max-width:620px){
+  .rules{grid-template-columns:1fr}
+  .sheet{grid-template-columns:1fr}
+  .navbtn{font-size:20px;padding:8px 14px}
+  .caption{padding:12px 14px;min-height:0}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">도움을 받아도 내가 결정하기 · 도입</div>
+      <h1>지석 씨의 요금제 고르기</h1>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-play" aria-selected="true">만화 보기</button>
+      <button role="tab" id="tab-sheet" aria-selected="false">한 장에 모아 보기</button>
+    </div>
+  </header>
+
+  <section id="view-play" class="viewer">
+    <div class="stage" id="stage"></div>
+  </section>
+  <div class="controls" id="controls">
+    <button class="navbtn" id="prev">◀ 이전</button>
+    <div class="dots" id="dots"></div>
+    <button class="navbtn primary" id="next">다음 ▶</button>
+  </div>
+  <div class="toggles" id="toggles">
+    <button class="chip" id="tts" aria-pressed="false">🔊 읽어 주기</button>
+    <button class="chip" id="auto" aria-pressed="false">▶ 저절로 넘기기</button>
+    <button class="chip" id="restart">처음부터</button>
+  </div>
+
+  <section id="view-sheet" hidden>
+    <p class="sheet-note">7컷을 한 장에 모았어요. 화면을 캡처해 인쇄하거나 교재에 넣을 수 있어요.</p>
+    <div class="sheet" id="sheet"></div>
+  </section>
+</div>
+
+<script>
+const INK='#23302a', SKIN='#f3cfae', W='#ffffff', RED='#d23f2f', GREEN='#3f7d2c';
+const FONT='Jua, "Noto Sans KR", sans-serif';
+
+/* ---------- drawing helpers ---------- */
+function arm(a,b,c,col){
+  const d=`M${a} Q${b} ${c}`;
+  const [hx,hy]=c.split(',');
+  return `<path d="${d}" fill="none" stroke="${INK}" stroke-width="26" stroke-linecap="round"/>
+          <path d="${d}" fill="none" stroke="${col}" stroke-width="20" stroke-linecap="round"/>
+          <circle cx="${hx}" cy="${hy}" r="12" fill="${SKIN}" stroke="${INK}" stroke-width="3"/>`;
+}
+function face(f){
+  const st=`fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"`;
+  const dots=`<circle cx="-18" cy="-302" r="5" fill="${INK}"/><circle cx="18" cy="-302" r="5" fill="${INK}"/>`;
+  const cheeks=`<circle cx="-32" cy="-282" r="8" fill="#f2a08f" opacity=".6"/><circle cx="32" cy="-282" r="8" fill="#f2a08f" opacity=".6"/>`;
+  switch(f){
+    case 'happy': return `<path d="M-27,-300 Q-18,-312 -9,-300" ${st}/><path d="M9,-300 Q18,-312 27,-300" ${st}/>${cheeks}<path d="M-18,-280 Q0,-258 18,-280 Z" fill="${INK}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+    case 'smile': return dots+cheeks+`<path d="M-16,-278 Q0,-264 16,-278" ${st}/>`;
+    case 'confused': return dots+`<path d="M-28,-322 L-10,-328" ${st}/><path d="M10,-318 L28,-326" ${st}/><path d="M-14,-274 Q-7,-281 0,-274 Q7,-267 14,-274" ${st}/>`;
+    case 'worried': return dots+`<path d="M-28,-318 L-10,-326" ${st}/><path d="M10,-326 L28,-318" ${st}/><path d="M-14,-270 Q0,-282 14,-270" ${st}/>`;
+    case 'shock': return `<circle cx="-18" cy="-302" r="10" fill="${W}" stroke="${INK}" stroke-width="3"/><circle cx="18" cy="-302" r="10" fill="${W}" stroke="${INK}" stroke-width="3"/><circle cx="-18" cy="-301" r="4" fill="${INK}"/><circle cx="18" cy="-301" r="4" fill="${INK}"/><path d="M-28,-326 L-10,-332" ${st}/><path d="M10,-332 L28,-326" ${st}/><ellipse cx="0" cy="-272" rx="10" ry="13" fill="${INK}"/>`;
+    case 'firm': return dots+`<path d="M-28,-326 L-10,-320" ${st}/><path d="M10,-320 L28,-326" ${st}/><path d="M-12,-274 L12,-274" ${st}/>`;
+    case 'oh': return dots+`<path d="M-28,-324 L-10,-328" ${st}/><path d="M10,-328 L28,-324" ${st}/><ellipse cx="0" cy="-274" rx="6" ry="7" fill="${INK}"/>`;
+  }
+}
+const HAIR={
+  short:'M-52,-310 Q-58,-368 0,-363 Q58,-368 52,-310 Q46,-336 18,-341 Q-10,-327 -40,-337 Q-50,-326 -52,-310Z',
+  neat:'M-52,-312 Q-56,-366 4,-362 Q58,-362 52,-304 Q44,-338 -6,-343 Q-30,-341 -52,-312Z',
+  long:'M-52,-298 Q-60,-370 0,-365 Q60,-370 52,-298 Q40,-346 -10,-341 Q-32,-322 -52,-298Z'
+};
+function person(o){
+  const s=o.s||1, sh=o.shirt, hair=o.hairCol||'#2b2420';
+  const L={down:['-56,-238','-82,-190','-72,-140'],hold:['-56,-238','-44,-176','-16,-186']};
+  const R={down:['56,-238','82,-190','72,-140'],hold:['56,-238','44,-176','16,-186'],
+           stop:['56,-238','110,-246','120,-296'],point:['56,-238','110,-252','160,-268'],
+           phone:['56,-238','92,-196','46,-292'],wave:['56,-238','100,-262','98,-330']};
+  let g='';
+  if(o.hair==='long') g+=`<path d="M-60,-300 Q-68,-372 0,-368 Q68,-372 60,-300 L66,-226 Q0,-212 -66,-226Z" fill="${hair}" stroke="${INK}" stroke-width="3"/>`;
+  g+=`<rect x="-46" y="-132" width="40" height="126" rx="14" fill="${o.pants||'#3d4a5e'}" stroke="${INK}" stroke-width="3"/>
+      <rect x="6" y="-132" width="40" height="126" rx="14" fill="${o.pants||'#3d4a5e'}" stroke="${INK}" stroke-width="3"/>
+      <ellipse cx="-28" cy="-6" rx="26" ry="10" fill="${INK}"/><ellipse cx="28" cy="-6" rx="26" ry="10" fill="${INK}"/>
+      <rect x="-12" y="-266" width="24" height="24" fill="${SKIN}" stroke="${INK}" stroke-width="3"/>
+      <path d="M-58,-122 L-62,-214 Q-60,-252 -20,-256 L20,-256 Q60,-252 62,-214 L58,-122 Z" fill="${sh}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  if(o.staff) g+=`<path d="M-18,-255 L0,-212 L18,-255Z" fill="${W}" stroke="${INK}" stroke-width="2.5"/><path d="M-5,-244 L5,-244 L8,-196 L0,-186 L-8,-196Z" fill="${RED}" stroke="${INK}" stroke-width="2"/><rect x="22" y="-226" width="28" height="16" rx="3" fill="${W}" stroke="${INK}" stroke-width="2"/>`;
+  else if(o.collar) g+=`<path d="M-20,-255 L0,-232 L20,-255" fill="none" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  g+=`<circle cx="-50" cy="-302" r="10" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><circle cx="50" cy="-302" r="10" fill="${SKIN}" stroke="${INK}" stroke-width="3"/>
+      <circle cx="0" cy="-305" r="50" fill="${SKIN}" stroke="${INK}" stroke-width="3"/>
+      <path d="${HAIR[o.hair||'short']}" fill="${hair}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  g+=face(o.face||'smile');
+  const la=L[o.left||'down'], ra=R[o.right||'down'];
+  g+=arm(la[0],la[1],la[2],sh)+arm(ra[0],ra[1],ra[2],sh);
+  if(o.right==='stop') g+=`<g><rect x="102" y="-344" width="38" height="50" rx="14" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><path d="M112,-340 v-10 M121,-342 v-12 M130,-340 v-10" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g>`;
+  if(o.right==='point') g+=`<path d="M168,-270 L186,-274" stroke="${INK}" stroke-width="9" stroke-linecap="round"/><path d="M168,-270 L186,-274" stroke="${SKIN}" stroke-width="4" stroke-linecap="round"/>`;
+  if(o.right==='phone') g+=`<rect x="30" y="-334" width="22" height="42" rx="5" fill="#33404a" stroke="${INK}" stroke-width="2.5"/>`;
+  const sx=o.flip?-s:s;
+  return `<g transform="translate(${o.x},${o.y}) scale(${sx},${s})">${g}</g>`;
+}
+function rich(t){ // [[word]] -> red
+  return t.replace(/\[\[(.+?)\]\]/g,`<tspan fill="${RED}">$1</tspan>`);
+}
+function bubble(x,y,w,lines,tip,fs=27){
+  const lh=fs*1.3, h=Math.round(lines.length*lh+26);
+  let g=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="22" fill="${W}" stroke="${INK}" stroke-width="3.5"/>`;
+  if(tip){
+    const tx=Math.max(x+34,Math.min(tip[0],x+w-34));
+    const ey= tip[1]>y+h ? y+h : y;
+    g+=`<path d="M${tx-15},${ey} L${tip[0]},${tip[1]} L${tx+15},${ey}" fill="${W}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+        <line x1="${tx-12}" y1="${ey}" x2="${tx+12}" y2="${ey}" stroke="${W}" stroke-width="6"/>`;
+  }
+  lines.forEach((l,i)=>{
+    g+=`<text x="${x+w/2}" y="${y+13+lh*(i+1)-lh*0.25}" text-anchor="middle" font-family='${FONT}' font-size="${fs}" fill="${INK}">${rich(l)}</text>`;
+  });
+  return g;
+}
+const pop=(d,inner)=>`<g class="pop" style="--d:${d}s">${inner}</g>`;
+function storeBg(){
+  let phones='';
+  for(let i=0;i<6;i++) phones+=`<rect x="${512+i*44}" y="${96}" width="28" height="50" rx="6" fill="#3a4752" stroke="${INK}" stroke-width="2"/><rect x="${516+i*44}" y="${101}" width="20" height="36" rx="3" fill="#9fd0e6"/>`;
+  return `<rect width="800" height="560" fill="#e3edda"/>
+    <rect y="448" width="800" height="112" fill="#cad6be"/>
+    <rect x="30" y="26" width="214" height="54" rx="10" fill="${GREEN}" stroke="${INK}" stroke-width="3"/>
+    <text x="137" y="64" text-anchor="middle" font-family='${FONT}' font-size="28" fill="${W}">휴대폰 가게</text>
+    <rect x="496" y="146" width="284" height="12" rx="3" fill="#a9b99a" stroke="${INK}" stroke-width="2"/>${phones}`;
+}
+function counter(x=470){
+  return `<rect x="${x}" y="384" width="${800-x}" height="176" fill="#8eac7a" stroke="${INK}" stroke-width="3"/>
+          <rect x="${x-16}" y="370" width="${816-x}" height="22" rx="4" fill="#a9c594" stroke="${INK}" stroke-width="3"/>`;
+}
+function homeBg(col='#f4e6d6'){
+  return `<rect width="800" height="560" fill="${col}"/><rect y="450" width="800" height="110" fill="#e0cdb6"/>
+    <rect x="560" y="50" width="180" height="140" rx="6" fill="#cfe6f2" stroke="${INK}" stroke-width="3"/>
+    <path d="M650,50 V190 M560,120 H740" stroke="${INK}" stroke-width="3"/>`;
+}
+function qmark(x,y,s=40,c=RED){return `<text x="${x}" y="${y}" font-family='${FONT}' font-size="${s}" fill="${c}" stroke="${INK}" stroke-width="1.2">?</text>`}
+
+/* ---------- characters ---------- */
+const SIWOO={shirt:'#8db87a',hair:'short',collar:true};
+const STAFF={shirt:'#2f4a7a',hair:'neat',staff:true,pants:'#25324a'};
+const MOM={shirt:'#e38c6c',hair:'long',hairCol:'#5a3b2a',pants:'#6a5b74'};
+
+/* ---------- cuts ---------- */
+const CUTS=[
+{ cap:'지석 씨는 요금제를 바꾸려고 <b>휴대폰 가게</b>에 갔어요.',
+  say:['지석 씨는 요금제를 바꾸려고 휴대폰 가게에 갔어요.','지석 씨: 요금제를 바꾸고 싶어요.','직원: 어서 오세요!'],
+  svg:()=>storeBg()
+   +person({...STAFF,x:640,y:520,s:.95,face:'smile'})+counter()
+   +pop(.1,person({...SIWOO,x:240,y:545,s:.9,face:'happy',right:'wave'}))
+   +pop(.6,bubble(30,92,330,['요금제를','바꾸고 싶어요.'],[236,214]))
+   +pop(1.3,bubble(520,96,230,['어서 오세요!'],[628,170]))
+},
+{ cap:'직원이 <b>비싼 요금제</b>를 권했어요. 어려운 말이 많아서 잘 모르겠어요.',
+  say:['직원이 비싼 요금제를 권했어요. 어려운 말이 많아서 잘 모르겠어요.','직원: 이게 제일 좋아요! 지금 서명하면 선물도 드려요!'],
+  svg:()=>storeBg()
+   +pop(0,`<g><rect x="370" y="96" width="190" height="170" rx="8" fill="#fff4c9" stroke="${INK}" stroke-width="3"/>
+      <rect x="370" y="96" width="190" height="40" rx="8" fill="${RED}" stroke="${INK}" stroke-width="3"/>
+      <text x="465" y="125" text-anchor="middle" font-family='${FONT}' font-size="24" fill="${W}">★ 인기 요금제 ★</text>
+      <text x="465" y="172" text-anchor="middle" font-family='${FONT}' font-size="26" fill="${INK}">프리미엄</text>
+      <text x="465" y="214" text-anchor="middle" font-family='${FONT}' font-size="34" fill="${RED}">월 89,000원</text>
+      <text x="465" y="248" text-anchor="middle" font-family='${FONT}' font-size="15" fill="#6b5b3a">약정 24개월 · 부가서비스 포함</text></g>`)
+   +person({...STAFF,x:660,y:520,s:.95,face:'happy',right:'point',flip:true})+counter(520)
+   +person({...SIWOO,x:170,y:545,s:.9,face:'confused'})
+   +pop(.5,bubble(560,10,230,['이게 제일 좋아요!','지금 서명하면','선물도 드려요!'],[668,172],25))
+   +pop(1.3,`<text x="20" y="168" font-family='${FONT}' font-size="26" fill="${INK}">약정?</text>`)
+   +pop(1.6,`<text x="104" y="118" font-family='${FONT}' font-size="26" fill="${INK}">위약금?</text>`)
+   +pop(1.9,`<text x="210" y="168" font-family='${FONT}' font-size="23" fill="${INK}">부가서비스?</text>`)
+   +pop(2.2,qmark(100,212,46)+qmark(230,250,38))
+},
+{ imagine:true,
+  cap:'만약에… 잘 모르고 바로 서명하면, 나중에 <b>돈을 많이</b> 낼 수 있어요.',
+  say:['만약에, 잘 모르고 바로 서명하면, 나중에 돈을 많이 낼 수 있어요.','지석 씨: 요금이 이렇게 많이 나왔어요?'],
+  svg:()=>homeBg('#ece4da')
+   +`<rect x="0" y="0" width="800" height="52" fill="${INK}"/><text x="24" y="36" font-family='${FONT}' font-size="26" fill="${W}">만약에… 잘 모르고 바로 서명하면?</text>`
+   +person({...SIWOO,x:400,y:548,s:1,face:'shock',left:'hold',right:'hold'})
+   +pop(.3,`<g><rect x="316" y="296" width="168" height="134" rx="6" fill="${W}" stroke="${INK}" stroke-width="3"/>
+      <text x="400" y="326" text-anchor="middle" font-family='${FONT}' font-size="20" fill="${INK}">휴대폰 요금 고지서</text>
+      <line x1="332" y1="338" x2="468" y2="338" stroke="${INK}" stroke-width="2"/>
+      <text x="400" y="368" text-anchor="middle" font-family='${FONT}' font-size="18" fill="#555">이번 달 낼 돈</text>
+      <text x="400" y="410" text-anchor="middle" font-family='${FONT}' font-size="34" fill="${RED}">89,000원</text></g>`)
+   +pop(.9,`<path d="M462,196 q8,14 0,22 q-8,-8 0,-22Z M478,228 q6,10 0,16 q-6,-6 0,-16Z" fill="#7fc1e6" stroke="${INK}" stroke-width="2"/>`)
+   +pop(1.1,bubble(470,78,300,['요금이 이렇게','많이 나왔어요?!'],[440,200]))
+},
+{ cap:'지석 씨는 서명하지 않았어요. <b>"잠깐만요"</b>라고 말했어요.',
+  say:['지석 씨는 서명하지 않았어요. 잠깐만요, 라고 말했어요.','지석 씨: 잠깐만요! 잘 모르겠어요. 생각해 보고 올게요.'],
+  svg:()=>storeBg()
+   +person({...STAFF,x:650,y:520,s:.95,face:'oh'})+counter(500)
+   +pop(.6,`<text x="706" y="200" font-family='${FONT}' font-size="44" fill="${RED}" stroke="${INK}" stroke-width="1.2">!</text>`)
+   +person({...SIWOO,x:240,y:545,s:.9,face:'firm',right:'stop'})
+   +pop(0,`<g transform="translate(92,150)"><polygon points="-26,-62 26,-62 62,-26 62,26 26,62 -26,62 -62,26 -62,-26" fill="${RED}" stroke="${INK}" stroke-width="3"/>
+      <polygon points="-22,-54 22,-54 54,-22 54,22 22,54 -22,54 -54,22 -54,-22" fill="none" stroke="${W}" stroke-width="3"/>
+      <text x="0" y="12" text-anchor="middle" font-family='${FONT}' font-size="30" fill="${W}">멈춤</text></g>`)
+   +pop(.4,bubble(300,24,290,['잠깐만요!','잘 모르겠어요.','생각해 보고 올게요.'],[290,206],26))
+},
+{ cap:'어려운 일은 <b>도와 달라고</b> 해요. 지석 씨는 어머니에게 전화했어요.',
+  say:['어려운 일은 도와 달라고 해요. 지석 씨는 어머니에게 전화했어요.','지석 씨: 어머니, 요금제 고르는 것 좀 도와주세요.','어머니: 그래, 같이 알아보자.'],
+  svg:()=>`<rect width="800" height="560" fill="#dceaf2"/><rect y="450" width="420" height="110" fill="#bccfdb"/>
+     <rect x="20" y="210" width="90" height="240" fill="#c3d6e2" stroke="${INK}" stroke-width="2"/><rect x="300" y="250" width="100" height="200" fill="#c3d6e2" stroke="${INK}" stroke-width="2"/>`
+   +`<path d="M410,0 L800,0 L800,560 L390,560 Z" fill="#f4e6d6"/><path d="M410,0 L390,560" stroke="${INK}" stroke-width="5"/>
+     <rect x="610" y="210" width="150" height="110" rx="6" fill="#cfe6f2" stroke="${INK}" stroke-width="3"/><path d="M685,210 V320" stroke="${INK}" stroke-width="3"/><rect x="390" y="450" width="410" height="110" fill="#e0cdb6"/><path d="M410,0 L390,560" stroke="${INK}" stroke-width="5"/>`
+   +person({...SIWOO,x:200,y:545,s:.92,face:'worried',right:'phone'})
+   +pop(.2,bubble(16,40,370,['어머니, 요금제 고르는 것','좀 도와주세요.'],[200,196]))
+   +pop(1.4,person({...MOM,x:590,y:545,s:.9,face:'smile',right:'phone',flip:true}))
+   +pop(1.8,bubble(440,60,320,['그래, 같이 알아보자.'],[590,200]))
+},
+{ cap:'어머니와 함께 요금제를 <b>비교</b>했어요. 내가 휴대폰을 어떻게 쓰는지 생각해요.',
+  say:['어머니와 함께 요금제를 비교했어요. 내가 휴대폰을 어떻게 쓰는지 생각해요.','어머니: 지석 씨는 휴대폰으로 무엇을 많이 해요?','지석 씨: 전화를 많이 해요. 영상은 조금 봐요.'],
+  svg:()=>homeBg()
+   +person({...SIWOO,x:160,y:545,s:.9,face:'smile'})
+   +person({...MOM,x:640,y:545,s:.9,face:'smile',flip:true})
+   +`<rect x="0" y="420" width="800" height="140" fill="#c99d6e" stroke="${INK}" stroke-width="3"/><rect x="0" y="410" width="800" height="18" fill="#dbb388" stroke="${INK}" stroke-width="3"/>`
+   +pop(.2,`<g><rect x="250" y="250" width="144" height="166" rx="10" fill="${W}" stroke="${INK}" stroke-width="3"/><rect x="250" y="250" width="144" height="40" rx="10" fill="#2f5fa8" stroke="${INK}" stroke-width="3"/>
+      <text x="322" y="279" text-anchor="middle" font-family='${FONT}' font-size="24" fill="${W}">A 요금제</text>
+      <text x="322" y="322" text-anchor="middle" font-family='${FONT}' font-size="22" fill="${INK}">월 25,000원</text>
+      <text x="322" y="356" text-anchor="middle" font-family='${FONT}' font-size="20" fill="${INK}">데이터 5GB</text>
+      <text x="322" y="390" text-anchor="middle" font-family='${FONT}' font-size="18" fill="${INK}">통화 무제한</text></g>`)
+   +pop(.4,`<g><rect x="408" y="250" width="144" height="166" rx="10" fill="${W}" stroke="${INK}" stroke-width="3"/><rect x="408" y="250" width="144" height="40" rx="10" fill="${GREEN}" stroke="${INK}" stroke-width="3"/>
+      <text x="480" y="279" text-anchor="middle" font-family='${FONT}' font-size="24" fill="${W}">B 요금제</text>
+      <text x="480" y="322" text-anchor="middle" font-family='${FONT}' font-size="22" fill="${INK}">월 39,000원</text>
+      <text x="480" y="356" text-anchor="middle" font-family='${FONT}' font-size="20" fill="${INK}">데이터 20GB</text>
+      <text x="480" y="390" text-anchor="middle" font-family='${FONT}' font-size="18" fill="${INK}">통화 무제한</text></g>`)
+   +pop(.9,bubble(410,14,370,['지석 씨는 휴대폰으로','무엇을 많이 해요?'],[620,204],26))
+   +pop(1.9,bubble(14,104,300,['전화를 많이 해요.','영상은 조금 봐요.'],[150,204],26))
+},
+{ cap:'결정은 지석 씨가 했어요. <b>도움을 받아도, 결정은 내가</b> 해요.',
+  say:['결정은 지석 씨가 했어요. 도움을 받아도, 결정은 내가 해요.','지석 씨: 제가 고를게요. A 요금제로 할게요!','어머니: 잘 정했어!'],
+  svg:()=>storeBg()
+   +person({...STAFF,x:680,y:520,s:.95,face:'smile'})+counter(560)
+   +person({...MOM,x:130,y:545,s:.88,face:'happy'})
+   +person({...SIWOO,x:350,y:548,s:.95,face:'happy',left:'hold',right:'hold'})
+   +pop(.2,`<g><rect x="282" y="300" width="136" height="120" rx="6" fill="${W}" stroke="${INK}" stroke-width="3"/>
+      <text x="350" y="328" text-anchor="middle" font-family='${FONT}' font-size="18" fill="${INK}">가입 신청서</text>
+      <rect x="298" y="344" width="20" height="20" rx="3" fill="${W}" stroke="${INK}" stroke-width="2.5"/><path d="M301,354 l6,6 l11,-14" fill="none" stroke="${RED}" stroke-width="4" stroke-linecap="round"/>
+      <text x="326" y="362" font-family='${FONT}' font-size="20" fill="${INK}">A 요금제</text>
+      <text x="298" y="400" font-family='${FONT}' font-size="15" fill="#666">서명</text>
+      <path d="M334,398 q8,-14 14,0 q6,12 12,-4 q6,-10 14,2" fill="none" stroke="#2f5fa8" stroke-width="3" stroke-linecap="round"/></g>`)
+   +pop(.6,bubble(230,26,320,['제가 고를게요.','[[A 요금제]]로 할게요!'],[350,196]))
+   +pop(1.5,bubble(14,104,190,['잘 정했어!'],[130,206],25))
+   +pop(1.8,`<path d="M470,230 l6,14 l14,6 l-14,6 l-6,14 l-6,-14 l-14,-6 l14,-6Z M240,250 l4,9 l9,4 l-9,4 l-4,9 l-4,-9 l-9,-4 l9,-4Z" fill="#f1c94b" stroke="${INK}" stroke-width="2"/>`)
+}
+];
+
+/* ending card icons */
+const ICON_STOP=`<svg viewBox="0 0 80 80"><polygon points="26,4 54,4 76,26 76,54 54,76 26,76 4,54 4,26" fill="${RED}" stroke="${INK}" stroke-width="3"/><rect x="28" y="22" width="24" height="36" rx="10" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><path d="M34,24 v-6 M40,23 v-8 M46,24 v-6" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></svg>`;
+const ICON_HELP=`<svg viewBox="0 0 80 80"><circle cx="26" cy="26" r="13" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><path d="M8,70 q0,-26 18,-26 q18,0 18,26Z" fill="#8db87a" stroke="${INK}" stroke-width="3"/><circle cx="56" cy="26" r="13" fill="${SKIN}" stroke="${INK}" stroke-width="3"/><path d="M38,70 q0,-26 18,-26 q18,0 18,26Z" fill="#e38c6c" stroke="${INK}" stroke-width="3"/><path d="M34,56 h12" stroke="${INK}" stroke-width="5" stroke-linecap="round"/></svg>`;
+const ICON_PICK=`<svg viewBox="0 0 80 80"><rect x="10" y="8" width="60" height="64" rx="8" fill="${W}" stroke="${INK}" stroke-width="3"/><rect x="20" y="22" width="14" height="14" rx="3" fill="${W}" stroke="${INK}" stroke-width="3"/><path d="M22,29 l4,5 l9,-12" fill="none" stroke="${RED}" stroke-width="4" stroke-linecap="round"/><path d="M40,30 h20 M20,50 h40 M20,60 h28" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></svg>`;
+const ENDING={cap:'기억해요',say:['기억해요.','하나. 모르면 멈춰요. 함부로 서명하지 않아요.','둘. 도와 달라고 해요.','셋. 결정은 내가 해요.'],
+ html:`<div class="ending"><h2>기억해요</h2>
+  <div class="rules">
+    <div class="rule rule-box">${ICON_STOP}<strong>모르면<br>멈춰요</strong><span>함부로 서명하지 않아요</span></div>
+    <div class="rule rule-box">${ICON_HELP}<strong>도와 달라고<br>해요</strong><span>믿을 수 있는 사람에게</span></div>
+    <div class="rule rule-box">${ICON_PICK}<strong>결정은<br>내가 해요</strong><span>다른 사람 말만 따르지 않아요</span></div>
+  </div>
+  <div class="helpers">누가 도와줄 수 있나요? <em>부모님</em><em>활동지원사</em><em>복지사 선생님</em><em>기타</em></div>
+  <div class="talk"><h3>함께 이야기해요</h3><ol>
+    <li>지석 씨는 왜 "잠깐만요"라고 말했나요?</li>
+    <li>나는 어려울 때 누구에게 도와 달라고 할 수 있나요?</li>
+  </ol></div></div>`};
+
+/* ---------- build ---------- */
+const total=CUTS.length+1;
+let idx=0, ttsOn=false, autoOn=false, timer=null;
+const stage=document.getElementById('stage');
+const dots=document.getElementById('dots');
+const svgOf=c=>`<svg viewBox="0 0 800 560" role="img" aria-label="${c.cap.replace(/<[^>]+>/g,'')}">${c.svg()}</svg>`;
+for(let i=0;i<total;i++){const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'번째 장면');b.onclick=()=>go(i);dots.appendChild(b)}
+
+function render(){
+  clearTimeout(timer);
+  const isEnd=idx===CUTS.length;
+  if(isEnd){
+    stage.innerHTML=ENDING.html;
+  }else{
+    const c=CUTS[idx];
+    stage.innerHTML=`<div class="panel${c.imagine?' imagine':''}">${svgOf(c)}</div>
+      <div class="caption"><span class="num">${idx+1}</span><p>${c.cap}</p></div>`;
+    const svg=stage.querySelector('svg'); svg.classList.add('playing');
+  }
+  [...dots.children].forEach((b,i)=>b.setAttribute('aria-current',i===idx));
+  document.getElementById('prev').disabled=idx===0;
+  const nx=document.getElementById('next');
+  nx.disabled=idx===total-1;
+  nx.textContent=idx===CUTS.length-1?'정리 ▶':'다음 ▶';
+  speakCurrent();
+}
+function go(i){idx=Math.max(0,Math.min(total-1,i));render()}
+function scheduleNext(ms){ if(autoOn && idx<total-1){clearTimeout(timer);timer=setTimeout(()=>go(idx+1),ms)} }
+
+function speakCurrent(){
+  const lines=(idx===CUTS.length?ENDING:CUTS[idx]).say;
+  try{ window.speechSynthesis && speechSynthesis.cancel(); }catch(e){}
+  if(!ttsOn){ scheduleNext(7000); return; }
+  try{
+    const u=new SpeechSynthesisUtterance(lines.join(' ... ').replace(/[^:]+: /g,m=>m.replace(':',' 이 말해요,')));
+    u.lang='ko-KR'; u.rate=0.85;
+    const v=speechSynthesis.getVoices().find(v=>/ko/i.test(v.lang)); if(v) u.voice=v;
+    u.onend=()=>scheduleNext(1200);
+    u.onerror=()=>scheduleNext(7000);
+    speechSynthesis.speak(u);
+  }catch(e){ scheduleNext(7000); }
+}
+
+document.getElementById('prev').onclick=()=>go(idx-1);
+document.getElementById('next').onclick=()=>go(idx+1);
+document.getElementById('restart').onclick=()=>go(0);
+document.getElementById('tts').onclick=e=>{ttsOn=!ttsOn;e.currentTarget.setAttribute('aria-pressed',ttsOn);speakCurrent()};
+document.getElementById('auto').onclick=e=>{autoOn=!autoOn;e.currentTarget.setAttribute('aria-pressed',autoOn);if(autoOn)speakCurrent();else clearTimeout(timer)};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(idx+1);if(e.key==='ArrowLeft')go(idx-1)});
+
+/* sheet */
+document.getElementById('sheet').innerHTML=CUTS.map((c,i)=>`<div class="cell"><div class="panel${c.imagine?' imagine':''}">${svgOf(c)}</div><div class="cap"><span class="num">${i+1}</span><span>${c.cap}</span></div></div>`).join('')
+  +`<div class="cell" style="justify-content:center">${ENDING.html}</div>`;
+const tPlay=document.getElementById('tab-play'), tSheet=document.getElementById('tab-sheet');
+function tab(sheet){
+  tPlay.setAttribute('aria-selected',!sheet); tSheet.setAttribute('aria-selected',sheet);
+  document.getElementById('view-play').hidden=sheet;
+  document.getElementById('controls').hidden=sheet;
+  document.getElementById('toggles').hidden=sheet;
+  document.getElementById('view-sheet').hidden=!sheet;
+  if(sheet){clearTimeout(timer);try{speechSynthesis.cancel()}catch(e){}}
+}
+tPlay.onclick=()=>tab(false); tSheet.onclick=()=>tab(true);
+render();
+</script>
+
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="9e32cc39-307a-4438-9d06-8a6180f38359" data-app-host="app.netlify.com" data-account-tier="free"></script>

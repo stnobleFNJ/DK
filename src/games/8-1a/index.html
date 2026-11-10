@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>상황에 맞는 기관 선택하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.photo.qp{margin:14px 6px 0}
+.photo.qp .cp{aspect-ratio:4/3}
+/* 기관 타일: 이모지 건물 + 간판 */
+.places{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 0}
+.place{position:relative;display:flex;flex-direction:column;align-items:stretch;background:#fff;border:3px solid transparent;border-radius:12px;overflow:hidden;box-shadow:0 5px 12px rgba(60,40,20,.16);transition:border-color .15s,opacity .2s}
+.place:last-child:nth-child(odd){grid-column:1/-1}
+.place .em{display:grid;place-items:center;height:88px;font-size:54px;line-height:1;background:linear-gradient(#f4f7fb,#e6edf3)}
+.place .sg{display:block;text-align:center;padding:8px 4px;font:800 18px var(--fb);letter-spacing:-.03em;color:#fff;background:var(--c)}
+.place:active{transform:scale(.97)}
+.place.wrong{border-color:var(--no);opacity:.5;animation:shake .4s}
+.place.ok{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok),0 8px 18px rgba(60,40,20,.2)}
+.place.dim{opacity:.35}
+.place:disabled{opacity:1}
+.place.wrong:disabled{opacity:.5}.place.dim:disabled{opacity:.35}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.score .n{font:var(--lw) 46px/1.1 var(--fl);letter-spacing:-.03em;margin:4px 0 0}
+.score .n small{font-size:24px;color:var(--muted)}
+.score p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.pairs{display:grid;gap:10px;margin:10px 0 0}
+.pair{display:grid;grid-template-columns:38% 22px 1fr;align-items:center;gap:8px;background:#fff;padding:7px;border-radius:8px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.pair img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px}
+.pair .ar{font:900 18px var(--fb);color:var(--muted);text-align:center}
+.pair .pt{min-width:0}
+.pair .pt s{display:block;text-decoration:none;font-size:13px;line-height:1.4;color:var(--muted)}
+.pair .chip2{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 10px;border-radius:8px;color:#fff;background:var(--c);font:800 15px var(--fb)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>시우의 상황 그림을 봐요.</li><li>시우가 가야 할 기관을 골라요.</li><li>5가지 상황을 모두 풀면 상황과 기관을 정리해 줘요.</li></ol><p>틀려도 괜찮아요. 다시 고르면 돼요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'관',html:'어디로 <b>가야 할까요?</b>'};
+// 기관 5곳 = 보기. 건물 그림이 자료에 없어 이모지 타일로 대신한다. 간판 색은 교재 82쪽 건물 그림에 맞췄다.
+// 임시: 기관 설명 문구는 자료에 없어 만들었다.
+const P={
+  hosp:{n:'병원',e:'🏥',c:'#3f8f6a',d:'아플 때 진료를 받는 곳'},
+  bank:{n:'은행',e:'🏦',c:'#2f5fa8',d:'돈을 맡기고, 보내고, 통장을 만드는 곳'},
+  lib:{n:'도서관',e:'📚',c:'#8a5a2b',d:'책을 빌리고 읽는 곳'},
+  gov:{n:'행정복지센터',e:'🏢',c:'#24577a',d:'신분증 같은 서류를 만드는 곳'},
+  post:{n:'우체국',e:'📮',c:'#d0352b',d:'편지와 택배를 보내는 곳'}
+};
+const ORDER=['gov','post','bank','hosp','lib'];
+// 상황 그림 = 원본 '공공기관 알아보기' 5장(tools/gen_8_1a.py). 그림 이름에서 상황을 정했다.
+// 임시: 상황 문장과 정답 설명 문장은 자료에 없어 그림 이름을 바탕으로 만들었다.
+const Q=[
+  {img:'stomach',t:'시우가 갑자기 배가 아파요.',a:'hosp',why:'배가 아플 때는 병원에 가서 진료를 받아요.'},
+  {img:'transfer',t:'친구에게 돈을 보내야 하는데, 시우는 계좌가 없어요.',a:'bank',why:'계좌를 만들고 돈을 보내려면 은행에 가요.'},
+  {img:'book',t:'시우는 과제를 하려면 책이 필요해요.',a:'lib',why:'책이 필요할 때는 도서관에서 빌려요.'},
+  {img:'idcard',t:'영화관에서 신분증을 보여 달래요. 시우는 신분증이 없어요.',a:'gov',why:'신분증은 행정복지센터에서 만들어요.'},
+  {img:'parcel',t:'시우가 택배를 보내고 싶어요.',a:'post',why:'택배를 보낼 때는 우체국에 가요.'}
+];
+
+const root=document.getElementById('app');
+let qs=[],cur=0,first=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const ro=w=>DK.bat(w)&&(w.charCodeAt(w.length-1)-0xAC00)%28!==8?'으로':'로';   // 받침(ㄹ 제외) 뒤 '으로'
+
+function home(){
+  clear();
+  const say='상황에 맞는 기관 선택하기. 시우에게 일이 생겼어요. 어디로 가야 할까요?';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Where should I go?</span><h1 class="h1">시우는<br><em>어디로 가야 할까요?</em></h1><p>시우의 5가지 상황을 보고, 가야 할 기관을 골라요.</p></section>
+  <div class="note"><i class="tp"></i><h3>우리 동네 기관</h3>
+    <div class="places" style="margin-top:10px">${ORDER.map(k=>`<div class="place" style="--c:${P[k].c};box-shadow:none;border:1px solid var(--line)"><span class="em" style="height:64px;font-size:38px" aria-hidden="true">${P[k].e}</span><span class="sg" style="font-size:15px">${P[k].n}</span></div>`).join('')}</div></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:()=>{qs=DK.shuffle(Q);cur=0;first=[];ask()}
+  });
+}
+
+function ask(){
+  clear();
+  const q=qs[cur],last=cur===qs.length-1;
+  let tried=false;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(qs.length,cur)}
+  <span class="qn">${cur+1} / ${qs.length}</span>
+  <div class="photo qp tilt-l"><i class="tp"></i><span class="cp"><img src="img/${q.img}.jpg" alt="${DK.esc(q.t)}"></span></div>
+  ${DK.sayBig(q.t)}
+  <p class="q">어디로 가야 할까요?</p><p class="qs">알맞은 기관 1곳을 눌러요.</p>
+  <div class="places">${DK.shuffle(ORDER).map(k=>`<button class="place" style="--c:${P[k].c}" data-act="pick" data-k="${k}" aria-label="${P[k].n}"><span class="em" aria-hidden="true">${P[k].e}</span><span class="sg">${P[k].n}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 상황 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>{cur++;cur<qs.length?ask():result()},
+    pick:b=>{
+      if(b.disabled)return;
+      const k=b.dataset.k,fb=root.querySelector('#fb');
+      if(k!==q.a){
+        tried=true;
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        const t=`${P[k].n}${DK.eun(P[k].n)} ${P[k].d}이에요.`;
+        fb.innerHTML=`<p class="fb no">✕<span>다시 골라 보세요.<small>${t}</small></span></p>`;
+        DK.speak(`${t} 다시 골라 보세요.`);
+        return;
+      }
+      first.push({q,ok:!tried});
+      root.querySelectorAll('.place').forEach(o=>{o.disabled=true;if(o!==b&&!o.classList.contains('wrong'))o.classList.add('dim')});
+      b.classList.add('ok');
+      fb.innerHTML=`<p class="fb ok">✓<span>맞아요! ${P[k].n}${ro(P[k].n)} 가요.<small>${q.why}</small></span></p>`;
+      DK.speak(`맞아요! ${q.why}`);
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  later(()=>DK.speak(q.t+' 어디로 가야 할까요?'),300);
+}
+
+function result(){
+  clear();
+  const right=first.filter(f=>f.ok).length,all=right===Q.length;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">${all?'모두<br>맞힘':'잘<br>했어요'}</i><div aria-hidden="true" style="font-size:40px">🗺️</div><p class="n">${right} <small>/ ${Q.length}</small></p><p>한 번에 맞혔어요</p></div>
+  <p class="sl" style="margin:20px 0 0">이럴 때는 여기로 가요</p>
+  <div class="pairs">${Q.map(q=>{const p=P[q.a];return `<div class="pair"><img src="img/${q.img}.jpg" alt=""><span class="ar" aria-hidden="true">→</span><span class="pt"><s>${q.t}</s><span class="chip2" style="--c:${p.c}"><span aria-hidden="true">${p.e}</span>${p.n}</span></span></div>`}).join('')}</div>
+  <div class="note"><i class="tp"></i><h3>기관이 하는 일</h3><ul>${ORDER.map(k=>`<li><b>${P[k].n}</b>: ${P[k].d}</li>`).join('')}</ul></div>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div>${DK.DKU}`,{
+    home,again:()=>{qs=DK.shuffle(Q);cur=0;first=[];ask()},listen:()=>DK.speak(Q.map(q=>q.why).join(' '))
+  });
+  DK.done({score:right+'/'+Q.length});
+  later(()=>DK.speak(`${Q.length}개 중 ${right}개를 한 번에 맞혔어요.`),400);
+}
+
+home();
+</script>
+</body>
+</html>

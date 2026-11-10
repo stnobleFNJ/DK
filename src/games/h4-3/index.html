@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>휴대전화로 119 신고하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.mini{font-size:56px;text-align:center;margin:6px 0 0}
+.alert{display:inline-flex;align-items:center;gap:6px;font:700 13px var(--fb);color:#fff;background:#c4372a;border-radius:999px;padding:4px 12px;margin-top:14px}
+.sit{margin:16px 8px 0}
+.sit .cp{aspect-ratio:1}
+.sit .ct{font-size:24px}
+.must{margin-top:16px;padding:12px 14px;border-radius:12px;background:#fbeee9;color:#9b3a26;font:700 16px var(--fb);text-align:center}
+/* 휴대폰 틀 (m6-3과 같은 모양) */
+.phone{position:relative;margin:14px auto 0;max-width:360px;border:7px solid var(--dark);border-radius:30px;background:#fff;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 24px rgba(60,40,20,.25)}
+.sbar{flex:none;display:flex;justify-content:space-between;padding:6px 18px 4px;font:700 12px var(--fb);color:#222}
+.mis{flex:none;background:#fdf1cf;border-bottom:1px solid #edd79a;padding:8px 14px;text-align:center}
+.mis small{display:block;font:700 11px var(--fb);color:#8a6d1f}
+.mis b{font:var(--hw) 19px/1.3 var(--fh);color:#5b4300}
+/* 키패드 */
+.disp{flex:none;height:72px;display:flex;align-items:center;justify-content:center;font:300 46px var(--fb);letter-spacing:.12em;color:#111}
+.disp:empty::before{content:'번호를 눌러요';font:400 16px var(--fb);letter-spacing:0;color:#aaa}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px 26px 8px}
+.key{aspect-ratio:1;max-height:70px;justify-self:center;width:100%;max-width:70px;border-radius:50%;background:#f0eeea;display:grid;place-items:center;font:400 30px var(--fb);color:#111}
+.key small{display:block;font:700 9px var(--fb);color:#888;letter-spacing:.1em;margin-top:-6px}
+.key:active{background:#ddd8cf}
+.key.hint{box-shadow:0 0 0 3px var(--tape);animation:pulse 1.4s infinite}
+.key.wrong{background:#fbd9d3;animation:shake .4s}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.prow{display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;gap:8px;padding:4px 18px 18px}
+.del{justify-self:center;font-size:24px;color:#666;padding:10px}
+.callb{display:flex;align-items:center;justify-content:center;gap:8px;height:62px;border-radius:31px;background:#2fae4e;color:#fff;font:800 18px var(--fb);box-shadow:0 4px 10px rgba(47,174,78,.35)}
+.callb:disabled{background:#c9c4bb;box-shadow:none;opacity:1}
+.callb.go{animation:pulse 1.2s infinite}
+.toast{position:absolute;left:50%;top:140px;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:10px 18px;border-radius:20px;font:700 15px var(--fb);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:3}
+.toast.show{opacity:1}
+/* 통화 화면 */
+.ph-call{display:flex;flex-direction:column;gap:14px;padding:22px 16px 20px;background:linear-gradient(180deg,#2b2926,#1c1a17);color:#fff;text-align:center}
+.ph-call .ce{width:84px;height:84px;border-radius:50%;background:#c4372a;display:grid;place-items:center;font-size:42px;margin:0 auto 8px}
+.ph-call .cn{font:800 34px var(--fb);letter-spacing:.08em}
+.ph-call .cs{font-size:14px;color:#9fd8a9}
+.bub{position:relative;text-align:left;background:#fff;color:#222;border-radius:16px 16px 16px 4px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.bub span{flex:1;font:700 18px/1.4 var(--fb)}
+.bub small{display:block;font:700 11px var(--fb);color:#c4372a;margin-bottom:2px}
+.me{background:var(--paper);color:var(--ink);border-radius:16px;padding:12px 12px 14px;text-align:left}
+.me small{display:block;font:700 12px var(--fb);color:var(--ac)}
+.me .big{font:var(--hw) 30px/1.3 var(--fh);margin:4px 0 10px;color:#3d352b}
+.me .row{display:grid;grid-template-columns:1fr 1.3fr;gap:8px}
+.me .btn{padding:12px 6px;font-size:15px}
+.me.on{box-shadow:0 0 0 3px var(--ok)}
+.hang{width:60px;height:60px;border-radius:50%;background:#e5483d;display:grid;place-items:center;font-size:26px;margin:0 auto}
+.hang+p{margin:4px 0 0;font-size:12px;color:#bbb}
+/* 결과 */
+.res{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px}
+.res .big{font:800 54px var(--fb);color:#c4372a;letter-spacing:.06em;line-height:1}
+.res h2{font:var(--lw) 25px/1.35 var(--fl);letter-spacing:-.04em;margin:10px 0 0}
+.res .stamp{font-size:17px;background:var(--ok)}
+.rl{display:grid;gap:12px;margin-top:16px}
+.ri{display:flex;gap:10px;align-items:center;background:#fff;padding:7px;box-shadow:0 4px 10px rgba(60,40,20,.14);border-radius:6px}
+.ri img{flex:none;width:28%;aspect-ratio:1;object-fit:cover;border-radius:4px}
+.ri .rt{flex:1}
+.ri b{display:block;font:var(--hw) 21px/1.3 var(--fh);color:#3d352b}
+.ri small{color:var(--ok);font-weight:700;font-size:13px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>위급 상황 사진을 봐요.</li><li>휴대폰에서 1, 1, 9를 차례대로 눌러요.</li><li>‘신고 연습’ 버튼을 눌러요.</li><li>“119입니다. 무슨 일이세요?”를 듣고, 큰 글자를 소리 내어 말해요.</li></ol><p>연습이라서 진짜 전화는 걸리지 않아요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'신',html:'119 <b>신고 연습</b>'};
+// 증상 3가지 = 요청서 문구. 사진 = 「후 4-3」 진짜 사진(tools/gen_h4_3.py).
+// 이 게임은 연습용이다. 실제로 전화를 걸지 않는다(tel: 링크를 쓰지 않는다).
+const S=[
+  {k:'face',name:'얼굴이 비뚤어졌어요'},
+  {k:'arm',name:'한쪽 팔에 힘이 없어요'},
+  {k:'chest',name:'가슴이 쥐어짜듯이 아파요'}
+];
+const NUM='119';
+const ANSWER='119입니다. 무슨 일이세요?';   // 요청서 음성 문구
+const PICKED='구급대원이 받았어요';          // 요청서 문구
+// 임시: 아래 문구들은 요청서에 없어 지었다.
+const WRONG='1, 1, 9를 차례대로 눌러요';
+const REPLY='알겠어요. 구급차가 바로 갈게요.';
+const MUST='위급 상황에서는 꼭 119에 전화해요!';
+
+const root=document.getElementById('app');
+let timers=[],typed='';
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const now=()=>{const d=new Date();return `${d.getHours()}:${DK.pad(d.getMinutes())}`};
+const sbar=()=>`<div class="sbar"><span>${now()}</span><span>📶 🔋</span></div>`;
+const img=s=>`img/${s.k}.jpg`;
+
+function home(){
+  clear();
+  const say='위급 상황에서는 무조건 119에 신고해요. 휴대전화로 119 신고를 연습해 봐요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Call 119</span><h1 class="h1">휴대전화로<br><em>119 신고하기</em></h1><p>위급한 일이 생기면 무조건 119에 신고해요. 1, 1, 9를 누르고 말하는 연습을 해 봐요.</p></section>
+  <p class="mini" aria-hidden="true">📱🚑</p>
+  <p class="must">연습이라서 진짜 전화는 걸리지 않아요.</p>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>sit(0)});
+}
+
+function sit(si){
+  clear();
+  const s=S[si];
+  const say=`위급 상황이에요! ${s.name}. 119에 신고해요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si)}
+  <span class="alert">🚨 위급 상황 ${si+1}</span>
+  <div class="photo sit tilt-l"><i class="tp"></i><span class="cp"><img src="${img(s)}" alt="${s.name}"></span><span class="ct">${s.name}</span></div>
+  <p class="must">🚑 ${MUST}</p>
+  <div class="acts two"><button class="btn sec" data-say="${say}">🔊 듣기</button><button class="btn pri" data-act="go">📱 휴대폰 열기 ›</button></div>${DK.DKU}`,{home,go:()=>dial(si)});
+  DK.speak(say);
+}
+
+function dial(si){
+  clear();typed='';
+  const s=S[si];
+  const keys=[['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si)}
+  <div class="phone">${sbar()}<div class="mis"><small>🚨 ${s.name}</small><b>1, 1, 9를 눌러요</b></div>
+    <div class="disp" id="disp" aria-live="polite"></div>
+    <div class="pad">${keys.map(([d,l])=>`<button class="key" data-act="key" data-d="${d}" aria-label="${d==='*'?'별표':d==='#'?'우물 정자':d}">${d}${l?`<small>${l}</small>`:''}</button>`).join('')}</div>
+    <div class="prow"><span></span><button class="callb" id="call" data-act="call" disabled>📞 신고 연습</button><button class="del" data-act="del" aria-label="하나 지우기">⌫</button></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>${DK.DKU}`,{
+    home,
+    key:b=>{
+      if(typed.length>=3)return;
+      const d=b.dataset.d;
+      if(d!==NUM[typed.length]){
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');
+        toast(WRONG);DK.speak(`${d==='*'?'별표':d==='#'?'우물 정자':d}가 아니에요. ${WRONG}.`);return;
+      }
+      typed+=d;DK.speak(d==='1'?'일':'구');
+      paint();
+      if(typed===NUM){const c=root.querySelector('#call');c.disabled=false;c.classList.add('go');later(()=>DK.speak('잘했어요! 신고 연습 버튼을 눌러요.'),700)}
+    },
+    del:()=>{typed=typed.slice(0,-1);paint();const c=root.querySelector('#call');c.disabled=true;c.classList.remove('go')},
+    call:()=>typed===NUM&&call(si)
+  });
+  const paint=()=>{
+    root.querySelector('#disp').textContent=typed;
+    root.querySelectorAll('.key').forEach(k=>k.classList.toggle('hint',typed.length<3&&k.dataset.d===NUM[typed.length]));
+  };
+  const toast=t=>{const e=root.querySelector('#toast');e.textContent=t;e.classList.add('show');later(()=>e.classList.remove('show'),1500)};
+  paint();
+  DK.speak('1, 1, 9를 차례대로 눌러요.');
+}
+
+function call(si){
+  clear();
+  const s=S[si],last=si===S.length-1;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si)}
+  <div class="phone">${sbar()}<div class="ph-call">
+    <div><div class="ce" aria-hidden="true">🚑</div><div class="cn">119</div><div class="cs" id="cs">📞 ${PICKED}</div></div>
+    <div class="bub" role="status"><span><small>구급대원</small>“${ANSWER}”</span><button class="spk" data-say="${ANSWER}" aria-label="다시 듣기">${DK.SPK}</button></div>
+    <div class="me" id="me"><small>👉 이렇게 말해요</small><p class="big">“${s.name}”</p>
+      <div class="row"><button class="btn sec" data-act="listen">🔊 들어 보기</button><button class="btn pri" data-act="said">🗣 말했어요</button></div></div>
+    <div class="bub" id="reply" hidden><span><small>구급대원</small>“${REPLY}”</span><button class="spk" data-say="${REPLY}" aria-label="다시 듣기">${DK.SPK}</button></div>
+    <div id="end" hidden><button class="hang" data-act="next" aria-label="전화 끊기">📞</button><p>전화 끊기</p></div>
+  </div></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 연습 ›'}</button></div>${DK.DKU}`,{
+    home,
+    listen:()=>DK.speak(s.name),
+    said:b=>{
+      b.disabled=true;root.querySelector('#me').classList.add('on');
+      root.querySelector('#reply').hidden=false;root.querySelector('#end').hidden=false;root.querySelector('#nx').hidden=false;
+      DK.speak(`잘했어요! ${REPLY}`);
+      later(()=>root.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    },
+    next:()=>last?finish():sit(si+1)
+  });
+  DK.speak(ANSWER);   // 누른 순간(사용자 동작 안)에 말해야 휴대폰에서도 소리가 난다
+}
+
+function finish(){
+  clear();
+  const head='119 신고 연습을 모두 마쳤어요!';   // 임시: 결과 문구는 요청서에 없어 지었다.
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="res"><i class="stamp">연습<br>완료</i><div class="big">119</div><h2>${head}</h2></div>
+  <div class="rl">${S.map(s=>`<div class="ri"><img src="${img(s)}" alt=""><span class="rt"><b>“${s.name}”</b><small>✓ 119 신고 연습 완료</small></span><button class="spk" data-say="${s.name}" aria-label="소리로 듣기">${DK.SPK}</button></div>`).join('')}</div>
+  <p class="must">🚑 ${MUST}</p>
+  <div class="acts"><button class="btn pri" data-act="again">↻ 다시 연습하기</button></div>${DK.DKU}`,{home,again:()=>sit(0)});
+  DK.done();
+  later(()=>DK.speak(`${head} ${MUST}`),300);
+}
+
+home();
+</script>
+</body>
+</html>

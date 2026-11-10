@@ -1,0 +1,444 @@
+<div id="app"></div>
+<style>
+  #app, #app * { box-sizing: border-box; }
+  #app {
+    --green-deep: #1c8c6c;
+    --green-soft: #c7e6c9;
+    --green-pale: #eef7ee;
+    --gold: #f2a900;
+    --purple: #8b5fbf;
+    --ink: #1f2d27;
+    --ink-soft: #4f5f58;
+    --white: #ffffff;
+    --danger-soft: #f7d9d9;
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--green-pale);
+    border-radius: 20px;
+    padding: 28px 24px 32px;
+    max-width: 720px;
+    margin: 0 auto;
+    color: var(--ink);
+    min-height: 560px;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green-deep);
+  }
+  .step-dots {
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d7e8d9;
+    transition: background .25s, transform .25s;
+  }
+  .dot.active { background: var(--gold); transform: scale(1.25); }
+  .dot.done { background: var(--green-deep); }
+
+  .prompt-bubble {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 18px 22px;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.04);
+  }
+
+  .choice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 520px) {
+    .choice-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .choice-card {
+    background: var(--white);
+    border: 3px solid transparent;
+    border-radius: 16px;
+    padding: 14px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    transition: transform .12s, border-color .12s, background .12s;
+    min-height: 96px;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.25;
+  }
+  .choice-card .emoji { font-size: 34px; }
+  .choice-card:hover { transform: translateY(-2px); }
+  .choice-card:active { transform: scale(.96); }
+  .choice-card.selected {
+    border-color: var(--green-deep);
+    background: var(--green-soft);
+  }
+
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .cat-grid .choice-card { min-height: 130px; font-size: 16px; }
+
+  .intensity-grid { grid-template-columns: repeat(3, 1fr); }
+  .intensity-grid .choice-card { min-height: 120px; }
+  .intensity-grid .emoji { font-size: 44px; }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+  }
+  .nav-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .nav-btn.back {
+    background: var(--white);
+    color: var(--ink-soft);
+  }
+  .nav-btn.back:disabled { visibility: hidden; }
+
+  .summary-strip {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .summary-chip {
+    background: var(--white);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--green-deep);
+  }
+
+  /* final card */
+  .final-wrap { text-align: center; }
+  .final-card {
+    background: var(--white);
+    border-radius: 22px;
+    padding: 30px 26px 26px;
+    box-shadow: 0 6px 0 rgba(28,140,108,0.15);
+    position: relative;
+  }
+  .final-card .badge {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--white);
+    font-weight: 800;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+  }
+  .final-icons {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 18px 0 20px;
+    flex-wrap: wrap;
+  }
+  .final-icons .icon-cell {
+    background: var(--green-pale);
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 30px;
+    min-width: 64px;
+  }
+  .final-sentence {
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 22px;
+  }
+  .final-sentence .fill {
+    color: var(--green-deep);
+  }
+  .final-sentence .fill.intensity {
+    color: var(--purple);
+  }
+
+  .action-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 14px 26px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .action-btn.speak { background: var(--green-deep); color: var(--white); }
+  .action-btn.restart { background: var(--white); color: var(--ink-soft); border: 2px solid #dbe8dc; }
+
+  .encourage {
+    margin-top: 18px;
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+</style>
+
+<script>
+(function () {
+  const root = document.getElementById('app');
+
+  const PLACES = [
+    { label: '집', emoji: '🏠' },
+    { label: '센터', emoji: '🏢' },
+    { label: '병원', emoji: '🏥' },
+    { label: '카페', emoji: '☕' },
+    { label: '거리', emoji: '🚸' },
+    { label: '마트', emoji: '🛒' },
+    { label: '학교', emoji: '🏫' },
+    { label: '버스·지하철', emoji: '🚌' },
+  ];
+
+  const PEOPLE = [
+    { label: '가족', emoji: '👨‍👩‍👧' },
+    { label: '친구', emoji: '🧑‍🤝‍🧑' },
+    { label: '선생님', emoji: '🧑‍🏫' },
+    { label: '활동지원사', emoji: '🤝' },
+    { label: '낯선 사람', emoji: '🚶' },
+    { label: '동료', emoji: '👥' },
+    { label: '의사 선생님', emoji: '🩺' },
+    { label: '가게 직원', emoji: '🧑‍💼' },
+  ];
+
+  const CATEGORIES = [
+    {
+      key: 'first',
+      label: '처음 해보는 일',
+      emoji: '🆕',
+      details: [
+        '혼자 처음 장을 봐요',
+        '혼자 처음 병원에 가요',
+        '새로운 일을 맡았어요',
+        '처음으로 요리를 해요',
+      ],
+    },
+    {
+      key: 'feedback',
+      label: '혼나거나\n갑자기 바뀌는 상황',
+      emoji: '😟',
+      details: [
+        '누가 나에게 혼을 냈어요',
+        '실수했다는 말을 들었어요',
+        '갑자기 계획이 바뀌었어요',
+        '나보고 못한다고 말했어요',
+      ],
+    },
+    {
+      key: 'sensory',
+      label: '소리 같은 자극에\n예민한 상황',
+      emoji: '🔊',
+      details: [
+        '시끄러운 소리가 들려요',
+        '사람이 너무 많아요',
+        '냄새가 이상해요',
+        '불빛이 너무 밝아요',
+      ],
+    },
+    {
+      key: 'social',
+      label: '낯선 사람과\n말하고 만나는 상황',
+      emoji: '💬',
+      details: [
+        '처음 보는 사람이에요',
+        '내가 먼저 말을 걸어야 해요',
+        '질문에 대답을 해야 해요',
+        '눈을 마주 봐야 해요',
+      ],
+    },
+  ];
+
+  const INTENSITIES = [
+    { label: '조금 힘들어요', emoji: '😐', word: '조금' },
+    { label: '많이 힘들어요', emoji: '😟', word: '많이' },
+    { label: '너무 힘들어요', emoji: '😢', word: '너무' },
+  ];
+
+  let step = 0; // 0 place, 1 person, 2 category, 3 detail, 4 intensity, 5 final
+  const state = { place: null, person: null, category: null, detail: null, intensity: null };
+
+  const STEP_PROMPTS = [
+    '어디에 있었나요?\n장소를 골라 주세요.',
+    '누구와 함께 있었나요?',
+    '어떤 상황이었나요?\n가장 가까운 걸 골라 주세요.',
+    '조금 더 자세히 알려 주세요.',
+    '그때 마음이 얼마나 힘들었나요?',
+  ];
+
+  function renderDots() {
+    const total = 5;
+    let html = '<div class="step-dots">';
+    for (let i = 0; i < total; i++) {
+      let cls = 'dot';
+      if (i < step) cls += ' done';
+      else if (i === step) cls += ' active';
+      html += `<div class="${cls}"></div>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderSummary() {
+    const chips = [];
+    if (state.place) chips.push(`${state.place.emoji} ${state.place.label}`);
+    if (state.person) chips.push(`${state.person.emoji} ${state.person.label}`);
+    if (state.category) chips.push(`${state.category.emoji} ${state.category.label.replace('\n', ' ')}`);
+    if (!chips.length) return '';
+    return `<div class="summary-strip">${chips.map(c => `<div class="summary-chip">${c}</div>`).join('')}</div>`;
+  }
+
+  function choiceCardHTML(item, selected, extraClass) {
+    return `<div class="choice-card ${selected ? 'selected' : ''} ${extraClass || ''}">
+      <div class="emoji">${item.emoji}</div>
+      <div>${item.label}</div>
+    </div>`;
+  }
+
+  function render() {
+    let body = '';
+
+    if (step <= 4) {
+      body += `<div class="header-row">
+        <div class="title">나의 스트레스 카드 만들기</div>
+        ${renderDots()}
+      </div>`;
+      body += renderSummary();
+      body += `<div class="prompt-bubble">${STEP_PROMPTS[step].replace('\n', '<br>')}</div>`;
+    }
+
+    if (step === 0) {
+      body += `<div class="choice-grid" id="grid">${PLACES.map((p, i) =>
+        `<div data-idx="${i}">${choiceCardHTML(p, state.place === p)}</div>`).join('')}</div>`;
+    } else if (step === 1) {
+      body += `<div class="choice-grid" id="grid">${PEOPLE.map((p, i) =>
+        `<div data-idx="${i}">${choiceCardHTML(p, state.person === p)}</div>`).join('')}</div>`;
+    } else if (step === 2) {
+      body += `<div class="choice-grid cat-grid" id="grid">${CATEGORIES.map((c, i) =>
+        `<div data-idx="${i}">${choiceCardHTML({ emoji: c.emoji, label: c.label.replace('\n', '<br>') }, state.category === c)}</div>`).join('')}</div>`;
+    } else if (step === 3) {
+      const details = state.category.details;
+      body += `<div class="choice-grid" id="grid">${details.map((d, i) =>
+        `<div data-idx="${i}">${choiceCardHTML({ emoji: state.category.emoji, label: d }, state.detail === d)}</div>`).join('')}</div>`;
+    } else if (step === 4) {
+      body += `<div class="choice-grid intensity-grid" id="grid">${INTENSITIES.map((it, i) =>
+        `<div data-idx="${i}">${choiceCardHTML(it, state.intensity === it)}</div>`).join('')}</div>`;
+    }
+
+    if (step <= 4) {
+      body += `<div class="nav-row">
+        <button class="nav-btn back" id="backBtn" ${step === 0 ? 'disabled' : ''}>← 이전</button>
+        <div></div>
+      </div>`;
+    }
+
+    if (step === 5) {
+      const sentence = `나는 <span class="fill">${state.place.label}</span>에서 <span class="fill">${state.person.label}</span>과 있을 때, ${state.detail}. 그래서 마음이 <span class="fill intensity">${state.intensity.word}</span> 힘들었어요.`;
+      body += `<div class="final-wrap">
+        <div class="final-card">
+          <div class="badge">나의 스트레스 카드 완성!</div>
+          <div class="final-icons">
+            <div class="icon-cell">${state.place.emoji}</div>
+            <div class="icon-cell">${state.person.emoji}</div>
+            <div class="icon-cell">${state.category.emoji}</div>
+            <div class="icon-cell">${state.intensity.emoji}</div>
+          </div>
+          <div class="final-sentence">${sentence}</div>
+          <div class="action-row">
+            <button class="action-btn speak" id="speakBtn">🔊 소리로 들어보기</button>
+            <button class="action-btn restart" id="restartBtn">🔄 다시 만들기</button>
+          </div>
+        </div>
+        <div class="encourage">잘했어요! 이 카드는 다음 시간에 다시 사용할 거예요.</div>
+      </div>`;
+    }
+
+    root.innerHTML = body;
+    attachHandlers();
+  }
+
+  function speakSentencePlain() {
+    const plain = `나는 ${state.place.label}에서 ${state.person.label}과 있을 때, ${state.detail}. 그래서 마음이 ${state.intensity.word} 힘들었어요.`;
+    if (!('speechSynthesis' in window)) {
+      alert('이 브라우저는 음성 안내를 지원하지 않아요.');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(plain);
+    utter.lang = 'ko-KR';
+    utter.rate = 0.92;
+    window.speechSynthesis.speak(utter);
+  }
+
+  function goNext(auto) {
+    setTimeout(() => { step += 1; render(); }, auto ? 260 : 0);
+  }
+
+  function attachHandlers() {
+    const grid = document.getElementById('grid');
+    if (grid) {
+      grid.querySelectorAll('[data-idx]').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.getAttribute('data-idx'), 10);
+          if (step === 0) { state.place = PLACES[idx]; goNext(true); }
+          else if (step === 1) { state.person = PEOPLE[idx]; goNext(true); }
+          else if (step === 2) { state.category = CATEGORIES[idx]; state.detail = null; goNext(true); }
+          else if (step === 3) { state.detail = state.category.details[idx]; goNext(true); }
+          else if (step === 4) { state.intensity = INTENSITIES[idx]; goNext(true); }
+        });
+      });
+    }
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.addEventListener('click', () => { if (step > 0) { step -= 1; render(); } });
+
+    const speakBtn = document.getElementById('speakBtn');
+    if (speakBtn) speakBtn.addEventListener('click', speakSentencePlain);
+
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) restartBtn.addEventListener('click', () => {
+      step = 0;
+      state.place = null; state.person = null; state.category = null; state.detail = null; state.intensity = null;
+      render();
+    });
+  }
+
+  render();
+})();
+</script>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="0f8728e4-5257-4db8-9a35-0df429f8b9de" data-app-host="app.netlify.com" data-account-tier="free"></script>

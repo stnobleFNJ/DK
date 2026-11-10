@@ -180,6 +180,7 @@ function finish(){
   <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 해 보기</button></div>${DK.DKU}`,{
     home,again:pickLevel,listen:()=>DK.speak(`${RESULT}. ${SUB}`)
   });
+  DK.done({level:level.t});
   later(()=>DK.speak(`${RESULT}. ${SUB}`),300);
 }
 

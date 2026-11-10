@@ -1,0 +1,12 @@
+# 관리자 폴더: 목록 보기 금지, 설정·공통 파일은 바로 열 수 없게
+DirectoryIndex index.php
+Options -Indexes
+<FilesMatch "^(config|config\.sample|lib|filter)\.php$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>

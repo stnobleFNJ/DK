@@ -163,6 +163,7 @@ function result(){
   <div class="acts">${wrongIds.length?`<button class="btn pri" data-act="retry">↻ 틀린 문제 ${wrongIds.length}개 다시 풀기</button>`:''}<button class="btn ${wrongIds.length?'line':'pri'}" data-act="restart">처음부터 다시 하기</button></div>${DK.DKU}`,{
     home,restart:home,retry:()=>start(wq,true)
   });
+  DK.done({score:right+'/'+total,retry});
   DK.speak(`${total}문제 중 ${right}개 맞혔어요. `+(max===0?'모든 유형을 잘 구분했어요!':`${ORDER.filter(t=>wrong[t]===max).map(t=>TYPE[t]).join(', ')} 학대 관련 문제를 조금 더 헷갈려했어요.`));
 }
 

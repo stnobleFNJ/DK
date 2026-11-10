@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 추억 카드 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.picks.five .photo .cp{aspect-ratio:1}
+.picks.five .photo .ct{font-size:19px;line-height:1.25}
+.pick.add .cp{display:grid;place-items:center;background:repeating-linear-gradient(45deg,#fbf6ea 0 10px,#f4ecda 10px 20px);border:2px dashed var(--line)}
+.pick.add .plus{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ac);font:700 15px var(--fb)}
+.pick.add .plus b{width:46px;height:46px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font:400 32px/1 var(--fb)}
+.pick.add:focus-within{outline:3px solid var(--ac);outline-offset:2px}
+.mine{margin-top:14px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px}
+.mine label{display:block;font:700 14px var(--fb);margin-bottom:6px}
+.mine input,.story textarea{width:100%;font:500 16px var(--fb);padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+.mine input:focus,.story textarea:focus{outline:none;border-color:var(--ac)}
+.mine small{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.story{margin-top:16px}
+.story label{display:block;font:var(--hw) 22px var(--fh);margin-bottom:6px}
+.story textarea{min-height:96px;resize:vertical;line-height:1.5}
+.priv{font-size:12px;color:var(--muted);margin:6px 0 0}
+/* 추억 카드 (7-1 취향카드 앞면을 따름) */
+.done{text-align:center;font:var(--hw) 27px/1.35 var(--fh);margin:20px 0 4px}
+.mcard{position:relative;margin:18px auto 0;width:min(340px,100%);background:var(--paper);border:6px solid #f7e3a8;border-radius:18px;box-shadow:0 14px 30px rgba(60,40,20,.28);padding:14px 14px 16px;color:var(--ink);transform:rotate(-1deg)}
+.mcard .tp{top:-14px}
+.mcard h2{margin:2px 0 10px;text-align:center;font:var(--hw) 26px var(--fh)}
+.mcard .main{display:block;border-radius:10px;overflow:hidden;aspect-ratio:1;background:var(--soft)}
+.mcard .main img{width:100%;height:100%;object-fit:cover}
+.mcard .subs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.mcard .subs span{position:relative;display:block;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--soft)}
+.mcard .subs img{width:100%;height:100%;object-fit:cover}
+.mcard .subs i{position:absolute;left:6px;bottom:6px;font:700 11px var(--fb);font-style:normal;color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:1px 6px}
+.mcard .sent{margin:12px 0 0;padding:12px;border-radius:10px;background:linear-gradient(90deg,#f1c96b,#f7e3a8);font:var(--lw) 18px/1.5 var(--fl);text-align:center}
+.mcard .feel{display:block;text-align:center;margin-top:8px;font:var(--hw) 22px var(--fh);color:var(--ac)}
+.mcard .st{margin:8px 0 0;font:var(--hw) 18px/1.4 var(--fh);color:#5c5246;text-align:center}
+.mcard .dt{display:block;text-align:right;font:400 11px var(--fm);color:var(--muted);margin-top:10px}
+.acts.four{grid-template-columns:1fr 1fr}
+.saved{text-align:center;font:700 14px var(--fb);color:var(--ok);margin:10px 0 0;min-height:1.4em}
+@media print{
+  body{background:#fff}
+  .stage{display:block}
+  .app{max-width:none;min-height:0;background:#fff;box-shadow:none;padding:0}
+  .hbar,.acts,.dku,.saved,.done,dialog{display:none!important}
+  .view{animation:none}
+  .mcard{transform:none;box-shadow:none;margin:0 auto;width:110mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .mcard .tp{display:none}
+}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>즐거웠던 추억을 떠올려요.</li><li>어디였는지, 무엇을 했는지, 누구와 함께 했는지 그림을 골라요. ‘내 사진 추가’로 내 사진을 넣어도 돼요.</li><li>그때 마음을 골라요.</li><li>나의 추억 카드를 저장하거나 인쇄해요.</li></ol><p>내 사진은 이 화면에서만 보여요. 어디로도 보내지 않아요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'추',html:'나의 <b>추억 카드</b>'};
+const STEPS=['어디','무엇','누구와','마음','카드'];
+// 질문·보기 = 요청서 문구. 그림 = 「후 5-3」 폴더의 진짜 그림(tools/gen_h5_2.py). 요청서 차시는 후5-2.
+// at = 카드 문장에 들어갈 꼴
+const Q=[
+  {key:'where',q:'어디였나요?',ask:'어떤 곳이었나요?',opts:[
+    {v:'집',at:'집에서',img:'img/where-home.jpg'},{v:'쇼핑몰',at:'쇼핑몰에서',img:'img/where-mall.jpg'},{v:'공원',at:'공원에서',img:'img/where-park.jpg'},
+    {v:'식당·카페',at:'식당·카페에서',img:'img/where-cafe.jpg'},{v:'여행지',at:'여행지에서',img:'img/where-trip.jpg'}]},
+  {key:'what',q:'무엇을 했나요?',ask:'무엇을 했나요?',opts:[
+    {v:'쇼핑했어요',img:'img/what-shop.jpg'},{v:'맛있는 것을 먹었어요',img:'img/what-eat.jpg'},{v:'산책했어요',img:'img/what-walk.jpg'},
+    {v:'크리스마스 마켓을 구경했어요',img:'img/what-xmas.jpg'},{v:'사진을 찍었어요',img:'img/what-photo.jpg'}]},
+  {key:'who',q:'누구와 함께 했나요?',ask:'누구와 함께 했나요?',opts:[
+    {v:'혼자',img:'img/who-alone.jpg'},{v:'가족과',img:'img/who-family.jpg'},{v:'친구와',img:'img/who-friend.jpg'},
+    {v:'선생님과',img:'img/who-teacher.jpg'},{v:'친한 사람들과',img:'img/who-close.jpg'}]}
+];
+const FEELS=['즐거웠어요','마음이 따뜻했어요','편안했어요','기뻤어요'];
+const STORYQ='더 기억나는 이야기가 있나요?';
+const DONE='나의 추억 카드가 완성됐어요';
+// 임시: '내 사진 추가'에서 이름을 적지 않았을 때 카드에 들어갈 말
+const MINE_DEF={where:'추억의 장소',what:'즐거운 시간을 보냈어요',who:'소중한 사람과'};
+
+const root=document.getElementById('app');
+let sel={},feel='',story='',urls=[],timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const today=()=>{const d=new Date();return `${d.getFullYear()}.${DK.pad(d.getMonth()+1)}.${DK.pad(d.getDate())}`};
+const reset=()=>{urls.forEach(u=>URL.revokeObjectURL(u));urls=[];sel={};feel='';story=''};
+
+/* 카드 문장: "공원에서 가족과 산책했어요." */
+function sentence(){
+  const w=sel.where,h=sel.who,t=sel.what;
+  let where=w.mine?(w.v||MINE_DEF.where):w.at;
+  if(w.mine&&!/에서$/.test(where))where+='에서';
+  let who=h.mine?(h.v||MINE_DEF.who):h.v;
+  if(h.mine&&h.v&&!/(와|과|랑|하고|혼자)$/.test(who))who+=DK.wa(who);
+  let what=t.mine?(t.v||MINE_DEF.what):t.v;
+  if(!/[.!?]$/.test(what))what+='.';
+  return `${where} ${who} ${what}`;
+}
+
+function home(){
+  clear();reset();
+  const say='즐거웠던 추억을 떠올리며 나의 추억 카드를 만들어 봐요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My memory card</span><h1 class="h1">나의 추억 카드<br><em>만들기</em></h1><p>즐거웠던 날을 떠올려요. 어디서, 무엇을, 누구와 했는지 고르면 추억 카드가 만들어져요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="picks two" style="pointer-events:none">${['what-walk','who-family'].map((k,i)=>`<div class="photo ${i?'tilt-r':'tilt-l'}"><i class="tp"></i><span class="cp" style="aspect-ratio:1"><img src="img/${k}.jpg" alt=""></span></div>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>step(0)});
+}
+
+function step(i){
+  clear();
+  const s=Q[i],cur=sel[s.key];
+  const mine=cur&&cur.mine?cur:null;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,i)}
+  <div class="qrow" style="display:flex;gap:10px;align-items:flex-start"><p class="q" style="flex:1">${s.q}</p><button class="spk" style="margin-top:20px" data-say="${s.q}" aria-label="질문 듣기">${DK.SPK}</button></div>
+  <p class="qs">그림을 하나 골라요. 내 사진을 넣어도 돼요.</p>
+  <div class="picks two five">${s.opts.map(o=>`<button class="pick photo${cur&&!cur.mine&&cur.v===o.v?' on':''}" data-act="pick" data-v="${o.v}"><span class="cp"><img src="${o.img}" alt=""></span><span class="ct">${o.v}</span></button>`).join('')}
+    <label class="pick photo add${mine?' on':''}" id="addl"><input type="file" accept="image/*" class="sr" id="file" aria-label="내 사진 추가"><span class="cp">${mine?`<img src="${mine.img}" alt="내 사진" style="width:100%;height:100%;object-fit:cover">`:'<span class="plus"><b>+</b>사진 고르기</span>'}</span><span class="ct">내 사진 추가</span></label></div>
+  <div class="mine" id="mine" ${mine?'':'hidden'}><label for="mname">${s.ask} 적어 보세요.</label><input id="mname" maxlength="20" value="${mine?DK.esc(mine.v):''}" placeholder="적지 않아도 돼요" autocomplete="off"><small>내 사진과 글은 이 화면에서만 보여요. 어디로도 보내지 않아요.</small></div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${cur?'':'disabled'}>다음 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>i?step(i-1):home(),next:()=>sel[s.key]&&go(),
+    pick:b=>{
+      sel[s.key]={...s.opts.find(o=>o.v===b.dataset.v)};
+      mark(b);root.querySelector('#mine').hidden=true;
+      DK.speak(b.dataset.v);later(go,700);
+    }
+  });
+  const go=()=>i<2?step(i+1):feelStep();
+  const mark=b=>{root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));root.querySelector('[data-act=next]').disabled=false};
+  const file=root.querySelector('#file'),name=root.querySelector('#mname');
+  file.onchange=()=>{
+    const f=file.files&&file.files[0];if(!f)return;
+    const u=URL.createObjectURL(f);urls.push(u);               // 브라우저 안에서만 미리보기(업로드 없음)
+    sel[s.key]={mine:true,v:name.value.trim(),img:u};
+    root.querySelector('#addl .cp').innerHTML=`<img src="${u}" alt="내 사진" style="width:100%;height:100%;object-fit:cover">`;
+    mark(root.querySelector('#addl'));
+    root.querySelector('#mine').hidden=false;
+    DK.speak(`내 사진을 넣었어요. ${s.ask} 적어 보세요.`);
+  };
+  name.oninput=()=>{if(sel[s.key]&&sel[s.key].mine)sel[s.key].v=name.value.trim()};
+  DK.speak(s.q);
+}
+
+function feelStep(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,3)}
+  <div class="qrow" style="display:flex;gap:10px;align-items:flex-start"><p class="q" style="flex:1">그때 마음은 어땠나요?</p><button class="spk" style="margin-top:20px" data-say="그때 마음은 어땠나요?" aria-label="질문 듣기">${DK.SPK}</button></div>
+  <p class="qs">마음을 하나 골라요.</p>
+  <div class="opts">${FEELS.map((f,k)=>`<button class="opt${feel===f?' on':''}" data-act="feel" data-v="${f}"><span class="no">${k+1}</span><span>${f}</span></button>`).join('')}</div>
+  <div class="story"><label for="story">${STORYQ}</label><textarea id="story" maxlength="80" placeholder="적지 않아도 돼요">${DK.esc(story)}</textarea><p class="priv">적은 글은 이 화면에서만 보여요. 어디로도 보내지 않아요.</p></div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${feel?'':'disabled'}>카드 만들기 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>step(2),next:()=>feel&&card(),
+    feel:b=>{feel=b.dataset.v;root.querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o===b));root.querySelector('[data-act=next]').disabled=false;DK.speak(feel)}
+  });
+  root.querySelector('#story').oninput=e=>{story=e.target.value};
+  DK.speak('그때 마음은 어땠나요?');
+}
+
+function card(){
+  clear();
+  const txt=sentence(),date=today();
+  const st=story.trim();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,4)}
+  <p class="done">🎉 ${DONE}!</p>
+  <div class="mcard" id="mcard"><i class="tp"></i><h2>나의 추억 카드</h2>
+    <span class="main"><img src="${sel.what.img}" alt="${DK.esc(sel.what.v||'무엇을 했나요')}"></span>
+    <span class="subs"><span><img src="${sel.where.img}" alt=""><i>📍 어디</i></span><span><img src="${sel.who.img}" alt=""><i>👥 누구와</i></span></span>
+    <p class="sent">${DK.esc(txt)}</p>
+    <span class="feel">♥ ${feel}</span>
+    ${st?`<p class="st">“${DK.esc(st)}”</p>`:''}
+    <span class="dt">${date}</span>
+  </div>
+  <p class="saved" id="saved" aria-live="polite"></p>
+  <div class="acts four"><button class="btn sec" data-act="edit">✎ 고치기</button><button class="btn line" data-act="save">💾 카드 저장하기</button><button class="btn line" data-act="print">🖨 인쇄하기</button><button class="btn pri" data-act="fresh">＋ 새로 만들기</button></div>${DK.DKU}`,{
+    home,edit:()=>step(0),fresh:()=>{reset();step(0)},
+    print:()=>{try{speechSynthesis.cancel()}catch(e){};window.print()},
+    save:async b=>{
+      b.disabled=true;
+      try{await download(txt,st,date);root.querySelector('#saved').textContent='✓ 카드를 그림 파일로 내려받았어요.';DK.speak('카드를 저장했어요.')}
+      catch(e){root.querySelector('#saved').textContent='저장하지 못했어요. 다시 눌러 보세요.'}
+      b.disabled=false;
+    }
+  });
+  DK.done({feel},{noText:true});  // 직접 쓴 추억 글·내 사진 이름은 보내지 않는다
+  later(()=>DK.speak(`${DONE}! ${txt} ${feel}`),300);
+}
+
+/* 카드를 canvas로 그려 PNG로 내려받는다(내 사진도 기기 안에서만 그린다) */
+const load=src=>new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src});
+function cover(g,im,x,y,w,h,r){
+  g.save();g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.clip();
+  const k=Math.max(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*k,ih=im.naturalHeight*k;
+  g.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih);g.restore();
+}
+function wrap(g,text,maxW){
+  const out=[];let line='';
+  for(const w of text.split(' ')){const t=line?line+' '+w:w;if(g.measureText(t).width>maxW&&line){out.push(line);line=w}else line=t}
+  if(line)out.push(line);return out;
+}
+async function download(txt,st,date){
+  try{await Promise.all([document.fonts.load('700 40px "Gaegu"'),document.fonts.load('700 40px "Gowun Batang"'),document.fonts.load('700 20px "Noto Sans KR"')])}catch(e){}
+  const [mi,wi,hi]=await Promise.all([load(sel.what.img),load(sel.where.img),load(sel.who.img)]);
+  const W=1080,P=60,IW=W-2*P-40;
+  const c=document.createElement('canvas'),g=c.getContext('2d');
+  g.font='700 44px "Gowun Batang",serif';const sl=wrap(g,txt,IW-60);
+  g.font='700 40px "Gaegu",cursive';const tl=st?wrap(g,`“${st}”`,IW-40):[];
+  const H=P+40+90+IW+16+Math.round((IW-16)/2*.75)+40+sl.length*64+50+70+tl.length*52+90+P;
+  c.width=W;c.height=H;
+  g.fillStyle='#f4efdf';g.fillRect(0,0,W,H);
+  const rr=(x,y,w,h,r)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h)};
+  g.fillStyle='#f7e3a8';rr(P,P,W-2*P,H-2*P,40);g.fill();
+  g.fillStyle='#fffaf0';rr(P+14,P+14,W-2*P-28,H-2*P-28,30);g.fill();
+  let y=P+40,x=P+20+14;
+  g.fillStyle='#453f36';g.font='700 60px "Gaegu",cursive';g.textAlign='center';g.fillText('나의 추억 카드',W/2,y+60);y+=90;
+  cover(g,mi,x,y,IW-28,IW,22);y+=IW+16;
+  const sw=(IW-28-16)/2,sh=Math.round(sw*.75);
+  cover(g,wi,x,y,sw,sh,16);cover(g,hi,x+sw+16,y,sw,sh,16);
+  g.font='700 24px "Noto Sans KR",sans-serif';g.textAlign='left';
+  [['📍 어디',x],['👥 누구와',x+sw+16]].forEach(([t,lx])=>{const tw=g.measureText(t).width;g.fillStyle='rgba(0,0,0,.5)';rr(lx+12,y+sh-48,tw+20,36,10);g.fill();g.fillStyle='#fff';g.fillText(t,lx+22,y+sh-21)});
+  y+=sh+40;
+  const bh=sl.length*64+40;const grd=g.createLinearGradient(x,0,x+IW-28,0);grd.addColorStop(0,'#f1c96b');grd.addColorStop(1,'#f7e3a8');
+  g.fillStyle=grd;rr(x,y,IW-28,bh,20);g.fill();
+  g.fillStyle='#453f36';g.font='700 44px "Gowun Batang",serif';g.textAlign='center';
+  sl.forEach((l,k)=>g.fillText(l,W/2,y+62+k*64));y+=bh+60;
+  g.fillStyle='#b9543c';g.font='700 46px "Gaegu",cursive';g.fillText('♥ '+feel,W/2,y);y+=60;
+  g.fillStyle='#5c5246';g.font='700 40px "Gaegu",cursive';tl.forEach(l=>{g.fillText(l,W/2,y);y+=52});
+  g.fillStyle='#807669';g.font='400 26px "Space Mono",monospace';g.textAlign='right';g.fillText(date,W-P-50,H-P-40);
+  const blob=await new Promise(res=>c.toBlob(res,'image/png'));
+  if(!blob)throw new Error('toBlob');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`나의-추억-카드-${date}.png`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+home();
+</script>
+</body>
+</html>

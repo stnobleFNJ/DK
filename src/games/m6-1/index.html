@@ -195,6 +195,7 @@ function result(){
   <div class="acts"><button class="btn line" data-act="listen">🔊 순위 다 듣기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="home">‹ 처음으로</button><button class="btn pri" data-act="again">↻ 다시 하기</button></div></div>${DK.DKU}`,{
     home,listen:()=>DK.speak(all),again:()=>{newGame();match()}
   });
+  DK.done({first:cs.name});
   DK.speak(line);
 }
 

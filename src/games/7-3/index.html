@@ -69,7 +69,7 @@ const Q=[
       ['아무 말 없이 직원 앞에 서 있어요.','말을 하지 않으면 도와줄 수 없어요. 가고 싶은 곳을 말해요.'],
       ['“빨리 알려 줘!”라고 크게 말해요.','반말로 크게 말하면 상대가 놀라요. 공손하게 물어봐요.']]}
 ];
-// 보드판 칸 위치(%) — 0 START, 1~6 문제, 7 GOAL (board.jpg 기준)
+// 보드판 칸 위치(%) — 0 시작(START), 1~6 문제, 7 도착(GOAL) (board.jpg 기준)
 const SQ=[[12.5,27],[38.4,27],[62.2,27],[85.6,27],[85.6,71],[62.2,71],[38.4,71],[12.5,71]];
 const OFF=[[-4,-6],[4,-6],[-4,6],[4,6]];
 
@@ -83,7 +83,7 @@ const sq=p=>p.k>=6?7:p.k;
 const left=()=>P.filter(p=>p.k<6).length;
 
 function board(me){
-  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="START 기관 앞, 문제1부터 문제6, GOAL 내가 원하는 장소로 가는 길">
+  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="시작 기관 앞, 문제1부터 문제6, 도착 내가 원하는 장소로 가는 길">
   ${P.map((p,i)=>{const [x,y]=SQ[sq(p)],[dx,dy]=n>1?OFF[i]:[0,0];return `<i class="tok t${i+1}${i===me?' me':''}" data-p="${i}" style="left:${x+dx}%;top:${y+dy}%">${i+1}</i>`}).join('')}</div></div>`;
 }
 
@@ -92,7 +92,7 @@ function home(){
   const say='혼자 이동하기 게임을 해 볼까요?';
   DK.mount(root,`${DK.hbar(BRAND)}
   <section class="hero"><span class="eb">Go on my own</span><h1 class="h1">혼자 이동하기 게임을<br><em>해 볼까요?</em></h1><p>기관 앞에서 출발해 내가 원하는 장소까지 가요. 가는 길에 생기는 문제 6개를 풀어 보세요.</p></section>
-  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="혼자 이동하기 보드판"></span><span class="ct">START에서 GOAL까지<small>문제를 맞히면 한 칸씩 앞으로 가요</small></span></div>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="혼자 이동하기 보드판"></span><span class="ct">시작에서 도착까지<small>문제를 맞히면 한 칸씩 앞으로 가요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:people});
   DK.speak(say);
 }
@@ -189,6 +189,7 @@ function result(){
   <div class="acts"><button class="btn pri" data-act="again">↻ 다시 풀기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="reset">인원 재설정</button><button class="btn line" data-act="home">처음부터 다시 하기</button></div></div>${DK.DKU}`,{
     home,again:newGame,reset:people
   });
+  DK.done({players:n,winner:rk[0].i+1});
   DK.speak(say);
 }
 

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나에게 맞는 도움 고르기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 처음 화면: 주제 8개 미리 보기 */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;padding:6px 4px 0}
+.tgrid .photo{padding:6px 6px 8px}
+.tgrid .photo .cp{aspect-ratio:3/2}
+.tgrid .photo .ct{font-size:18px;padding-top:6px}
+/* 주제 머리 */
+.tchip{display:inline-flex;align-items:center;gap:6px;margin-top:14px}
+.qrow{display:flex;gap:10px;align-items:flex-start}
+.qrow .q{flex:1}
+.qrow .spk{margin-top:20px}
+/* 고르기: 여러 개 */
+.picks.hp4 .photo .cp{aspect-ratio:3/2}
+.picks.hp4 .photo .ct{font-size:19px;line-height:1.25}
+.pick .ck{position:absolute;right:10px;top:12px;z-index:3;width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;font:900 16px var(--fb);color:transparent}
+.pick.on .ck{background:var(--ac);border-color:var(--ac);color:#fff}
+.cnt{font:700 14px var(--fb);color:var(--ac);text-align:center;margin:14px 0 0;min-height:1.5em}
+.skip{display:block;margin:12px auto 0;font:500 14px var(--fb);color:var(--muted);text-decoration:underline;padding:6px}
+/* 결과 */
+.res{position:relative;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 16px;margin:24px 2px 0}
+.res h2{font:var(--lw) 26px/1.3 var(--fl);letter-spacing:-.04em;margin:0}
+.res .date{font-size:12px;color:var(--muted);margin:4px 0 0}
+.res .stamp{font-size:16px}
+.grp{margin-top:16px}
+.grp h3{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:var(--hw) 22px var(--fh)}
+.grp h3 i{font-style:normal;font:700 11px var(--fb);color:#fff;background:var(--ac);border-radius:6px;padding:2px 7px}
+.hi{display:flex;gap:10px;align-items:center;background:#fff;padding:6px;margin-top:8px;box-shadow:0 3px 8px rgba(60,40,20,.12);border-radius:6px}
+.hi img{flex:none;width:34%;aspect-ratio:3/2;object-fit:cover;border-radius:4px}
+.hi b{flex:1;font:var(--hw) 19px/1.3 var(--fh);color:#3d352b}
+.grp.none p{margin:0;font-size:14px;color:var(--muted)}
+.acts.three{grid-template-columns:1fr 1fr 1fr}
+.acts.three .btn{padding:14px 4px;font-size:15px}
+.saved{text-align:center;font:700 14px var(--fb);color:var(--ok);margin:10px 0 0;min-height:1.4em}
+.again{background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;margin-top:14px;display:flex;gap:10px;align-items:center}
+.again span{flex:1;font-size:14px}
+/* 인쇄: 결과 목록만 */
+@media print{
+  body{background:#fff}
+  .stage{display:block}
+  .app{max-width:none;min-height:0;background:#fff;box-shadow:none;padding:0}
+  .hbar,.acts,.dku,.saved,dialog,.noprint{display:none!important}
+  .view{animation:none}
+  .res{box-shadow:none;margin:0;border:0}
+  .res .stamp{display:none}
+  .grp{break-inside:avoid}
+  .hi{box-shadow:none;border:1px solid #ddd}
+  .hi img{width:28%}
+}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>옷 입기, 약 먹기처럼 8가지 생활을 하나씩 봐요.</li><li>나에게 필요한 도움 그림을 눌러 골라요. 여러 개 골라도 돼요.</li><li>마지막에 [내가 고른 도움]을 보고 저장하거나 인쇄해요.</li></ol><p>정답은 없어요. 나에게 맞는 도움을 골라요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'도',html:'나에게 맞는 <b>도움</b>'};
+// 주제 이름·질문 = 요청서 문구(바꾸지 않는다).
+// 선택지 그림 = 주제 그림(2×2)을 잘라 쓴 진짜 그림(tools/gen_h3_1.py). 순서: 왼쪽 위·오른쪽 위·왼쪽 아래·오른쪽 아래.
+// 임시: 선택지 문구 32개는 자료에 글자가 없어 그림을 보고 지었다(기획자 확인 필요).
+const T=[
+  {k:'dress',name:'옷 입기',q:'옷을 입을 때 어떤 도움을 받고 싶나요?',
+   h:['날씨에 맞는 옷을 알려 주세요','입을 옷을 같이 골라 주세요','가는 곳에 맞는 옷을 챙겨 주세요','지퍼와 단추 잠그기를 도와주세요']},
+  {k:'medicine',name:'약 복용',q:'약을 먹을 때 어떤 도움을 받고 싶나요?',
+   h:['약 먹을 시간을 알려 주세요','약을 알맞게 덜어 주세요','약과 물을 챙겨 주세요','약을 먹었는지 확인해 주세요']},
+  {k:'hospital',name:'병원 가기',q:'병원에 갈 때 어떤 도움을 받고 싶나요?',
+   h:['병원 가는 날을 알려 주세요','병원에 같이 가 주세요','의사 선생님께 말할 때 도와주세요','병원 갈 준비물을 챙겨 주세요']},
+  {k:'meal',name:'식사 지원',q:'식사할 때 어떤 도움을 받고 싶나요?',
+   h:['먹으면 안 되는 음식을 알려 주세요','밥 먹을 시간을 알려 주세요','메뉴 고르기를 도와주세요','음식을 먹기 좋게 잘라 주세요']},
+  {k:'clean',name:'청소·빨래',q:'청소와 빨래는 어떻게 도와주면 좋을까요?',
+   h:['청소를 같이 해 주세요','세탁기 쓰는 법을 알려 주세요','빨래 나누기를 도와주세요','옷 개기와 정리를 도와주세요']},
+  {k:'outing',name:'외출',q:'외출할 때 어떤 도움을 받고 싶나요?',
+   h:['길 찾기를 도와주세요','버스 타기를 도와주세요','힘들 때 같이 쉬어 가 주세요','길을 건널 때 같이 가 주세요']},
+  {k:'health',name:'건강한 생활',q:'건강하게 지내려면 어떤 도움을 받고 싶나요?',
+   h:['같이 산책해 주세요','방 온도를 알맞게 맞춰 주세요','아픈 곳을 살펴 주세요','같이 체조해 주세요']},
+  {k:'alone',name:'혼자 있을 때',q:'혼자 있을 때 어떤 도움을 받고 싶나요?',
+   h:['정해진 시간에 영상 통화를 해 주세요','문을 잘 잠갔는지 확인해 주세요','집에 잘 왔는지 확인해 주세요','급할 때 바로 전화를 받아 주세요']}
+];
+const img=(t,i)=>`img/${t.k}-${i+1}.jpg`;
+
+const root=document.getElementById('app');
+const store=DK.store('dk-h3-1:');
+let sel=T.map(()=>[]),timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const today=()=>{const d=new Date();return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`};
+
+function home(){
+  clear();
+  const last=store.get('last',null);
+  const intro='생활 속에서 나에게 맞는 도움을 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Help that fits me</span><h1 class="h1">나에게 맞는<br><em>도움 고르기</em></h1><p>8가지 생활을 보고, 나에게 필요한 도움을 골라요. 다 고르면 [내가 고른 도움] 목록이 나와요.</p></section>
+  <div class="tgrid">${T.map((t,i)=>`<div class="photo ${i%2?'tilt-r':'tilt-l'}">${i<2?'<i class="tp"></i>':''}<span class="cp"><img src="img/${t.k}.jpg" alt="${t.name} 도움 그림 4장"></span><span class="ct">${i+1}. ${t.name}</span></div>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${intro}">🔊 듣기</button></div>
+  ${last?`<div class="again"><span>지난번에 고른 도움이 있어요.<br><small style="color:var(--muted)">${DK.esc(last.date)}</small></span><button class="btn line" data-act="last" style="padding:10px 12px">보기</button></div>`:''}
+  ${DK.DKU}`,{start:()=>{sel=T.map(()=>[]);topic(0)},last:()=>{sel=T.map((t,i)=>(last.sel[i]||[]).filter(n=>n>=0&&n<4));result(last.date)}});
+}
+
+function topic(i){
+  clear();
+  const t=T[i],last=i===T.length-1;
+  const say=t.q+' 여러 개 골라도 돼요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(T.length,i)}
+  <span class="tchip chip">${i+1} / ${T.length} · ${t.name}</span>
+  <div class="qrow"><p class="q">${t.q}</p><button class="spk" data-say="${DK.esc(say)}" aria-label="질문 듣기">${DK.SPK}</button></div>
+  <p class="qs">필요한 도움을 눌러요. 여러 개 골라도 돼요.</p>
+  <div class="picks two hp4">${t.h.map((h,k)=>`<button class="pick photo${sel[i].includes(k)?' on':''}" data-act="pick" data-k="${k}" aria-pressed="${sel[i].includes(k)}"><i class="ck" aria-hidden="true">✓</i><span class="cp"><img src="${img(t,k)}" alt=""></span><span class="ct">${h}</span></button>`).join('')}</div>
+  <p class="cnt" id="cnt" aria-live="polite"></p>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 ›'}</button></div>
+  <button class="skip" data-act="skip">이 도움은 필요 없어요 ›</button>${DK.DKU}`,{
+    home,prev:()=>i?topic(i-1):home(),
+    next:()=>{if(!sel[i].length){DK.speak('도움을 골라 주세요. 필요 없으면 아래 버튼을 눌러요.');const c=root.querySelector('#cnt');c.textContent='도움을 1개 이상 골라 주세요.';return}go()},
+    // 임시: '이 도움은 필요 없어요'는 요청서에 없지만, 도움이 필요 없는 주제를 건너뛸 수 있게 넣었다.
+    skip:()=>{sel[i]=[];go()},
+    pick:b=>{
+      const k=+b.dataset.k,on=!sel[i].includes(k);
+      sel[i]=on?[...sel[i],k].sort():sel[i].filter(x=>x!==k);
+      b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);
+      if(on)DK.speak(t.h[k]);
+      count();
+    }
+  });
+  const go=()=>last?result():topic(i+1);
+  const count=()=>{root.querySelector('#cnt').textContent=sel[i].length?`${sel[i].length}개 골랐어요`:''};
+  count();
+  DK.speak(say);
+}
+
+function result(date){
+  clear();
+  date=date||today();
+  const n=sel.reduce((a,s)=>a+s.length,0);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="res" id="sheet"><i class="stamp">내가<br>고른 도움</i>
+    <span class="eb">My help list</span><h2>[내가 고른 도움]</h2><p class="date">${DK.esc(date)} · 모두 ${n}개</p>
+    ${T.map((t,i)=>sel[i].length?`<div class="grp"><h3><i>${i+1}</i>${t.name}</h3>${sel[i].map(k=>`<div class="hi"><img src="${img(t,k)}" alt=""><b>${t.h[k]}</b></div>`).join('')}</div>`
+      :`<div class="grp none"><h3><i>${i+1}</i>${t.name}</h3><p>필요한 도움이 없어요.</p></div>`).join('')}
+  </div>
+  <p class="saved" id="saved" aria-live="polite"></p>
+  <div class="acts three"><button class="btn sec" data-act="again">↻ 다시 고르기</button><button class="btn line" data-act="save">💾 저장하기</button><button class="btn pri" data-act="print">🖨 인쇄하기</button></div>${DK.DKU}`,{
+    home,
+    again:()=>{sel=T.map(()=>[]);topic(0)},
+    print:()=>{try{speechSynthesis.cancel()}catch(e){};window.print()},
+    save:async b=>{
+      store.set('last',{date,sel});
+      b.disabled=true;
+      try{await download(date);root.querySelector('#saved').textContent='✓ 이 기기에 저장하고, 그림 파일로 내려받았어요.'}
+      catch(e){root.querySelector('#saved').textContent='✓ 이 기기에 저장했어요.'}
+      DK.speak('저장했어요.');b.disabled=false;
+    }
+  });
+  DK.done({count:n});
+  DK.speak(n?`내가 고른 도움은 모두 ${n}개예요.`:'고른 도움이 없어요.');
+}
+
+/* 결과 카드를 canvas로 그려 PNG로 내려받는다(사진 없이 글만) */
+async function download(date){
+  try{await Promise.all([document.fonts.load('700 40px "Gaegu"'),document.fonts.load('700 30px "Noto Sans KR"'),document.fonts.load('500 30px "Noto Sans KR"')])}catch(e){}
+  const W=1080,P=70,LH=54;
+  const rows=[];
+  T.forEach((t,i)=>{rows.push({h:`${i+1}. ${t.name}`});(sel[i].length?sel[i].map(k=>t.h[k]):['필요한 도움이 없어요.']).forEach(x=>rows.push({t:x,none:!sel[i].length}))});
+  const H=300+rows.reduce((a,r)=>a+(r.h?LH+24:LH),0)+120;
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const g=c.getContext('2d');
+  g.fillStyle='#f4efdf';g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(170,167,147,.25)';g.lineWidth=2;for(let y=28;y<H;y+=28){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+  g.fillStyle='#fffaf0';g.strokeStyle='#d8c9b3';g.lineWidth=3;g.fillRect(P-20,P,W-2*(P-20),H-2*P);g.strokeRect(P-20,P,W-2*(P-20),H-2*P);
+  g.fillStyle='#f1c96b';g.save();g.translate(W/2,P);g.rotate(-.06);g.fillRect(-80,-16,160,32);g.restore();
+  g.fillStyle='#b9543c';g.font='700 22px "Noto Sans KR",sans-serif';g.fillText('MY HELP LIST',P+20,P+70);
+  g.fillStyle='#453f36';g.font='700 64px "Gaegu",cursive';g.fillText('[내가 고른 도움]',P+20,P+150);
+  g.fillStyle='#807669';g.font='500 26px "Noto Sans KR",sans-serif';g.fillText(date,P+20,P+200);
+  let y=P+270;
+  for(const r of rows){
+    if(r.h){y+=24;g.fillStyle='#b9543c';g.font='700 34px "Noto Sans KR",sans-serif';g.fillText(r.h,P+20,y);y+=LH;continue}
+    g.fillStyle=r.none?'#807669':'#453f36';g.font=`${r.none?400:500} 30px "Noto Sans KR",sans-serif`;
+    g.fillText((r.none?'· ':'✓ ')+r.t,P+50,y);y+=LH;
+  }
+  const blob=await new Promise(res=>c.toBlob(res,'image/png'));
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='내가-고른-도움.png';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+home();
+</script>
+</body>
+</html>

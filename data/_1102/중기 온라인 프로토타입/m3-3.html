@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=362d44bd-1312-4f79-a0ab-08e4c89a81ce
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>나의 스트레스 날리기 월드컵</title>
+  <style>
+    :root{--navy:#26366c;--blue:#e8f0ff;--orange:#ffb760;--ink:#20232c;--line:#d8dde8}
+    *{box-sizing:border-box} body{margin:0;background:#f5f7fc;color:var(--ink);font-family:"Noto Sans KR","Malgun Gothic",sans-serif;font-size:18px;min-height:100vh}
+    main{max-width:720px;margin:auto;padding:28px 18px 42px;text-align:center}.tag{display:inline-block;background:#fff1df;color:#9c5804;padding:7px 14px;border-radius:999px;font-weight:800;font-size:15px}h1{font-size:clamp(27px,6vw,39px);margin:14px 0 7px;color:var(--navy)}.lead{margin:0 auto 20px;line-height:1.55;color:#4e5565}.round{font-weight:900;color:var(--navy);font-size:20px;margin:17px 0 9px}.progress{height:12px;border-radius:9px;background:#dce3f3;overflow:hidden;margin:0 auto 22px;max-width:540px}.progress span{display:block;height:100%;background:linear-gradient(90deg,#647be0,#8e69d8);transition:width .3s}
+    .choice{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{border:3px solid var(--line);background:#fff;border-radius:22px;min-height:225px;padding:21px 10px 17px;cursor:pointer;box-shadow:0 4px 12px #25305a18;transition:.18s;display:flex;flex-direction:column;justify-content:center;align-items:center}.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:#6579d8;outline:none;box-shadow:0 8px 20px #25305a28}.emoji{font-size:72px;line-height:1.15}.name{font-weight:900;font-size:22px;margin-top:14px;word-break:keep-all}.hint{font-size:15px;color:#606878;margin-top:8px}.vs{font-weight:900;font-size:19px;margin:15px 0;color:#737c90}.start,.restart{border:0;border-radius:16px;background:var(--navy);color:white;font:800 21px inherit;padding:17px 28px;cursor:pointer;box-shadow:0 5px 12px #26366c55}.start:hover,.restart:hover{background:#344783}.options{display:grid;gap:11px;text-align:left;max-width:520px;margin:24px auto}.option{background:#fff;border-radius:14px;padding:13px 16px;box-shadow:0 2px 8px #25305a12;font-weight:700}.option span{margin-right:8px}.result{background:#fff;border:3px solid #ffcb83;border-radius:25px;padding:25px 18px;box-shadow:0 5px 16px #25305a14}.winner{font-size:32px;font-weight:900;color:#b05a00;margin:8px 0}.winner .emoji{font-size:80px;display:block;margin-bottom:7px}.note{background:#fff6e8;border-radius:13px;padding:13px 15px;line-height:1.55;margin:18px auto;max-width:500px;font-size:16px}.hidden{display:none}.footer{font-size:14px;color:#737c90;margin-top:24px}@media(max-width:430px){main{padding:20px 13px 34px}.card{min-height:195px;padding:14px 7px}.emoji{font-size:59px}.name{font-size:19px}.hint{font-size:13px}}
+  </style>
+</head>
+<body>
+<main>
+  <section id="intro">
+    <div class="tag">나에게 맞는 방법 찾기</div>
+    <h1>나의 스트레스 날리기 월드컵</h1>
+    <p class="lead">두 가지 방법 중 지금의 나에게 더 잘 맞는 것을 골라요.<br>정답은 없어요. 내 마음이 편해지는 방법을 찾아봐요.</p>
+    <div class="options">
+      <div class="option"><span>①</span>마음에 드는 방법을 하나 눌러요.</div>
+      <div class="option"><span>②</span>모두 고르면 나만의 방법이 나와요.</div>
+      <div class="option"><span>③</span>마음이 바뀌면 다시 해도 괜찮아요.</div>
+    </div>
+    <button class="start" onclick="startGame()">16강 시작하기</button>
+  </section>
+
+  <section id="game" class="hidden" aria-live="polite">
+    <div class="round" id="roundLabel"></div>
+    <div class="progress"><span id="bar"></span></div>
+    <p class="lead" id="question">지금의 나에게 더 잘 맞는 방법은 무엇인가요?</p>
+    <div class="choice">
+      <button class="card" id="a" onclick="choose(0)"></button>
+      <button class="card" id="b" onclick="choose(1)"></button>
+    </div>
+    <div class="vs">VS</div>
+    <p class="hint">원하는 쪽을 눌러요.</p>
+  </section>
+
+  <section id="end" class="hidden">
+    <div class="tag">월드컵 결과</div>
+    <h1>나만의 스트레스 해소법</h1>
+    <div class="result" id="result"></div>
+    <div class="note">이 방법이 언제나 꼭 맞아야 하는 것은 아니에요.<br>오늘의 내 마음에 맞는 방법을 골라보세요.</div>
+    <button class="restart" onclick="startGame()">다시 해보기</button>
+  </section>
+  <p class="footer">혼자 고르기 어렵다면 믿을 수 있는 사람과 함께 해도 좋아요.</p>
+</main>
+<script>
+const items=[
+ {e:'🎧',n:'음악 듣기',d:'좋아하는 음악을 들어요'}, {e:'🛌',n:'편하게 쉬기',d:'잠깐 누워서 쉬어요'},
+ {e:'🐶',n:'반려동물 돌보기',d:'동물과 함께 있어요'}, {e:'📺',n:'TV·영화 보기',d:'재미있는 것을 봐요'},
+ {e:'🎲',n:'보드게임 하기',d:'함께 게임을 해요'}, {e:'🏸',n:'배드민턴 하기',d:'몸을 움직여요'},
+ {e:'🚶',n:'산책하기',d:'밖에서 천천히 걸어요'}, {e:'🌬️',n:'천천히 숨 쉬기',d:'숨을 깊게 쉬어요'},
+ {e:'☕',n:'따뜻한 음료 마시기',d:'차나 물을 마셔요'}, {e:'💬',n:'믿을 사람과 이야기하기',d:'내 마음을 말해요'},
+ {e:'✏️',n:'글·그림으로 표현하기',d:'마음을 적거나 그려요'}, {e:'🚿',n:'샤워하기',d:'몸을 편안하게 해요'},
+ {e:'🧹',n:'정리·청소하기',d:'내 주변을 정리해요'}, {e:'🍳',n:'간단한 요리하기',d:'좋아하는 것을 만들어요'},
+ {e:'🤸',n:'스트레칭하기',d:'몸을 천천히 풀어요'}, {e:'🧩',n:'좋아하는 취미 하기',d:'내가 좋아하는 일 해요'}
+];
+let pool=[], winners=[], round=16, match=0;
+function startGame(){pool=[...items].sort(()=>Math.random()-.5); winners=[]; round=16; match=0; intro.classList.add('hidden'); end.classList.add('hidden'); game.classList.remove('hidden'); render();}
+function render(){const total=round===16?8:round===8?4:round===4?2:1; roundLabel.textContent=`${round}강 · ${match+1} / ${total}`; bar.style.width=`${((match)/total)*100}%`; a.innerHTML=card(pool[0]); b.innerHTML=card(pool[1]);}
+function card(x){return `<span class="emoji" aria-hidden="true">${x.e}</span><span class="name">${x.n}</span><span class="hint">${x.d}</span>`}
+function choose(i){winners.push(pool[i]); pool.splice(0,2); match++; if(pool.length){render();return} if(winners.length===1){showEnd(winners[0]);return} pool=winners; winners=[]; round/=2; match=0; render();}
+function showEnd(x){game.classList.add('hidden'); end.classList.remove('hidden'); result.innerHTML=`<span class="emoji" aria-hidden="true">${x.e}</span><div class="winner">${x.n}</div><p class="lead">${x.d}<br>이 방법으로 내 마음을 조금 편하게 해볼까요?</p>`;}
+</script>
+</body>
+</html>

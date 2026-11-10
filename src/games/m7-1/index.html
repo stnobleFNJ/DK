@@ -51,7 +51,7 @@
 .rt{font:var(--hw) 21px var(--fh);margin:20px 0 0}
 </style>
 </head>
-<body>
+<body data-track="hub">
 <div class="stage"><main class="app" id="app"></main></div>
 <dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>거실, 주방, 화장실, 현관 중 한 곳을 골라요.</li><li>그림 속 위험한 곳을 찾아 눌러요.</li><li>누르면 안전해진 모습 스티커가 붙어요.</li><li>네 곳을 모두 찾으면 우리집 안전관리사가 돼요!</li></ol><p>잘 모르겠으면 ‘힌트’를 눌러 보세요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
@@ -176,6 +176,7 @@ function finish(){
     home,listen:()=>DK.speak(DONE+' 네 곳의 위험 요소를 모두 찾았어요.'),
     again:()=>{ROOMS.forEach(r=>found[r.key].clear());home()}
   });
+  DK.done();
   later(()=>DK.speak(DONE),400);
 }
 

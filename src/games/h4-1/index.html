@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>위급 신호 몸으로 따라 하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;padding:6px 4px 0}
+.sgrid .photo{padding:6px 6px 8px}
+.sgrid .photo .cp{aspect-ratio:1}
+.sgrid .photo .ct{font-size:18px;line-height:1.25}
+.sym{margin:18px 6px 0}
+.sym .cp{aspect-ratio:1}
+.sym .ct{font-size:24px}
+.alert{display:inline-flex;align-items:center;gap:6px;font:700 13px var(--fb);color:#fff;background:#c4372a;border-radius:999px;padding:4px 12px;margin-top:14px}
+.step{margin:16px 4px 0}
+.step .cp{aspect-ratio:3/2}
+.step .n{position:absolute;left:14px;top:16px;z-index:2;background:var(--ac);color:#fff;font:700 14px var(--fb);border-radius:999px;padding:4px 12px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.dots{display:flex;justify-content:center;gap:10px;margin:14px 0 0}
+.dots i{width:34px;height:34px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font:700 14px var(--fb);color:var(--muted);font-style:normal}
+.dots i.d{background:var(--ok);color:#fff}
+.dots i.c{background:var(--ac);color:#fff;transform:scale(1.12)}
+.follow{text-align:center;font:var(--hw) 20px var(--fh);color:var(--muted);margin:10px 0 0}
+/* 네 단계 모아 보기 */
+.four{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.four div{background:#fff;padding:5px 5px 8px;box-shadow:0 3px 8px rgba(60,40,20,.14);border-radius:4px;border:3px solid transparent;transition:border-color .2s}
+.four div.on{border-color:var(--ac)}
+.four img{width:100%;aspect-ratio:3/2;object-fit:cover}
+.four p{margin:6px 2px 0;font:var(--hw) 16px/1.25 var(--fh)}
+.four b{color:var(--ac);font:700 12px var(--fb);display:block}
+/* 결과 */
+.res{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px}
+.res h2{font:var(--lw) 25px/1.35 var(--fl);letter-spacing:-.04em;margin:0}
+.res p{font-size:14px;color:var(--muted);margin:8px 0 0}
+.res .stamp{font-size:17px;background:var(--ok)}
+.rl{display:grid;gap:12px;margin-top:16px}
+.ri{display:flex;gap:10px;align-items:center;background:#fff;padding:7px;box-shadow:0 4px 10px rgba(60,40,20,.14);border-radius:6px}
+.ri img{flex:none;width:30%;aspect-ratio:1;object-fit:cover;border-radius:4px}
+.ri .rt{flex:1;min-width:0}
+.ri b{display:block;font:var(--hw) 20px/1.3 var(--fh);color:#3d352b}
+.ri small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.ri .ok{color:var(--ok);font-weight:700;font-size:12px}
+.tip{margin-top:16px;padding:12px 14px;border-radius:12px;background:#fbeee9;color:#9b3a26;font:700 15px var(--fb);text-align:center}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>위급 신호 4가지를 하나씩 봐요.</li><li>사진을 보고, 소리를 들으며 네 단계를 몸짓으로 따라 해요.</li><li>따라 했으면 ‘따라 했어요’를 눌러요.</li></ol><p>천천히 따라 해도 괜찮아요. 🔊를 누르면 다시 들을 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'위',html:'위급 신호 <b>따라 하기</b>'};
+// 증상 4가지와 단계 동작 문구 = 요청서 문구 그대로.
+// 증상 사진: face·arm·chest = 「후 4-3」 진짜 사진. head.jpg와 단계 사진 16장(<증상>-1~4.jpg)은 임시 그림(tools/gen_h4_1.py).
+const S=[
+  {k:'face',name:'얼굴이 비뚤어졌어요',steps:['거울을 봐요','‘이’하고 소리를 내요','소리를 내며 손가락으로 한 쪽 입술 끝을 눌러요','누른 입술 끝을 아래로 내려요']},
+  {k:'arm',name:'갑자기 한쪽 팔에 힘이 없어요',steps:['두 팔을 앞으로 들어요','한쪽 팔에 힘을 빼요','한 쪽 어깨도 힘을 빼요','힘을 뺀 팔을 아래로 내려요']},
+  {k:'chest',name:'가슴이 쥐어짜듯이 아파요',steps:['한 손을 가슴에 대요','두 손으로 가슴을 꾹 눌러요','몸을 앞으로 숙여요','아픈 표정을 지어요']},
+  {k:'head',name:'갑자기 머리가 매우 아파요',steps:['한 손을 머리에 대요','두 손으로 머리를 잡아요','눈을 찡그려요','머리가 아프다고 말해요']}
+];
+const TITLE='위급 신호 몸으로 따라 하기';                    // 요청서 화면 문구
+const SUBT='사진을 보고, 네 단계를 몸짓과 말로 표현해요.';    // 요청서 화면 문구
+const simg=s=>`img/${s.k}.jpg`, pimg=(s,i)=>`img/${s.k}-${i+1}.jpg`;
+const plain=t=>t.replace(/[‘’]/g,'');                      // 읽을 때 따옴표 빼기
+
+const root=document.getElementById('app');
+let timers=[],done=new Set();
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+
+/* 여러 문장을 차례로 읽고, 문장마다 onEach(i)를 부른다 */
+function speakSeq(list,onEach,onDone){
+  clear();
+  let i=0;
+  const next=()=>{
+    if(i>=list.length){onDone&&onDone();return}
+    const k=i++;onEach&&onEach(k);
+    try{
+      const u=new SpeechSynthesisUtterance(list[k]);u.lang='ko-KR';u.rate=.9;
+      const v=speechSynthesis.getVoices().find(v=>/ko/i.test(v.lang));if(v)u.voice=v;
+      let ended=false;const go=()=>{if(ended)return;ended=true;later(next,900)};
+      u.onend=go;u.onerror=go;speechSynthesis.speak(u);
+      later(go,Math.max(2500,list[k].length*260));   // 소리가 안 나는 기기에서도 넘어가게
+    }catch(e){later(next,2500)}
+  };
+  next();
+}
+
+function home(){
+  clear();done=new Set();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Emergency signs</span><h1 class="h1">위급 신호<br><em>몸으로 따라 하기</em></h1><p>${SUBT}</p></section>
+  <div class="sgrid">${S.map((s,i)=>`<div class="photo ${i%2?'tilt-r':'tilt-l'}">${i<2?'<i class="tp"></i>':''}<span class="cp"><img src="${simg(s)}" alt=""></span><span class="ct">${s.name}</span></div>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${TITLE}. ${SUBT}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>sym(0)});
+}
+
+function sym(si){
+  clear();
+  const s=S[si];
+  const say=`위급 신호! ${s.name}. 네 단계를 몸으로 따라 해 봐요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si)}
+  <span class="alert">🚨 위급 신호 ${si+1}</span>
+  <div class="photo sym tilt-l"><i class="tp"></i><span class="cp"><img src="${simg(s)}" alt="${s.name}"></span><span class="ct">${s.name}</span></div>
+  <p class="q" style="text-align:center">네 단계를 따라 해 봐요</p>
+  <div class="acts two"><button class="btn sec" data-say="${say}">🔊 듣기</button><button class="btn pri" data-act="go">따라 하기 ›</button></div>${DK.DKU}`,{home,go:()=>step(si,0)});
+  DK.speak(say);
+}
+
+function step(si,i){
+  clear();
+  const s=S[si],t=s.steps[i],last=i===3;
+  const say=`${i+1}단계. ${plain(t)}.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si)}
+  <span class="chip" style="display:inline-block;margin-top:14px">${s.name}</span>
+  <div class="dots" aria-label="${i+1}단계, 모두 4단계">${[0,1,2,3].map(k=>`<i class="${k<i?'d':k===i?'c':''}">${k<i?'✓':k+1}</i>`).join('')}</div>
+  <div class="photo step ${i%2?'tilt-r':'tilt-l'}"><i class="tp"></i><i class="n">${i+1}단계</i><span class="cp"><img src="${pimg(s,i)}" alt="${DK.esc(t)}"></span></div>
+  ${DK.sayBig(t)}
+  <p class="follow">👆 소리를 듣고 몸으로 따라 해요</p>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">따라 했어요 ✓</button></div>${DK.DKU}`,{
+    home,prev:()=>i?step(si,i-1):sym(si),next:()=>last?symDone(si):step(si,i+1)
+  });
+  root.querySelector('.saybig [data-say]').dataset.say=say;
+  root.querySelector('.saybig [data-say]').onclick=()=>DK.speak(say);
+  later(()=>DK.speak(say),250);
+}
+
+function symDone(si){
+  clear();done.add(si);
+  const s=S[si],last=si===S.length-1;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(S.length,si+1)}
+  <p class="fb ok">✓<span>잘했어요!<small>「${s.name}」 네 단계를 모두 따라 했어요.</small></span></p>
+  <p class="sl" style="margin:16px 0 0">네 단계 모아 보기</p>
+  <div class="four">${s.steps.map((t,k)=>`<div id="f${k}"><img src="${pimg(s,k)}" alt=""><p><b>${k+1}단계</b>${t}</p></div>`).join('')}</div>
+  <div class="acts"><button class="btn sec" data-act="play">▶ 이어서 듣고 한 번 더 따라 하기</button><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 위급 신호 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>last?finish():sym(si+1),
+    play:()=>{
+      const box=[...root.querySelectorAll('.four div')];
+      speakSeq([s.name+'.',...s.steps.map((t,k)=>`${k+1}단계. ${plain(t)}.`)],k=>box.forEach((b,j)=>b.classList.toggle('on',j===k-1)),()=>box.forEach(b=>b.classList.remove('on')));
+    }
+  });
+  DK.speak(`잘했어요! ${s.name}. 네 단계를 모두 따라 했어요.`);
+}
+
+function finish(){
+  clear();
+  // 임시: 결과 화면 제목·안내 문구는 요청서에 없어 지었다.
+  const head='위급 신호 네 가지를 모두 따라 했어요!';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="res"><i class="stamp">연습<br>완료</i><span class="eb">Well done</span><h2>위급 신호 네 가지를<br>모두 따라 했어요!</h2><p>이런 신호가 보이면 바로 도움을 요청해요.</p></div>
+  <div class="rl">${S.map(s=>`<div class="ri"><img src="${simg(s)}" alt=""><span class="rt"><b>${s.name}</b><small>${s.steps.map((t,k)=>`${k+1}. ${t}`).join('<br>')}</small></span><button class="spk" data-say="${s.name}" aria-label="소리로 듣기">${DK.SPK}</button></div>`).join('')}</div>
+  <p class="tip">🚑 위급 신호가 보이면 바로 119에 전화해요!</p>
+  <div class="acts"><button class="btn pri" data-act="again">↻ 다시 연습</button></div>${DK.DKU}`,{
+    home,again:()=>{done=new Set();sym(0)}
+  });
+  DK.done();
+  later(()=>DK.speak(head+' '+S.map(s=>s.name).join('. ')+'.'),300);
+}
+
+home();
+</script>
+</body>
+</html>

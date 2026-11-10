@@ -24,3 +24,13 @@ out/
 .env
 .env.*
 !.env.example
+
+# 계정·비밀번호 메모 (예: data/_1109/단국대홈페이지_계정.txt)
+*계정*.txt
+*접속주소*.txt
+src/admin/config.php
+
+__pycache__/
+
+# 받은 원본 압축(풀어 둔 내용만 저장, GitHub 100MB 제한)
+data/**/*.zip

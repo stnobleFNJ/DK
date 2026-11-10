@@ -1,39 +1,21 @@
-"""전5-2 「우리집 한바퀴」 — 빠진 '알맞은 행동' 그림 5장을 임시 일러스트로 만든다.
-사용: python tools/gen_5_2.py   → src/games/5-2/img/q*-good.jpg, sp-*.jpg, tools/placeholder_manifest/5-2.json
+"""전5-2 「우리집 한바퀴」 — 바른 행동 사진 5장과 칸 공간 사진 4장을 만든다.
+사용: python tools/gen_5_2.py   → src/games/5-2/img/q*-good.jpg, sp-*.jpg
 
-거실·주방·화장실 칸(1·3·4·6·8)은 '알맞지 않은 행동' 사진만 있어서, 알맞은 행동 그림을 임시로 그린다.
-진짜 사진이 오면 같은 파일 이름(q1-good.jpg …)으로 덮어쓰면 된다.
-보드판·상황 사진은 실제 사진이므로 optimize_images.py 5-2 로 만든다.
-sp-*.jpg(칸 공간 사진)는 실제 보드판에서 잘라 낸 것이라 도장을 찍지 않는다.
+거실·주방·화장실 칸(1·3·4·6·8)의 '알맞은 행동' 사진은 11/09 추가 사진(data/_1109/5-2)을 쓴다.
+(전에는 임시생성 그림이었다.) 나머지 보드판·상황 사진은 optimize_images.py 5-2 로 만든다.
+sp-*.jpg(칸 공간 사진)는 실제 보드판에서 잘라 낸 것이다.
 """
-import json
 import sys
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / 'tools'))
-from placeholder import scene  # noqa: E402
-
 OUT = ROOT / 'src' / 'games' / '5-2' / 'img'
 BOARD = ROOT / 'data' / '큐알활동사진_생애주기_전기_1,5,6,7단원' / '5-2 우리집공간사용법' / '1. 우리집 한바퀴 생활공간 보드.png'
-SIZE = (1200, 675)
-BGNAME = {'room': '거실(크림 벽·원목 바닥·창문·화분)', 'kitchen': '주방(크림 벽·조리대·원목 바닥)',
-          'bath': '화장실(타일 벽·바닥)', 'bedroom': '침실'}
+NEW = ROOT / 'data' / '_1109' / '5-2'
 
-# (파일, 이름표, 이모지, 배경, 칸, 설명)
-ITEMS = [
-    ('q1-good.jpg', '소파를 함께 나눠 앉기', '👪🛋', 'room', '1번 칸 거실',
-     '거실 소파에 가족이 자리를 나눠 함께 앉는 모습(알맞은 행동)'),
-    ('q3-good.jpg', '식탁 위 내 물건 치우기', '🎒📚👉🚪', 'kitchen', '3번 칸 주방(식탁)',
-     '식탁 위에 둔 가방과 책을 내 방으로 치우는 모습(알맞은 행동)'),
-    ('q4-good.jpg', '이어폰으로 음악 듣기', '🙂🎧🎵', 'room', '4번 칸 거실',
-     '거실에서 이어폰을 끼고 조용히 음악을 듣는 모습(알맞은 행동)'),
-    ('q6-good.jpg', '화장실 빨리 쓰고 나오기', '🚽⏱👍', 'bath', '6번 칸 화장실',
-     '화장실을 짧게 쓰고 다음 사람을 위해 나오는 모습(알맞은 행동)'),
-    ('q8-good.jpg', '식사 후 그릇 치우기', '🍽🧽✨', 'kitchen', '8번 칸 주방(식탁)',
-     '밥을 다 먹고 그릇을 싱크대로 옮겨 치우는 모습(알맞은 행동)'),
-]
+# 칸 번호 → 저장 이름 (원본: 'N) …바른행동(추가).png')
+GOOD = {'2-1': 'q1-good.jpg', '2-3': 'q3-good.jpg', '2-4': 'q4-good.jpg', '2-6': 'q6-good.jpg', '2-8': 'q8-good.jpg'}
 
 # 보드판(1672×941)에서 칸 그림 부분을 잘라 문제 화면 머리 사진으로 쓴다(실제 사진, 도장 없음)
 CROPS = [('sp-living.jpg', (362, 238, 646, 462)), ('sp-room.jpg', (702, 238, 980, 462)),
@@ -46,23 +28,18 @@ def main():
     board = Image.open(BOARD).convert('RGB')
     for name, box in CROPS:
         board.crop(box).save(OUT / name, 'JPEG', quality=84, optimize=True)
-        print(f'{name}\t(보드판 자르기)')
-    man = []
-    for name, text, emoji, bg, cell, desc in ITEMS:
-        out = OUT / name
-        scene(out, text, emoji, bg, size=SIZE)
-        print(f'{out.relative_to(ROOT)}\t{out.stat().st_size // 1024}KB')
-        man.append({
-            'file': f'src/games/5-2/img/{name}',
-            'desc': desc,
-            'structure': f'배경 {BGNAME[bg]} / 가운데 이모지 그림 {emoji} / 이름표 「{text}」 / '
-                         f'오른쪽 위 빨간 「임시생성」 도장(짧은 변의 약 26%) / {SIZE[0]}×{SIZE[1]}px JPEG',
-            'used_in': f'{cell} 문제 — 행동 보기 2장 중 정답(알맞은 행동) 그림',
-        })
+        print(f'{name}	(보드판 자르기)')
+    for no, name in GOOD.items():
+        src = next(p for p in NEW.glob(f'{no})*바른행동*.png'))
+        im = Image.open(src).convert('RGB')
+        if im.width > 1600:
+            im = im.resize((1600, round(im.height * 1600 / im.width)), Image.LANCZOS)
+        im.save(OUT / name, 'JPEG', quality=82, optimize=True, progressive=True)
+        print(f'{name}	{im.width}x{im.height}	{(OUT / name).stat().st_size // 1024}KB	← {src.name}')
     mf = ROOT / 'tools' / 'placeholder_manifest' / '5-2.json'
-    mf.parent.mkdir(parents=True, exist_ok=True)
-    mf.write_text(json.dumps(man, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(mf.relative_to(ROOT))
+    if mf.exists():
+        mf.unlink()
+        print(f'{mf.relative_to(ROOT)} 삭제(임시 그림 없음)')
 
 
 if __name__ == '__main__':

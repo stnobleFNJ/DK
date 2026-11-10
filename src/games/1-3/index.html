@@ -112,6 +112,7 @@ function result(){
   <div class="acts"><button class="btn line" data-act="listen">🔊 내 계획 다 듣기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="edit">‹ 고치기</button><button class="btn pri" data-act="again">↻ 다시하기</button></div></div>${DK.DKU}`,{
     home,listen:()=>DK.speak(planText()),edit:()=>theme(0),again:home
   });
+  DK.done({plan:THEMES.map((T,i)=>chosen(i).v)});
   DK.speak(planText());
 }
 

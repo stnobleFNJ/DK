@@ -36,5 +36,6 @@ FTP로 `src/` **안의** 파일과 폴더(`.htaccess` 포함)를 `www/`에 올�
 
 - 모든 게임 디자인은 `data/dk/typeA.html`(종이 전시)을 기준으로 하고, `src/games/common/`의 테마를 씁니다.
 - 원본 PNG는 `data/`에 두고 `python tools/optimize_images.py`로 `src/games/<차시>/img/`에 JPEG을 만듭니다.
+- 성인 후기 게임은 `src/games/h<회기>/`(예: `h3-1`)에 있습니다. 11/02 자료는 `data/_1102/`에 있습니다.
 - 성인 중기 게임은 `src/games/m<회기>/`(예: `m5-1`)에 있고, 이미지는 `python tools/gen_m<회기>.py`(예: `gen_m5_1.py`)로 `data/나관엽 - 게임 참고자료 (10.26)/`에서 만듭니다.
-- 사진이 없는 이미지는 `tools/gen_<차시>.py`로 「임시생성」 도장이 찍힌 그림을 만듭니다. 목록은 `docs/임시이미지목록.md`(`tools/placeholder_manifest/*.json`에서 생성)에 있고, 실제 사진을 같은 파일 이름으로 덮어쓰면 교체됩니다.
+- 사진이 없는 이미지는 `tools/gen_<차시>.py`로 「임시생성」 도장이 찍힌 그림을 만듭니다. 목록은 `docs/임시이미지목록.md`(`python tools/build_placeholder_list.py`로 `tools/placeholder_manifest/*.json`에서 생성)에 있고, 실제 사진을 같은 파일 이름으로 덮어쓰면 교체됩니다.

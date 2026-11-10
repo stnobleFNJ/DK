@@ -1,73 +1,59 @@
-"""전3-1 「건강 빨간불을 초록불로 만들기」 임시 그림 20장을 만든다.
-빨간불 행동 5장 + 초록불 보기 15장(문항마다 3장). 진짜 사진이 오면 같은 파일 이름으로 덮어쓰면 된다.
-    python tools/gen_3_1.py
+"""전3-1 「건강 빨간불을 초록불로 만들기」 실제 사진 20장을 게임용 JPEG로 만든다.
+사용: python tools/gen_3_1.py   → src/games/3-1/img/q1-red.jpg … q5-g3.jpg
+
+원본: data/_1102/게임(전기3,4단원)/게임(전기3,4)/전3-1 건강 습관 점검하기/
+  건강 빨간불 행동N/<문장>.png                    → qN-red.jpg
+  건강 초록불 행동N(빨간불 행동N과 연결)/<문장>.png → qN-g1.jpg(정답) · qN-g2.jpg · qN-g3.jpg
+원본 파일 이름이 곧 화면 문장이다(‘(정답)’ 표시는 정답 파일 고르기에만 쓴다).
+원본은 1672×941 PNG(사진). 비율은 그대로 두고 긴 변 1200px, JPEG quality 83으로 줄인다. 도장은 찍지 않는다.
+여러 번 실행해도 같은 결과가 나온다.
 """
-import json, sys
+import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
-from PIL import Image, ImageDraw, ImageFilter
-from placeholder import background, emoji_layer, stamp
+from PIL import Image
 
-sys.stdout.reconfigure(encoding='utf-8')
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'src/games/3-1/img'
-SIZE = (960, 640)
+SRC = ROOT / 'data' / '_1102' / '게임(전기3,4단원)' / '게임(전기3,4)' / '전3-1 건강 습관 점검하기'
+OUT = ROOT / 'src' / 'games' / '3-1' / 'img'
+MAXW = 1200
 
-
-def pic(out, emoji, bg):
-    """placeholder.scene과 같지만 보기 카드(작은 썸네일)에서도 잘 보이게 그림을 크게(높이의 약 52%) 그린다."""
-    w, h = SIZE
-    im = background(w, h, bg).convert('RGBA')
-    em = emoji_layer(emoji, round(h * .52))
-    if em.width > w * .86:
-        k = w * .86 / em.width
-        em = em.resize((round(em.width * k), round(em.height * k)), Image.LANCZOS)
-    cx, cy = w // 2, round(h * .52)
-    sh = Image.new('RGBA', im.size, (0, 0, 0, 0))
-    ImageDraw.Draw(sh).ellipse((cx - em.width * .42, cy + em.height * .36, cx + em.width * .42, cy + em.height * .52), fill=(60, 40, 20, 70))
-    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(12)))
-    im.alpha_composite(em, (cx - em.width // 2, cy - em.height // 2))
-    im = stamp(im.convert('RGB'), scale=1.15)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    im.save(out, 'JPEG', quality=84, optimize=True, progressive=True)
-
-# (파일, 배경, 이모지, 설명, 쓰는 곳)
-IMGS = [
-    # 1. 누워 있는 것을 좋아해요
-    ('red-lie.jpg', 'bedroom', '🛌', '빨간불 행동: 누워 있는 것을 좋아해요', '1번 문제 빨간불 그림'),
-    ('stretch.jpg', 'room', '🧘', '초록불 정답: 일어나서 스트레칭을 해요', '1번 문제 보기(정답), 결과 화면'),
-    ('sofa-tv.jpg', 'room', '🛋️📺', '틀린 보기: 소파에 누워 텔레비전을 봐요', '1번 문제 보기(오답)'),
-    ('sleep-all-day.jpg', 'bedroom', '😴', '틀린 보기: 하루 종일 잠만 자요', '1번 문제 보기(오답)'),
-    # 2. 라면을 자주 먹어요
-    ('red-ramen.jpg', 'kitchen', '🍜', '빨간불 행동: 라면을 자주 먹어요', '2번 문제 빨간불 그림'),
-    ('rice-veg.jpg', 'kitchen', '🍚🥗', '초록불 정답: 밥과 채소 반찬을 먹어요', '2번 문제 보기(정답), 결과 화면'),
-    ('ramen-two.jpg', 'kitchen', '🍜🍜', '틀린 보기: 라면을 두 개 끓여 먹어요', '2번 문제 보기(오답)'),
-    ('snack-meal.jpg', 'kitchen', '🍪', '틀린 보기: 밥 대신 과자를 먹어요', '2번 문제 보기(오답)'),
-    # 3. 탄산음료를 자주 마셔요
-    ('red-soda.jpg', 'kitchen', '🥤', '빨간불 행동: 탄산음료를 자주 마셔요', '3번 문제 빨간불 그림'),
-    ('water.jpg', 'kitchen', '🚰', '초록불 정답: 목마르면 물을 마셔요', '3번 문제 보기(정답), 결과 화면'),
-    ('soda-more.jpg', 'kitchen', '🥤🥤', '틀린 보기: 탄산음료를 한 잔 더 마셔요', '3번 문제 보기(오답)'),
-    ('juice.jpg', 'kitchen', '🧃', '틀린 보기: 달콤한 주스를 많이 마셔요', '3번 문제 보기(오답)'),
-    # 4. 운동을 안 해요
-    ('red-noexercise.jpg', 'room', '🛋️', '빨간불 행동: 운동을 안 해요', '4번 문제 빨간불 그림'),
-    ('walk.jpg', 'outdoor', '🚶', '초록불 정답: 공원에서 걸어요', '4번 문제 보기(정답), 결과 화면'),
-    ('game.jpg', 'room', '🎮', '틀린 보기: 하루 종일 게임만 해요', '4번 문제 보기(오답)'),
-    ('sit-all-day.jpg', 'room', '🪑', '틀린 보기: 하루 종일 앉아만 있어요', '4번 문제 보기(오답)'),
-    # 5. 밤늦게 음식을 먹어요
-    ('red-latefood.jpg', 'kitchen', '🌙🍗', '빨간불 행동: 밤늦게 음식을 먹어요', '5번 문제 빨간불 그림'),
-    ('early-dinner.jpg', 'kitchen', '🕖🍽️', '초록불 정답: 저녁을 일찍 먹어요', '5번 문제 보기(정답), 결과 화면'),
-    ('chicken-night.jpg', 'kitchen', '🍗', '틀린 보기: 밤에 치킨을 시켜 먹어요', '5번 문제 보기(오답)'),
-    ('pizza-bed.jpg', 'bedroom', '🍕', '틀린 보기: 자기 전에 피자를 먹어요', '5번 문제 보기(오답)'),
+# 문항별: (빨간불 문장, [초록불 정답, 오답, 오답]) — 원본 파일 이름 앞부분으로 찾는다(점·공백 차이 무시)
+Q = [
+    ('누워있는 것을 좋아해요', ['몸을 움직여요', '천천히 오래 씹어 먹어요', '물을 자주 마셔요']),
+    ('라면을 자주 먹어요', ['라면은 일주일에 한 번만 먹어요', '밤 늦게까지 휴대폰을 보지 않아요', '밥을 먹고 산책해요']),
+    ('탄산음료를 자주 마셔요', ['물을 하루에 6~8잔 마셔요', '밤 12시 전에 자요', '자전거를 타요']),
+    ('운동을 안 해요', ['매일 30분 이상 운동해요', '채소와 과일을 먹어요', '아침에 일찍 일어나요']),
+    ('밤 늦게 음식을 먹어요', ['잠자기 전에는 음식을 먹지 않아요', '낮잠을 오래 자지 않아요', '가까운 거리는 걸어가요']),
 ]
-BG = {'room': '방(크림색 벽·창문·원목 바닥·화분)', 'bedroom': '침실(크림색 벽·창문·침대·원목 바닥)',
-      'kitchen': '주방(크림색 벽·조리대·원목 바닥)', 'outdoor': '야외(하늘·나무·잔디)'}
 
-man = []
-for f, bg, em, desc, used in IMGS:
-    pic(OUT / f, em, bg)
-    print(f)
-    man.append({'file': f'src/games/3-1/img/{f}', 'desc': desc,
-                'structure': f'배경: {BG[bg]} / 가운데 그림: 이모지 {em}(높이의 약 52%로 크게) / 이름표: 없음(게임 화면 글자로 보여 줌) / 도장: 오른쪽 위, 짧은 변의 약 30% 크기 / {SIZE[0]}×{SIZE[1]}px JPEG',
-                'used_in': f'전3-1 {used}'})
-(ROOT / 'tools/placeholder_manifest/3-1.json').write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding='utf-8')
-print(len(man), 'images')
+
+def find(folder_prefix, text):
+    dirs = [d for d in SRC.iterdir() if d.is_dir() and d.name.startswith(folder_prefix)]
+    assert len(dirs) == 1, (folder_prefix, dirs)
+    hits = [p for p in dirs[0].glob('*.png') if p.stem.rstrip('.').startswith(text)]
+    assert len(hits) == 1, (text, hits)
+    return hits[0]
+
+
+def save(src, out):
+    im = Image.open(src).convert('RGB')
+    if max(im.size) > MAXW:
+        k = MAXW / max(im.size)
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+    im.save(out, 'JPEG', quality=83, optimize=True, progressive=True)
+    print(f'{out.name}\t{im.width}x{im.height}\t{out.stat().st_size // 1024}KB\t{src.name}')
+
+
+def main():
+    sys.stdout.reconfigure(encoding='utf-8')
+    OUT.mkdir(parents=True, exist_ok=True)
+    for n, (red, greens) in enumerate(Q, 1):
+        save(find(f'건강 빨간불 행동{n}', red), OUT / f'q{n}-red.jpg')
+        for k, g in enumerate(greens, 1):
+            p = find(f'건강 초록불 행동{n}', g)
+            assert ('(정답)' in p.name) == (k == 1), p   # 첫째가 정답 파일인지 확인
+            save(p, OUT / f'q{n}-g{k}.jpg')
+
+
+if __name__ == '__main__':
+    main()

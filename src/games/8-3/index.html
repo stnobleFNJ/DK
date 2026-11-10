@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>회원가입 연습하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.mini{font-size:56px;text-align:center;margin:6px 0 0}
+/* 안전 안내 */
+.safe{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;padding:12px 14px;border-radius:12px;background:#fdf1cf;border:1.5px solid #edd79a;color:#5b4300;font:700 15px/1.5 var(--fb)}
+.safe i{font-style:normal;font-size:22px;line-height:1.2}
+.safe small{display:block;font-weight:500;color:#6d5a24}
+/* 연습용 정보 카드 (교재 88쪽 형식) */
+.icard{position:relative;margin:22px 6px 6px;padding:28px 16px 14px;background:#fff;border:2px solid #f0a96a;border-radius:14px;box-shadow:0 6px 14px rgba(60,40,20,.14);transform:rotate(-1deg)}
+.icard h3{position:absolute;top:-15px;left:50%;transform:translateX(-50%);margin:0;padding:5px 18px;border-radius:999px;background:#ef7d2d;color:#fff;font:800 16px var(--fb);white-space:nowrap}
+.icard dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:17px}
+.icard dt{color:var(--muted);font-weight:700}
+.icard dd{margin:0;font-weight:700;color:var(--ink);word-break:break-all}
+.icard dd code{font:700 17px var(--fm);letter-spacing:.02em}
+.icard .tip{margin:10px 0 0;font-size:12px;color:var(--muted)}
+/* 브라우저 틀 */
+.web{margin:20px 0 0;border:1px solid #c9ccd3;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 10px 24px rgba(60,40,20,.2);color:#222;font-family:var(--fb)}
+.url{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#eef0f3;border-bottom:1px solid #d9dce2}
+.url .dots{display:flex;gap:5px}.url .dots i{width:9px;height:9px;border-radius:50%;background:#ff6159}.url .dots i+i{background:#ffbd2e}.url .dots i+i+i{background:#28c941}
+.url span:last-child{flex:1;min-width:0;padding:4px 10px;border-radius:999px;background:#fff;font:400 12px var(--fb);color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lnav{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#1f3a63;color:#fff;font:800 17px var(--fb)}
+.lnav b{font-size:20px}
+.lbody{padding:14px 14px 6px}
+.lguide{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:#edfdf3}
+.lguide img{flex:none;width:52px;height:auto}
+.lguide p{flex:1;margin:0;padding:9px 11px;border:2px solid #2a9d74;border-radius:12px;background:#fff;font:500 14px/1.5 var(--fb);color:#1f3a63}
+.lguide p b{display:block;color:#222;font-weight:800}
+.crumb{margin:12px 0 2px;font-size:11px;color:#888}
+.lbody h2{margin:0 0 10px;font:800 22px var(--fb);color:#1f3a63;padding-bottom:8px;border-bottom:2px solid #1f3a63}
+/* 폼 */
+.fld{padding:10px 0;border-bottom:1px solid #eef0f3}
+.fld label{display:block;font:700 15px var(--fb);color:#333;margin-bottom:6px}
+.fld .row{display:flex;gap:8px}
+.fld input[type=text],.fld input[type=password],.fld input[type=tel]{flex:1;min-width:0;width:100%;font:500 17px var(--fb);padding:12px;border:1.5px solid #c4c8cf;border-radius:8px;background:#fff;color:#111}
+.fld input:focus{outline:none;border-color:#1f3a63;box-shadow:0 0 0 3px rgba(31,58,99,.15)}
+.fld.bad input{border-color:#d0402f;background:#fff6f4}
+.fld.good input{border-color:#2a9d74}
+.sbtn{flex:none;padding:0 12px;border:1.5px solid #9aa1ab;border-radius:8px;background:#fff;font:700 14px var(--fb);color:#333;display:grid;place-items:center;min-height:48px}
+.sbtn.eye{min-width:56px}
+.msg{display:none;margin:6px 0 0;font:700 14px/1.4 var(--fb)}
+.fld.bad .msg.err,.agree.bad .msg.err{display:block;color:#d0402f}
+.msg.ok{color:#1f7a57}
+.msg.ok.show{display:block}
+.hint{margin:5px 0 0;font-size:12px;color:#888}
+.agree{padding:14px 0 4px}
+.agree label{display:flex;gap:10px;align-items:center;font:700 15px var(--fb);color:#333;cursor:pointer}
+.agree input{width:26px;height:26px;accent-color:#1f3a63;flex:none}
+.lbtns{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin:16px 0 8px}
+.lbtns button{text-align:center;padding:14px 0;border-radius:8px;font:800 17px var(--fb)}
+.lbtns .join{background:#1f3a63;color:#fff}
+.lbtns .cancel{background:#fff;border:1.5px solid #c4c8cf;color:#333}
+.sum{display:none;margin:4px 0 0;padding:10px 12px;border-radius:8px;background:#fff1ee;color:#b23524;font:700 14px var(--fb)}
+.sum.show{display:block}
+.lfoot{padding:12px 14px 14px;text-align:center;font-size:12px;color:#999;border-top:1px solid #eef0f3}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:10px 18px;border-radius:20px;font:700 14px var(--fb);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9}
+.toast.show{opacity:1}
+/* 완료 화면 (그림 '회원가입 완료화면') */
+.done{text-align:center;padding:30px 6px 24px}
+.done h3{margin:0;font:800 22px/1.4 var(--fb);color:#0f6b4a}
+.done p{margin:8px 0 0;font-size:15px;color:#444}
+.done .who{display:inline-block;margin-top:16px;padding:10px 16px;border-radius:10px;background:#f3f5f8;font:700 15px var(--fb);color:#1f3a63;text-align:left}
+.res{position:relative;margin:26px 4px 0}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>위에 있는 ‘연습용 정보 카드’를 봐요.</li><li>카드를 보고 한 칸씩 써요.</li><li>아이디를 쓰고 ‘중복 확인’을 눌러요.</li><li>동의에 ✓ 표시를 하고 ‘가입하기’를 눌러요.</li></ol><p>틀린 칸은 빨간 글씨로 알려 줘요. 연습 화면이라 쓴 내용은 어디에도 보내지 않아요. 진짜 비밀번호는 쓰지 마세요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'가',html:'회원가입 <b>연습하기</b>'};
+// 연습용 정보 카드: 이름·연락처·주소는 교재 88쪽 카드 그대로. 아이디·비밀번호는 지어낸 예시.
+// 임시: 아이디 haneul12, 비밀번호 book1234
+const CARD={name:'김하늘',id:'haneul12',pw:'book1234',tel:'010-1234-5678',addr:'사랑시 행복동 12'};
+// 임시: '이미 있는 아이디' 목록(중복 확인 연습용). haneul을 넣어 두면 카드 예시와 비슷한 아이디로 중복을 겪어 볼 수 있다.
+const TAKEN=['haneul','admin','library','dalmadang','test','user1'];
+const GUIDE='안녕하세요! 달님 사서입니다. 회원가입을 도와드릴게요. 아이디와 비밀번호를 입력하고 아래 동의란을 확인해 주세요.'; // 그림 문구 그대로
+const SAFE='연습 화면이에요. 쓴 내용은 어디에도 보내지 않아요. 진짜 비밀번호는 쓰지 마세요.';
+
+const root=document.getElementById('app');
+let timers=[],idChecked='';
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1800)}
+
+const safeBox=`<div class="safe"><i aria-hidden="true">🔒</i><span>진짜 비밀번호는 쓰지 마세요!<small>연습 화면이에요. 쓴 내용은 어디에도 보내지 않고, 화면을 나가면 지워져요.</small></span></div>`;
+const cardBox=`<section class="icard" aria-label="연습용 정보 카드"><h3>연습용 정보 카드</h3><dl>
+  <dt>이름</dt><dd>${CARD.name}</dd><dt>아이디</dt><dd><code>${CARD.id}</code></dd><dt>비밀번호</dt><dd><code>${CARD.pw}</code></dd>
+  <dt>연락처</dt><dd>${CARD.tel}</dd><dt>주소</dt><dd>${CARD.addr}</dd></dl>
+  <p class="tip">이 카드를 보고 아래 회원가입 칸을 채워 보세요.</p></section>`;
+const urlBar=`<div class="url"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>🔒 www.dalmadang-lib.kr/join</span></div><div class="lnav"><b aria-hidden="true">📖</b>달마당 도서관</div>`;
+const guideBox=t=>`<div class="lguide"><img src="img/moon.jpg" alt="달님 사서"><p><b>달님 사서</b>${t}</p></div>`;
+
+function home(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Sign-up practice</span><h1 class="h1">도서관 회원가입,<br><em>연습해 볼까요?</em></h1><p>달마당 도서관에 회원가입을 하려고 해요. 정보 카드를 보고 필요한 정보를 한 칸씩 써 보세요.</p></section>
+  <p class="mini" aria-hidden="true">📖🖊️</p>
+  ${safeBox}
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="도서관 회원가입을 하려고 해요. 필요한 정보를 적어 보세요. ${SAFE}">🔊 듣기</button></div>${DK.DKU}`,{start:form});
+}
+
+/* ---------- 칸별 검사: 맞으면 '' , 틀리면 안내 문구 ---------- */
+const digits=s=>s.replace(/[\s-]/g,'');
+const RULES={
+  name:v=>!v?'이름을 써 주세요.':/\d/.test(v)?'이름에는 숫자를 쓰지 않아요.':v.length<2?'이름을 끝까지 써 주세요.':'',
+  id:v=>!v?'아이디를 써 주세요.':/[^a-z0-9]/.test(v)?(/[A-Z]/.test(v)?'아이디는 영어 소문자로 써요.':'아이디는 영어와 숫자로만 써요.'):v.length<4||v.length>12?'아이디는 4~12글자로 써요.':TAKEN.includes(v)?'이미 있는 아이디예요. 다른 아이디를 써 보세요.':idChecked!==v?'‘중복 확인’ 버튼을 눌러 주세요.':'',
+  pw:v=>!v?'비밀번호를 써 주세요.':v.length<8?'비밀번호는 8글자 이상 써요.':!(/[a-zA-Z]/.test(v)&&/\d/.test(v))?'비밀번호는 영어와 숫자를 섞어 써요.':'',
+  pw2:(v,f)=>!v?'비밀번호를 한 번 더 써 주세요.':v!==f.elements.pw.value.trim()?'비밀번호가 서로 달라요.':'',
+  tel:v=>!v?'연락처를 써 주세요.':/[^\d\s-]/.test(v)?'연락처는 숫자로 써요.':!/^01[016789]\d{7,8}$/.test(digits(v))?'연락처는 010으로 시작하는 11자리 숫자예요.':'',
+  addr:v=>!v?'주소를 써 주세요.':v.length<4?'주소를 끝까지 써 주세요.':'',
+  agree:(v,f)=>f.elements.agree.checked?'':'개인정보 동의에 ✓ 표시를 해 주세요.'
+};
+const ORDER=['name','id','pw','pw2','tel','addr','agree'];
+
+const field=(k,label,type,opts='')=>`<div class="fld" data-f="${k}"><label for="f-${k}">${label}</label><div class="row"><input id="f-${k}" name="${k}" type="${type}" autocomplete="off" autocapitalize="off" spellcheck="false" ${opts}>${
+  k==='id'?'<button type="button" class="sbtn" data-act="dup">중복 확인</button>':k==='pw'||k==='pw2'?`<button type="button" class="sbtn eye" data-act="eye" data-for="f-${k}" aria-label="비밀번호 보이기">👁 보기</button>`:''}</div>${
+  k==='id'?'<p class="msg ok" id="idok">✓ 쓸 수 있는 아이디예요.</p>':''}<p class="msg err" id="e-${k}" aria-live="polite"></p>${
+  k==='id'?'<p class="hint">영어 소문자와 숫자 4~12글자</p>':k==='pw'?'<p class="hint">영어와 숫자를 섞어 8글자 이상</p>':''}</div>`;
+
+function form(){
+  clear();idChecked='';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">정보 카드를 보고 회원가입을 해 보세요.</p>
+  ${cardBox}
+  <div class="web">${urlBar}
+   <div class="lbody">${guideBox(GUIDE)}
+    <p class="crumb">홈 › 회원가입</p><h2>회원가입</h2>
+    <form id="join" novalidate autocomplete="off">
+     ${field('name','이름','text','maxlength="20"')}
+     ${field('id','아이디','text','maxlength="20" inputmode="email"')}
+     ${field('pw','비밀번호','password','maxlength="30"')}
+     ${field('pw2','비밀번호 확인','password','maxlength="30"')}
+     ${field('tel','연락처','tel','placeholder="010-0000-0000" maxlength="16" inputmode="tel"')}
+     ${field('addr','주소','text','maxlength="40"')}
+     <div class="agree" data-f="agree"><label><input type="checkbox" name="agree" id="f-agree">개인정보 수집·이용에 동의합니다.</label><p class="msg err" id="e-agree" aria-live="polite"></p></div>
+     <p class="sum" id="sum" role="alert"></p>
+     <div class="lbtns"><button type="submit" class="join">가입하기</button><button type="button" class="cancel" data-act="cancel">취소</button></div>
+    </form>
+   </div>
+   <div class="lfoot">© 달마당 도서관. All rights reserved.</div>
+  </div>
+  ${safeBox}${DK.DKU}`,{
+    home,
+    dup:()=>checkId(),
+    eye:b=>{const i=document.getElementById(b.dataset.for);const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'🙈 숨기기':'👁 보기';b.setAttribute('aria-label',show?'비밀번호 숨기기':'비밀번호 보이기')},
+    cancel:()=>{f.reset();idChecked='';ORDER.forEach(k=>mark(k,null));root.querySelector('#idok').classList.remove('show');root.querySelector('#sum').classList.remove('show');toast('쓴 내용을 모두 지웠어요');DK.speak('쓴 내용을 모두 지웠어요. 처음부터 다시 써 보세요.')}
+  });
+  const f=root.querySelector('#join');
+  // 입력값은 어디로도 보내지 않는다: submit을 막고 화면 안에서만 검사한다.
+  f.addEventListener('submit',e=>{e.preventDefault();submit(f)});
+  ORDER.forEach(k=>{
+    const el=f.elements[k];
+    el.addEventListener(k==='agree'?'change':'blur',()=>{if(k==='agree'||el.value)mark(k,RULES[k](el.value.trim(),f))});
+    el.addEventListener('input',()=>{
+      if(k==='id'&&idChecked&&el.value.trim()!==idChecked){idChecked='';root.querySelector('#idok').classList.remove('show')}
+      const box=root.querySelector(`[data-f="${k}"]`);
+      if(box.classList.contains('bad')||box.classList.contains('good'))mark(k,RULES[k](el.value.trim(),f));
+      if(k==='pw'&&f.elements.pw2.value)mark('pw2',RULES.pw2(f.elements.pw2.value,f));
+    });
+  });
+  DK.speak('정보 카드를 보고 회원가입을 해 보세요.');
+}
+
+/* 칸 옆에 안내 표시. msg===null이면 표시 지우기 */
+function mark(k,msg){
+  const box=root.querySelector(`[data-f="${k}"]`),e=root.querySelector('#e-'+k);
+  box.classList.toggle('bad',!!msg);box.classList.toggle('good',msg==='');
+  e.textContent=msg?'⚠ '+msg:'';
+}
+
+function checkId(){
+  const f=root.querySelector('#join'),v=f.elements.id.value.trim(),ok=root.querySelector('#idok');
+  ok.classList.remove('show');idChecked='';
+  // 형식부터 확인
+  const pre=!v?'아이디를 먼저 써 주세요.':/[^a-z0-9]/.test(v)?(/[A-Z]/.test(v)?'아이디는 영어 소문자로 써요.':'아이디는 영어와 숫자로만 써요.'):v.length<4||v.length>12?'아이디는 4~12글자로 써요.':TAKEN.includes(v)?'이미 있는 아이디예요. 다른 아이디를 써 보세요.':'';
+  if(pre){mark('id',pre);DK.speak(pre);return}
+  idChecked=v;mark('id','');ok.classList.add('show');DK.speak('쓸 수 있는 아이디예요.');
+}
+
+function submit(f){
+  const bad=[];
+  ORDER.forEach(k=>{const m=RULES[k](k==='agree'?'':f.elements[k].value.trim(),f);mark(k,m);if(m)bad.push([k,m])});
+  const sum=root.querySelector('#sum');
+  if(bad.length){
+    sum.textContent=`고칠 곳이 ${bad.length}군데 있어요. 빨간 글씨를 보고 고쳐 보세요.`;sum.classList.add('show');
+    const first=root.querySelector(`[data-f="${bad[0][0]}"]`);
+    first.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>f.elements[bad[0][0]].focus({preventScroll:true}),350);
+    DK.speak(bad[0][1]);
+    return;
+  }
+  done(f.elements.name.value.trim(),idChecked);
+}
+
+function done(name,id){
+  clear();
+  const ok='회원가입이 완료되었습니다!',sub='도서관 서비스를 이용해 주셔서 감사합니다.'; // 그림 '회원가입 완료화면' 문구
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="web">${urlBar}
+   <div class="lbody">${guideBox('회원가입을 축하해요! 이제 책을 빌릴 수 있어요.')}
+    <p class="crumb">홈 › 회원가입</p>
+    <div class="done"><h3>${ok} 🎉</h3><p>${sub}</p><span class="who">이름: ${DK.esc(name)}<br>아이디: ${DK.esc(id)}</span></div>
+   </div>
+   <div class="lfoot">© 달마당 도서관. All rights reserved.</div>
+  </div>
+  <div class="note res"><i class="stamp">가입<br>완료</i><h3>잘했어요!</h3><ul><li>정보 카드를 보고 칸을 알맞게 채웠어요.</li><li>아이디는 ‘중복 확인’을 했어요.</li><li>비밀번호를 두 번 똑같이 썼어요.</li><li>개인정보 동의를 확인했어요.</li></ul></div>
+  ${safeBox}
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 연습하기</button></div>${DK.DKU}`,{
+    home,again:form,listen:()=>DK.speak(`${ok} ${sub}`)
+  });
+  DK.done(null,{noText:true});  // 연습 화면에 쓴 이름·아이디는 보내지 않는다
+  DK.speak(`${ok} ${sub}`);
+}
+
+home();
+</script>
+</body>
+</html>

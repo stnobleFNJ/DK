@@ -43,6 +43,8 @@ a.card:active{transform:scale(.97)}
 .img .bd.part{color:#5a3f08;background:var(--tape);border-color:#d9a93f}
 .img .bd.none{color:var(--ac);background:transparent}
 .img .bd.na{color:var(--muted);border-style:dashed}
+/* 11/02 자료로 새로 추가·변경된 게임 */
+.new{position:absolute;top:10px;right:10px;font:700 11px var(--fm);letter-spacing:.08em;color:#fff;background:var(--ac);border-radius:4px;padding:1px 6px;transform:rotate(4deg)}
 .img .bd.tbd{color:var(--muted);font-weight:900}
 .img small{font-size:12px;line-height:1.4;flex-basis:100%}
 a.card .img{margin-top:6px}
@@ -60,29 +62,41 @@ div.card .code{color:var(--muted)}
 </div>
 <script>
 // 이름은 docs/게임개발목록.md 기준. 요청서에 없는 차시는 name을 비워 두면 굵은 '미정'으로 표시된다.
-// 게임이 완성되면 href를 채우면 카드가 링크로 바뀐다.
+// 게임이 완성되면 href를 채우면 카드가 링크로 바뀐다. isNew: 1=NEW(새 게임) · 2=UPDATE(실제 사진·자료 반영) — 11/02·11/09 자료 기준
 // img: 소스이미지(docs/게임개발목록.md '소스이미지 현황') ok=있음 · part=일부 · none=없음 · na=필요 없음 · 비우면 굵은 '미정'. imgNote: 부족한 이미지.
 const EARLY=[
- {code:'전1-1',name:'오늘의 PICK (내가 좋아하는 것 찾기)',href:'games/1-1/index.html',img:'ok'},
+ {code:'전1-1',name:'오늘의 PICK (내가 좋아하는 것 찾기)',href:'games/1-1/index.html',img:'ok',isNew:2},
  {code:'전1-2',name:'다른 사람의 한 주 살펴보기',href:'games/1-2/index.html',img:'ok'},
  {code:'전1-3',name:'내일 계획 만들기 (나의 내일은?)',href:'games/1-3/index.html',img:'part',imgNote:'활동별 사진 16장 임시 그림'},
  {code:'전1-4',name:'내가 원하는 프로그램 고르기',href:'games/1-4/index.html',img:'none',imgNote:'프로그램 10개 임시 그림'},
- {code:'전3-1',name:'건강 빨간불을 초록불로 만들기',href:'games/3-1/index.html',img:'none',imgNote:'빨간불 5 + 초록불 보기 15 임시 그림'},
+ {code:'전2-1',name:'소비기한 확인하기 (똑똑하게 장보기)',href:'games/2-1/index.html',img:'ok',isNew:1},
+ {code:'전3-1',name:'건강 빨간불을 초록불로 만들기',href:'games/3-1/index.html',img:'ok',isNew:2},
  {code:'전3-2'},
- {code:'전3-3',name:'내 마음 표현하기',href:'games/3-3/index.html',img:'none',imgNote:'상황 4장 임시 그림'},
- {code:'전4-1',name:'나의 코디 꾸미기',href:'games/4-1/index.html',img:'none',imgNote:'옷·신발 24개 + 남·여 모델 임시 그림'},
- {code:'전4-2',name:'나의 공간 아름답게 꾸미기',href:'games/4-2/index.html',img:'none',imgNote:'방 배경 + 가구 21개 임시 그림'},
+ {code:'전3-3',name:'내 마음 표현하기',href:'games/3-3/index.html',img:'ok',isNew:2},
+ {code:'전4-1',name:'나의 코디 꾸미기 (깨끗한 하루 만들기)',href:'games/4-1/index.html',img:'ok',isNew:2},
+ {code:'전4-2',name:'나의 공간 아름답게 꾸미기 (내 공간 정리하기)',href:'games/4-2/index.html',img:'ok',isNew:2},
  {code:'전5-1'},
- {code:'전5-2',name:'우리집 한바퀴 (공간 바르게 사용하기)',href:'games/5-2/index.html',img:'part',imgNote:'바른 행동 그림 5장 임시 그림'},
- {code:'전5-3',name:'시우씨의 이야기 완성하기',href:'games/5-3a/index.html',img:'ok'},
- {code:'전5-3',name:'내 마음 전하기 룰렛',href:'games/5-3b/index.html',img:'ok'},
+ {code:'전5-2',name:'우리집 한바퀴 (공간 바르게 사용하기)',href:'games/5-2/index.html',img:'ok',isNew:2},
+ {code:'전5-3',name:'건우 씨의 이야기 완성하기',href:'games/5-3a/index.html',img:'ok',isNew:2},
+ {code:'전5-3',name:'내 마음 전하기 상황판',href:'games/5-3b/index.html',img:'ok',isNew:2},
  {code:'전6-1'},
- {code:'전6-2',name:'매너있게 말하고 방에서 탈출하기',href:'games/6-2/index.html',img:'ok'},
- {code:'전7-1',name:'나의 취향카드 만들기',href:'games/7-1/index.html',img:'ok'},
+ {code:'전6-2',name:'매너 있게 말하고 방에서 탈출하기',href:'games/6-2/index.html',img:'ok',isNew:2},
+ {code:'전7-1',name:'나의 취향카드 만들기',href:'games/7-1/index.html',img:'ok',isNew:2},
  {code:'전7-2'},
- {code:'전7-3',name:'혼자 이동하기',href:'games/7-3/index.html',img:'ok'}
+ {code:'전7-3',name:'혼자 이동하기',href:'games/7-3/index.html',img:'ok',isNew:2},
+ {code:'전8-1',name:'상황에 맞는 기관 선택하기',href:'games/8-1a/index.html',img:'ok',isNew:1},
+ {code:'전8-1',name:'기관 이용 시 준비물 선택하기',href:'games/8-1b/index.html',img:'ok',isNew:1},
+ {code:'전8-3',name:'회원가입 연습하기 (신청서 작성하기)',href:'games/8-3/index.html',img:'ok',isNew:1},
+ {code:'전8-4',name:'나와 맞는 행사 찾기 (우리 동네 함께 즐기기)',href:'games/8-4/index.html',img:'part',imgNote:'포스터 1장(단풍길 러닝 페스타) 원본이 잘려 있어 임시 보충',isNew:1}
 ];
 const MIDDLE=[
+ {code:'중1-1',name:'나의 생활, 나의 선택 (내가 선택한 것 찾기)',href:'games/m1-1/index.html',img:'ok',isNew:1},
+ {code:'중1-3',name:'지석 씨의 영화 약속',href:'games/m1-3/index.html',img:'na',isNew:1},
+ {code:'중1-4',name:'지석 씨의 요금제 고르기 (함부로 서명하지 말아요)',href:'games/m1-4/index.html',img:'na',isNew:1},
+ {code:'중2-2',name:'약을 언제 먹나요?',href:'games/m2-2/index.html',img:'na',isNew:1},
+ {code:'중2-3',name:'약을 먹었는데 몸이 이상해요',href:'games/m2-3/index.html',img:'ok',isNew:1},
+ {code:'중3-2',name:'나의 스트레스 카드 만들기',href:'games/m3-2/index.html',img:'na',isNew:1},
+ {code:'중3-3',name:'나의 스트레스 해소법 월드컵',href:'games/m3-3/index.html',img:'ok',isNew:1},
  {code:'중5-1',name:'예의 없는 행동 주사위 게임',href:'games/m5-1/index.html',img:'ok'},
  {code:'중5-2',name:'나의 권리 말판 게임',href:'games/m5-2/index.html',img:'ok'},
  {code:'중6-1',name:'나에게 필요한 서비스 이상형 월드컵',href:'games/m6-1/index.html',img:'ok'},
@@ -90,9 +104,17 @@ const MIDDLE=[
  {code:'중6-3',name:'연락처를 찾아주세요 (지석씨 돕기)',href:'games/m6-3/index.html',img:'na'},
  {code:'중7-1',name:'우리집 위험 요소 찾기',href:'games/m7-1/index.html',img:'part',imgNote:'안전해진 모습 스티커 임시 그림'},
  {code:'중7-2',name:'위험한 연락 구분하기',href:'games/m7-2/index.html',img:'na'},
- {code:'중7-4',name:'이건 학대일까요?',href:'games/m7-4/index.html',img:'ok'}
+ {code:'중7-4',name:'이건 학대일까요?',href:'games/m7-4/index.html',img:'ok'},
+ {code:'중8-2',name:'나의 건강계산기 (체질량지수 확인하기)',href:'games/m8-2/index.html',img:'ok',isNew:1},
+ {code:'중8-3',name:'생활 뉴스: 참지 마세요 (내 몸의 이상 신호 말해보기)',href:'games/m8-3/index.html',img:'ok',isNew:1}
 ];
-const SECTIONS=[['성인 전기','EARLY',EARLY],['성인 중기','MIDDLE',MIDDLE]];
+const LATE=[
+ {code:'후3-1',name:'나에게 맞는 도움 고르기',href:'games/h3-1/index.html',img:'ok',isNew:1},
+ {code:'후4-1',name:'위급 신호 몸으로 따라 하기',href:'games/h4-1/index.html',img:'part',imgNote:'단계 동작 사진 16장 + 두통 사진 임시 그림',isNew:1},
+ {code:'후4-3',name:'휴대전화로 119 신고하기',href:'games/h4-3/index.html',img:'ok',isNew:1},
+ {code:'후5-2',name:'나의 추억 카드 만들기',href:'games/h5-2/index.html',img:'ok',isNew:1}
+];
+const SECTIONS=[['성인 전기','EARLY',EARLY],['성인 중기','MIDDLE',MIDDLE],['성인 후기','LATE',LATE]];
 const IMG={ok:'있음',part:'일부',none:'없음',na:'필요 없음'};
 const root=document.getElementById('games');
 SECTIONS.forEach(([title,en,games])=>{
@@ -117,6 +139,7 @@ games.forEach(g=>{
  }
  else{const b=document.createElement('b');b.textContent='미정';n.append(b)}
  el.append(code,n);
+ if(g.isNew){const t=document.createElement('span');t.className='new';t.textContent=g.isNew===2?'UPDATE':'NEW';el.append(t)}
  const img=document.createElement('span');
  img.className='img';
  const bd=document.createElement('span');

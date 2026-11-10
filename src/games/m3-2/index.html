@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 스트레스 카드 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 고른 것 띠 */
+.strip{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.strip span{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:700}
+/* 이모지 보기 카드 */
+.emos{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:6px 2px 0}
+.emos.three{grid-template-columns:1fr}
+.em{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:104px;padding:12px 8px;background:var(--paper);border:2px solid var(--line);border-radius:14px;box-shadow:3px 3px 0 var(--line);text-align:center;font:700 16px/1.35 var(--fb);transition:border-color .15s,background .15s}
+.em .e{font-size:40px;line-height:1.1}
+.em:active{transform:scale(.97)}
+.em.on{border-color:var(--ac);background:#fff6f0;box-shadow:0 0 0 2px var(--ac),3px 3px 0 var(--line)}
+.emos.sit .em{min-height:112px;font-size:15px}
+.emos.three .em{flex-direction:row;justify-content:flex-start;gap:14px;min-height:0;padding:14px 18px;font-size:18px}
+.emos.three .em .e{font-size:44px}
+.lv{display:flex;gap:4px;margin-left:auto}
+.lv i{width:12px;height:22px;border-radius:3px;background:var(--soft)}
+.lv i.f{background:var(--ac)}
+/* 결과 카드 */
+.scard{position:relative;background:var(--paper);border:6px solid #f7e3a8;border-radius:18px;padding:20px 16px 18px;margin:26px 6px 0;box-shadow:0 12px 30px rgba(60,40,20,.22);transform:rotate(-1.2deg)}
+.scard h2{margin:0;text-align:center;font:var(--hw) 28px var(--fh)}
+.scard .ics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 0}
+.scard .ic{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(60,40,20,.12);font-size:11px;color:var(--muted);font-weight:700}
+.scard .ic b{font-size:34px;line-height:1.15;font-weight:400}
+.scard .sen{margin:16px 0 0;padding:14px;border-radius:12px;background:linear-gradient(90deg,#f1c96b,#f7e3a8);font:var(--lw) 19px/1.6 var(--fl);text-align:center}
+.scard .sen u{text-decoration:none;border-bottom:3px solid var(--ac);color:#7d2f1d}
+.scard .stamp{top:-22px;right:-12px}
+.tip{margin:14px 0 0;font-size:14px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>내가 제일 힘들었던 때를 떠올려요.</li><li>어디에서, 누구와 있었는지 골라요.</li><li>왜 힘들었는지, 얼마나 힘들었는지 골라요.</li><li>나의 스트레스 카드가 만들어져요.</li></ol><p>정답은 없어요. ‹ 이전 버튼으로 다시 고를 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'힘',html:'나의 <b>스트레스 카드</b>'};
+const STEPS=['어디','누구','상황','힘든 정도','카드'];
+// 장소 8개·사람 8개 — 프로토타입(m3-2.html) 그대로. 두 사람 이모지(ZWJ)는 기기마다 깨질 수 있어 한 글자 이모지로 바꿨다.
+const PLACES=[
+  {v:'집',e:'🏠'},{v:'센터',e:'🏢'},{v:'병원',e:'🏥'},{v:'카페',e:'☕'},
+  {v:'거리',e:'🚸'},{v:'마트',e:'🛒'},{v:'학교',e:'🏫'},{v:'버스·지하철',e:'🚌'}
+];
+const PEOPLE=[
+  {v:'가족',e:'👪'},{v:'친구',e:'👫'},{v:'선생님',e:'📚'},{v:'활동지원사',e:'🤝'},
+  {v:'낯선 사람',e:'🚶'},{v:'동료',e:'👥'},{v:'의사 선생님',e:'🩺'},{v:'가게 직원',e:'🛍️'}
+];
+// 상황 6개 — 요청서 문구 그대로(교재 중기 31쪽 '이유'와 같다). 바꾸지 않는다.
+const SITS=[
+  {v:'혼자 하기 어려워서',e:'🙍'},
+  {v:'언제/어떻게 될지 몰라서',e:'❓'},
+  {v:'실수하거나 혼날까 봐',e:'😰'},
+  {v:'갑자기 바뀌는 게 혼란스러워서',e:'🔀'},
+  {v:'설명을 이해하기 어려워서',e:'💭'},
+  {v:'소리나 낯선 사람이 고통스러워서',e:'🔊'}
+];
+// 힘든 정도 3단계 — 프로토타입 그대로
+const LEVELS=[
+  {v:'조금 힘들어요',e:'😐',w:'조금',n:1},
+  {v:'많이 힘들어요',e:'😟',w:'많이',n:2},
+  {v:'너무 힘들어요',e:'😢',w:'너무',n:3}
+];
+const Q=[
+  {key:'place',q:'어디에서 제일 힘들었나요?',qs:'장소를 하나 골라요.',list:PLACES},
+  {key:'who',q:'누구와 있을 때 힘들었나요?',qs:'사람을 하나 골라요.',list:PEOPLE},
+  {key:'sit',q:'왜 힘들었나요?',qs:'가장 가까운 것을 하나 골라요.',list:SITS,cls:'sit'},
+  {key:'lv',q:'얼마나 힘들었나요?',qs:'내 마음과 가장 가까운 것을 골라요.',list:LEVELS,cls:'three'}
+];
+
+const root=document.getElementById('app');
+let sel={},timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const item=k=>Q.find(q=>q.key===k).list.find(o=>o.v===sel[k]);
+const sentence=(u=s=>s)=>{const p=item('place'),w=item('who'),s=item('sit'),l=item('lv');
+  return `나는 ${u(p.v)}에서 ${u(w.v)}${DK.wa(w.v)} 있을 때, ${u(s.v)} 마음이 ${u(l.w)} 힘들어요.`};
+
+function home(){
+  clear();sel={};
+  const say='나의 스트레스 카드를 만들어 보세요. 내가 제일 힘들었던 때를 떠올리며 하나씩 골라요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My stress card</span><h1 class="h1">나의 스트레스 카드<br><em>만들기</em></h1><p>내가 제일 힘들었던 때를 떠올리며 하나씩 골라요. 어떤 때 힘든지 알면, 미리 피하거나 마음을 편하게 할 수 있어요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="scard" style="margin-top:10px"><h2>나의 스트레스 카드</h2>
+    <div class="ics"><span class="ic"><b>📍</b>어디</span><span class="ic"><b>🧑</b>누구</span><span class="ic"><b>❓</b>왜</span><span class="ic"><b>😟</b>얼마나</span></div>
+    <p class="sen">나는 ○○에서 ○○와 있을 때<br>○○해서 힘들어요.</p></div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>step(0)});
+  DK.speak(say);
+}
+
+function step(i){
+  clear();
+  const s=Q[i];
+  const chips=Q.slice(0,i).map(x=>{const o=item(x.key);return `<span>${o.e} ${o.v}</span>`}).join('');
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,i)}
+  ${chips?`<div class="strip">${chips}</div>`:''}
+  <p class="q">${s.q}</p><p class="qs">${s.qs}</p>
+  <div class="emos ${s.cls||''}">${s.list.map(o=>`<button class="em${sel[s.key]===o.v?' on':''}" data-act="pick" data-v="${o.v}"><span class="e" aria-hidden="true">${o.e}</span><span>${o.v}</span>${o.n?`<span class="lv" aria-hidden="true">${[1,2,3].map(k=>`<i class="${k<=o.n?'f':''}"></i>`).join('')}</span>`:''}</button>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${sel[s.key]?'':'disabled'}>${i<Q.length-1?'다음 ›':'카드 만들기 ›'}</button></div>${DK.DKU}`,{
+    home,prev:()=>i?step(i-1):home(),next:()=>sel[s.key]&&(i<Q.length-1?step(i+1):card()),
+    pick:b=>{sel[s.key]=b.dataset.v;root.querySelectorAll('.em').forEach(p=>p.classList.toggle('on',p===b));root.querySelector('[data-act=next]').disabled=false;DK.speak(b.dataset.v);later(()=>i<Q.length-1?step(i+1):card(),700)}
+  });
+  later(()=>DK.speak(s.q),250);
+}
+
+function card(){
+  clear();
+  const p=item('place'),w=item('who'),s=item('sit'),l=item('lv');
+  const txt=sentence();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,4)}
+  <div class="scard"><i class="stamp">완성</i><h2>나의 스트레스 카드</h2>
+    <div class="ics"><span class="ic"><b>${p.e}</b>${p.v}</span><span class="ic"><b>${w.e}</b>${w.v}</span><span class="ic"><b>${s.e}</b>왜</span><span class="ic"><b>${l.e}</b>${l.w}</span></div>
+    <p class="sen">${sentence(v=>`<u>${v}</u>`)}</p></div>
+  <p class="tip">잘했어요! 이 카드를 선생님이나 친구에게 보여 주며 이야기해 보세요.</p>
+  <div class="note"><h3>힘들 때 이렇게 해 봐요</h3><ul><li>심호흡을 3번 해요. 숨을 들이마시고, 잠깐 멈추고, 내쉬어요.</li><li>믿을 수 있는 사람에게 힘들다고 말해요.</li><li>나를 편하게 하는 활동을 해요.</li></ul></div>
+  <div class="acts"><button class="btn sec" data-act="listen">🔊 소리로 듣기</button><button class="btn pri" data-act="again">↻ 다시 만들기</button></div>${DK.DKU}`,{
+    home,listen:()=>DK.speak(txt),again:()=>{sel={};step(0)}
+  });
+  DK.done();
+  later(()=>DK.speak('나의 스트레스 카드가 완성됐어요. '+txt),300);
+}
+
+home();
+</script>
+</body>
+</html>

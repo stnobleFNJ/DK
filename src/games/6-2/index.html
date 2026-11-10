@@ -34,6 +34,8 @@
 .photo.room .ct{display:flex;gap:10px;align-items:center;font-size:20px}
 .photo.room .ct span{flex:1}
 .opt{min-height:56px;align-items:center;font-size:17px}
+/* 보기마다 소리로 듣기 버튼(11/09 수정의견) */
+.orow{display:flex;gap:8px;align-items:center}.orow .opt{flex:1;min-width:0}.orow .spk{width:44px;height:44px}
 /* 열쇠 얻기 */
 .keypop{position:fixed;left:50%;top:42%;font-size:88px;pointer-events:none;z-index:9;animation:keypop 1.2s ease forwards}
 @keyframes keypop{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}30%{transform:translate(-50%,-50%) scale(1.25);opacity:1}65%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-38vh) scale(.3);opacity:0}}
@@ -58,7 +60,7 @@
 </head>
 <body>
 <div class="stage"><main class="app" id="app"></main></div>
-<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>방 그림을 보고 동료의 상황을 살펴봐요.</li><li>두 가지 말 중에서 매너있는 말을 골라요.</li><li>맞히면 열쇠를 하나 얻어요. 열쇠 4개를 모으면 탈출!</li></ol><p>틀려도 괜찮아요. 설명을 듣고 다시 고르면 돼요. 「다시하기」를 누르면 처음부터 다시 해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>방 그림을 보고 동료의 상황을 살펴봐요.</li><li>두 가지 말 중에서 매너 있는 말을 골라요.</li><li>맞히면 열쇠를 하나 얻어요. 열쇠 4개를 모으면 탈출!</li></ol><p>틀려도 괜찮아요. 설명을 듣고 다시 고르면 돼요. 「다시하기」를 누르면 처음부터 다시 해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
 const BRAND={mark:'탈',html:'매너 <b>방탈출</b>'};
@@ -92,7 +94,7 @@ const board=cur=>`<div class="board" aria-label="열쇠 ${got()}개, 모두 4개
 function home(){
   clear();keys=[];mine=null;
   DK.mount(root,`${DK.hbar(BRAND)}
-  <section class="hero"><span class="eb">Escape room</span><h1 class="h1">매너있게 말하고<br><em>방에서 탈출해요!</em></h1><p>매너있게 말하고 열쇠를 모아 보세요. 방 4개에서 매너있는 말을 고르면 열쇠를 하나씩 얻어요.</p></section>
+  <section class="hero"><span class="eb">Escape room</span><h1 class="h1">매너 있게 말하고<br><em>방에서 탈출해요!</em></h1><p>매너 있게 말하고 열쇠를 모아 보세요. 방 4개에서 매너 있는 말을 고르면 열쇠를 하나씩 얻어요.</p></section>
   <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/start.jpg" alt="굳게 닫힌 파란 문"></span><span class="ct">닫힌 문 앞에 섰어요<small>열쇠 4개를 모으면 문이 열려요</small></span></div>
   ${board(-1)}
   <div class="acts"><button class="btn pri" data-act="start">방에 들어가기</button></div>${DK.DKU}`,{start:()=>unlock(0)});
@@ -125,8 +127,8 @@ function room(i){
   ${board(i)}
   <span class="eb" style="margin-top:16px">Room ${i+1}</span><h1 class="rt">${r.title}</h1>
   <div class="photo room tilt-l"><i class="tp"></i><span class="cp"><img src="${r.img}" alt="${r.alt}"></span><span class="ct"><span>${r.cap}</span><button class="spk" data-say="${DK.esc(intro)}" aria-label="소리로 듣기">${DK.SPK}</button></span></div>
-  <p class="q">어떻게 말하면 좋을까요?</p><p class="qs">두 가지 말 중에서 매너있는 말을 골라 보세요.</p>
-  <div class="opts">${opts.map((o,k)=>`<button class="opt" data-act="pick" data-ok="${o.ok}"><span class="no">${k+1}</span><span>“${o.t}”</span></button>`).join('')}</div>
+  <p class="q">어떻게 말하면 좋을까요?</p><p class="qs">두 가지 말 중에서 매너 있는 말을 골라 보세요.</p>
+  <div class="opts">${opts.map((o,k)=>`<div class="orow"><button class="opt" data-act="pick" data-ok="${o.ok}"><span class="no">${k+1}</span><span>“${o.t}”</span></button><button class="spk" data-say="${DK.esc(`${k+1}번. ${o.t}`)}" aria-label="${k+1}번 말 소리로 듣기">${DK.SPK}</button></div>`).join('')}</div>
   <div id="fb" aria-live="polite"></div>
   <div class="acts" id="next" hidden><button class="btn pri" data-act="next">${last?'열쇠 4개로 탈출하기 ›':'다음 방으로 ›'}</button></div>${DK.DKU}`,{
     home,next:()=>unlock(i+1),
@@ -135,15 +137,15 @@ function room(i){
       const fb=root.querySelector('#fb');
       if(b.dataset.ok!=='1'){
         b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
-        fb.innerHTML=`<p class="fb no">✕<span>앗, 매너없는 말이에요.<small>${r.why} 다른 말을 다시 골라 보세요.</small></span></p>`;
-        DK.speak(`앗, 매너없는 말이에요. ${r.why} 다른 말을 다시 골라 보세요.`);
+        fb.innerHTML=`<p class="fb no">✕<span>앗, 매너 없는 말이에요.<small>${r.why} 다른 말을 다시 골라 보세요.</small></span></p>`;
+        DK.speak(`앗, 매너 없는 말이에요. ${r.why} 다른 말을 다시 골라 보세요.`);
         return;
       }
       root.querySelectorAll('.opt').forEach(o=>{o.disabled=true});
       b.classList.add('ok');b.style.opacity=1;
       keys[i]=true;
-      fb.innerHTML=`<p class="fb ok">✓<span>매너있는 말이에요! 열쇠 1개를 얻었어요.<small>${r.tip}</small></span></p>`;
-      DK.speak(`${r.good} 매너있는 말이에요! 열쇠를 얻었어요.`);
+      fb.innerHTML=`<p class="fb ok">✓<span>매너 있는 말이에요! 열쇠 1개를 얻었어요.<small>${r.tip}</small></span></p>`;
+      DK.speak(`${r.good} 매너 있는 말이에요! 열쇠를 얻었어요.`);
       const pop=document.createElement('div');pop.className='keypop';pop.textContent='🔑';pop.setAttribute('aria-hidden','true');document.body.appendChild(pop);
       setTimeout(()=>pop.remove(),1300);
       later(()=>{const rm=root.querySelector('#rm'+i);rm.classList.add('got','open');rm.querySelector('.ky').classList.add('new');root.querySelector('#kc').textContent=got()},1000);
@@ -156,11 +158,11 @@ function room(i){
 
 function finish(){
   clear();
-  const done='방에서 탈출했어요! 매너있는 말로 열쇠 4개를 모두 모았어요.';
+  const done='방에서 탈출했어요! 매너 있는 말로 열쇠 4개를 모두 모았어요.';
   DK.mount(root,`${DK.hbar(BRAND,true)}
-  <div class="win"><i class="stamp esc">탈출<br>성공</i><span class="wp"><img src="img/escape.jpg" alt="빛이 들어오는 열린 문"></span><div class="wc"><h2>방에서 탈출했어요!</h2><p>매너있는 말로 열쇠 4개를 모두 모았어요.</p></div></div>
+  <div class="win"><i class="stamp esc">탈출<br>성공</i><span class="wp"><img src="img/escape.jpg" alt="빛이 들어오는 열린 문"></span><div class="wc"><h2>방에서 탈출했어요!</h2><p>매너 있는 말로 열쇠 4개를 모두 모았어요.</p></div></div>
   <div class="keys" aria-label="열쇠 4개">${ROOMS.map(()=>'<span>🔑</span>').join('')}</div>
-  <div class="note"><i class="tp"></i><h3>오늘 배운 매너있는 말</h3><ol>${ROOMS.map(r=>`<li><small>${r.title}</small>“${r.good}”</li>`).join('')}</ol></div>
+  <div class="note"><i class="tp"></i><h3>오늘 배운 매너 있는 말</h3><ol>${ROOMS.map(r=>`<li><small>${r.title}</small>“${r.good}”</li>`).join('')}</ol></div>
   <p class="q">내가 지키고 싶은 매너는?</p><p class="qs">하나를 골라 보세요. 고르지 않아도 괜찮아요.</p>
   <div class="opts">${ROOMS.map((r,k)=>`<button class="opt${mine===k?' on':''}" data-act="mine" data-k="${k}"><span class="no">${k+1}</span><span>${r.manner}</span></button>`).join('')}</div>
   <div id="say"></div>
@@ -174,6 +176,7 @@ function finish(){
       DK.speak(t);say.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
   });
+  DK.done();
   later(()=>DK.speak(done),400);
 }
 

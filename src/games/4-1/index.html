@@ -9,35 +9,42 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../common/paper.css">
 <style>
-/* 종이 인형: 같은 크기 투명 PNG를 겹쳐서 입힌 모습을 만든다 (모델 → 하의 → 신발 → 상의) */
-.doll{position:relative;display:block;aspect-ratio:2/3;overflow:hidden;background:radial-gradient(ellipse 38% 4% at 50% 96.5%,rgba(110,80,50,.22),transparent 100%),linear-gradient(#fffaf0 0 78%,#efe2c8 78%)}
-.doll img{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+/* 코디 보드: 바닥에 펼쳐 놓은 것처럼 상의 → 하의 → 신발을 위에서 아래로 쌓는다 */
+.board{display:grid;grid-template-rows:38fr 40fr 22fr;gap:2%;aspect-ratio:3/5;padding:7% 8%;background:#fff}
+.board .sl{position:relative;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden}
+.board .sl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.board .sl.e{border:2px dashed var(--line);border-radius:10px;font:var(--hw) 16px/1 var(--fh);color:var(--muted)}
+.board .sl.now.e{border-color:var(--ac);color:var(--ac)}
+.board .sl.sh img{inset:0 11%;width:78%}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pair .board{box-shadow:0 2px 6px rgba(60,40,20,.14)}
 .qrow{display:flex;gap:10px;align-items:center;margin:16px 0 4px}
 .qrow .q{flex:1;margin:0}
-/* 고르기 화면: 왼쪽 미리보기, 오른쪽 보기 4개 */
-.try{display:grid;grid-template-columns:42% 1fr;gap:12px;align-items:start;margin-top:10px}
-.try .mirror{position:relative;background:#fff;padding:6px;box-shadow:0 6px 14px rgba(60,40,20,.18);transform:rotate(-1.2deg)}
-.try .mirror .ct{display:block;text-align:center;font:var(--hw) 17px/1.2 var(--fh);padding:6px 0 2px;min-height:1.4em}
+/* 고르기 화면: 왼쪽 코디 보드, 오른쪽 보기 4개 (사진만, 글자 없음) */
+.try{display:grid;grid-template-columns:40% 1fr;gap:12px;align-items:start;margin-top:10px}
+.try .mirror{background:#fff;padding:4px;box-shadow:0 6px 14px rgba(60,40,20,.18);transform:rotate(-1.2deg)}
+.try .mirror .board{display:grid}
 .picks.four{grid-template-columns:1fr 1fr;gap:12px 10px;padding:4px 2px 0}
-.pick.it{padding:5px 5px 6px}
-.pick.it .cp{aspect-ratio:1;background:#fffaf0}
-.pick.it .cp img{object-fit:contain}
-.pick.it .ct{padding:4px 0 0;font-size:17px;text-align:center}
-.picks.two .pick .cp{aspect-ratio:2/3}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pick.it{padding:6px}
+.pick.it .cp{aspect-ratio:1;background:#fff;padding:8%}
+.pick.it .cp img{object-fit:contain;mix-blend-mode:multiply}
+.picks.two .pick .cp{aspect-ratio:3/5;background:#fff}
+.picks.two .pick .ct{text-align:center}
+/* 얼룩 안내 */
+.stain{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:#fdf1e6;border:1.5px solid var(--ac);font:600 16px/1.5 var(--fb)}
+.stain p{margin:0 0 10px}
+.stain .acts{margin:0}
+.stain .btn{padding:11px;font-size:15px}
 /* 완성 화면 */
 .win.done{transform:rotate(-1.5deg);margin:24px 16px 16px}
-.win.done .doll{max-width:300px;margin:0 auto}
+.win.done .board{max-width:280px;margin:0 auto}
 .win.done .stamp{left:-12px;right:auto;transform:rotate(-12deg)}
-.wear{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 0;padding:0;list-style:none}
-.wear li{font:700 14px var(--fb);background:var(--soft);border-radius:999px;padding:5px 12px}
-.wear li b{color:var(--ac);margin-right:4px}
-@media (min-width:480px){.try{grid-template-columns:40% 1fr;gap:16px}}
+@media (min-width:480px){.try{grid-template-columns:38% 1fr;gap:16px}}
 </style>
 </head>
 <body>
 <div class="stage"><main class="app" id="app"></main></div>
-<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>남자, 여자 중 하나를 골라요.</li><li>상의, 하의, 신발을 하나씩 골라요.</li><li>고른 옷을 입은 모습을 확인해요.</li></ol><p>고르면 바로 옷을 입혀 볼 수 있어요. 마음에 들 때 ‘다음’을 눌러요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>남자, 여자 중 하나를 골라요.</li><li>상의, 하의, 신발을 하나씩 골라요.</li><li>코디 보드에서 고른 옷을 확인해요.</li></ol><p>얼룩이 있는 옷은 깨끗한 옷으로 바꿔 입어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
 const BRAND={mark:'코',html:'나의 <b>코디 꾸미기</b>'};
@@ -49,53 +56,63 @@ const CATS=[
   {key:'bottom',name:'하의',q:'하의 1개를 골라 보세요.'},
   {key:'shoes',name:'신발',q:'신발 1개를 골라 보세요.'}
 ];
-// 임시: 옷 이름·종류는 요청서에 없어 정했다. 그림은 tools/gen_4_1.py로 그린 임시 그림(진짜 사진이 오면 같은 이름으로 덮어쓰기)
+// 사진: img/{m|f}-{top|bottom|shoes}-{1~4}.png (원본 파일 번호 그대로, tools/gen_4_1.py)
+// 화면에는 사진만 보이고(사진 아래 글자 없음), 이름은 소리·완성 문장·aria-label에만 쓴다.
+// 임시: 옷 이름은 요청서에 없어 사진을 보고 지었다.
+// 두 번째 값 1 = 얼룩 있는 옷. 원본 파일 이름의 '(얼룩)' 표시를 따랐다.
+// 임시: 여자 신발2(베이지 구두)는 파일 이름에 '(얼룩)'이 없지만 사진에 흙 얼룩이 뚜렷해서 얼룩 옷으로 정했다.
 const ITEMS={
-  m:{top:[['tshirt','티셔츠'],['shirt','셔츠'],['knit','니트'],['hoodie','후드티']],
-     bottom:[['jeans','청바지'],['chino','면바지'],['shorts','반바지'],['track','운동복 바지']],
-     shoes:[['sneakers','운동화'],['dress','구두'],['sandals','샌들'],['boots','부츠']]},
-  f:{top:[['tshirt','줄무늬 티셔츠'],['blouse','블라우스'],['knit','카디건'],['hoodie','후드티']],
-     bottom:[['jeans','청바지'],['wide','와이드 바지'],['shorts','반바지'],['skirt','치마']],
-     shoes:[['sneakers','운동화'],['dress','구두'],['sandals','샌들'],['boots','부츠']]}
+  m:{top:[['베이지 맨투맨',1],['초록 긴팔 티셔츠'],['파란 반팔 티셔츠'],['흰 셔츠']],
+     bottom:[['남색 반바지'],['회색 반바지'],['청바지',1],['베이지 바지']],
+     shoes:[['갈색 슬립온'],['남색 운동화'],['흰 운동화'],['검정 구두',1]]},
+  f:{top:[['하늘색 블라우스'],['노란 반팔 티셔츠'],['흰 블라우스',1],['자주색 카디건']],
+     bottom:[['분홍 치마',1],['베이지 반바지'],['검정 치마'],['청바지']],
+     shoes:[['검정 샌들'],['베이지 구두',1],['흰 운동화'],['갈색 슬립온']]}
 };
-const ORDER=['bottom','shoes','top'];          // 겹치는 순서(모델 위에)
-const img=(g,cat,k)=>`img/${g}-${cat}-${k}.png`;
-const nameOf=(cat,k)=>(ITEMS[sel.g][cat].find(x=>x[0]===k)||[])[1];
+const img=(g,cat,n)=>`img/${g}-${cat}-${n}.png`;
+const it=(g,cat,n)=>ITEMS[g][cat][n-1];
+const nameOf=(cat,n)=>it(sel.g,cat,n)[0];
+const stained=(cat,n)=>!!it(sel.g,cat,n)[1];
+// 임시: 얼룩 옷 안내 흐름(다른 옷 고르기 / 그대로 입기)은 요청서에 없어 정했다
+const STAIN='옷에 얼룩이 있어요. 깨끗한 옷으로 바꿔 볼까요?';
 
 const root=document.getElementById('app');
-let sel={},timers=[];
+let sel={},ok={},timers=[];          // ok[cat]=true: 얼룩 옷을 '그대로 입기'로 정함
 const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
 const later=(f,ms)=>timers.push(setTimeout(f,ms));
 
-/* 입은 모습: 모델 + 고른 옷 층 */
-function doll(g,s,alt){
-  const layers=ORDER.filter(c=>s[c]).map(c=>`<img src="${img(g,c,s[c])}" alt="">`).join('');
-  return `<span class="doll" role="img" aria-label="${DK.esc(alt)}"><img src="img/${g}-model.png" alt="">${layers}</span>`;
+/* 코디 보드: 상의·하의·신발 칸. 아직 안 고른 칸은 점선 */
+function board(g,s,alt,now){
+  const slot=c=>s[c.key]
+    ?`<span class="sl${c.key==='shoes'?' sh':''}"><img src="${img(g,c.key,s[c.key])}" alt=""></span>`
+    :`<span class="sl e${now===c.key?' now':''}">${c.name}</span>`;
+  return `<span class="board" role="img" aria-label="${DK.esc(alt)}">${CATS.map(slot).join('')}</span>`;
 }
-const wearText=s=>CATS.filter(c=>s[c.key]).map(c=>nameOf(c.key,s[c.key])).join(', ')||'아직 고르지 않았어요';
-function preload(g){Object.entries(ITEMS[g]).forEach(([c,l])=>l.forEach(([k])=>{new Image().src=img(g,c,k);new Image().src=`img/thumb-${g}-${c}-${k}.png`}))}
+const wearText=s=>CATS.filter(c=>s[c.key]).map(c=>it(s.g||sel.g,c.key,s[c.key])[0]).join(', ')||'아직 고르지 않았어요';
+function preload(g){Object.entries(ITEMS[g]).forEach(([c,l])=>l.forEach((x,i)=>{new Image().src=img(g,c,i+1)}))}
 
 function home(){
-  clear();sel={};
+  clear();sel={};ok={};
   DK.mount(root,`${DK.hbar(BRAND)}
-  <section class="hero"><span class="eb">My style</span><h1 class="h1">나의 코디를<br><em>꾸며 보세요!</em></h1><p>옷과 신발을 골라 나만의 코디를 완성해요.</p></section>
+  <section class="hero"><span class="eb">My style</span><h1 class="h1">나의 코디를<br><em>꾸며 보세요!</em></h1><p>깨끗한 옷과 신발을 골라 나만의 코디를 완성해요.</p></section>
   ${DK.steps(STEPS,0)}
-  <div class="photo tilt-l"><i class="tp"></i><span class="pair">${doll('m',{top:'tshirt',bottom:'jeans',shoes:'sneakers'},'남자 모델')}${doll('f',{top:'blouse',bottom:'skirt',shoes:'dress'},'여자 모델')}</span><span class="ct">상의, 하의, 신발 고르기<small>3번 고르면 코디가 완성돼요</small></span></div>
+  <div class="photo tilt-l"><i class="tp"></i><span class="pair">${board('m',{g:'m',top:3,bottom:4,shoes:2},'남자 코디 예시')}${board('f',{g:'f',top:1,bottom:3,shoes:3},'여자 코디 예시')}</span><span class="ct">상의, 하의, 신발 고르기<small>3번 고르면 코디가 완성돼요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:gender});
 }
 
 function gender(){
   clear();
   const q='남자, 여자를 선택해보세요.';
+  const ex={m:{g:'m',top:2,bottom:1,shoes:2},f:{g:'f',top:4,bottom:2,shoes:1}};
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.steps(STEPS,0)}
   <div class="qrow"><p class="q">${q}</p><button class="spk" data-say="${q}" aria-label="소리로 듣기">${DK.SPK}</button></div>
-  <div class="picks two">${GEN.map(o=>`<button class="pick photo${sel.g===o.g?' on':''}" data-act="pick" data-g="${o.g}" aria-label="${o.v} 고르기"><i class="tp"></i><span class="cp">${doll(o.g,{},o.v+' 모델')}</span><span class="ct" style="text-align:center">${o.v}</span></button>`).join('')}</div>
+  <div class="picks two">${GEN.map(o=>`<button class="pick photo${sel.g===o.g?' on':''}" data-act="pick" data-g="${o.g}" aria-label="${o.v} 고르기"><i class="tp"></i><span class="cp">${board(o.g,ex[o.g],o.v+' 옷')}</span><span class="ct">${o.v}</span></button>`).join('')}</div>
   ${DK.DKU}`,{
     home,
     pick:b=>{
       const g=b.dataset.g;
-      if(sel.g!==g)sel={g};                     // 성별을 바꾸면 고른 옷은 비운다
+      if(sel.g!==g){sel={g};ok={}}            // 성별을 바꾸면 고른 옷은 비운다
       root.querySelectorAll('.pick').forEach(p=>p.classList.toggle('on',p===b));
       preload(g);DK.speak(GEN.find(x=>x.g===g).v);later(()=>pick(0),650);
     }
@@ -105,29 +122,42 @@ function gender(){
 function pick(i){
   clear();
   const c=CATS[i],g=sel.g,list=ITEMS[g][c.key];
+  const canGo=()=>!!sel[c.key]&&(!stained(c.key,sel[c.key])||!!ok[c.key]);
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.steps(STEPS,i+1)}
   <div class="qrow"><p class="q">${c.q}</p><button class="spk" data-say="${c.q}" aria-label="소리로 듣기">${DK.SPK}</button></div>
-  <p class="qs">누르면 바로 입어 볼 수 있어요.</p>
+  <p class="qs">누르면 코디 보드에 바로 놓여요.</p>
   <div class="try">
     <div class="mirror" id="mirror" aria-live="polite"></div>
-    <div class="picks four">${list.map(([k,v])=>`<button class="pick photo it${sel[c.key]===k?' on':''}" data-act="pick" data-k="${k}" aria-label="${v} 고르기" aria-pressed="${sel[c.key]===k}"><span class="cp"><img src="img/thumb-${g}-${c.key}-${k}.png" alt="${v}"></span><span class="ct">${v}</span></button>`).join('')}</div>
+    <div class="picks four">${list.map(([v],d)=>`<button class="pick photo it${sel[c.key]===d+1?' on':''}" data-act="pick" data-n="${d+1}" aria-label="${v} 고르기" aria-pressed="${sel[c.key]===d+1}"><span class="cp"><img src="${img(g,c.key,d+1)}" alt="${v}"></span></button>`).join('')}</div>
   </div>
-  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${sel[c.key]?'':'disabled'}>${i<2?'다음 ›':'완성하기'}</button></div>${DK.DKU}`,{
+  <div id="stain" aria-live="polite"></div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">${i<2?'다음 ›':'완성하기'}</button></div>${DK.DKU}`,{
     home,
     prev:()=>i?pick(i-1):gender(),
-    next:()=>sel[c.key]&&(i<2?pick(i+1):done()),
+    next:()=>canGo()&&(i<2?pick(i+1):done()),
     pick:b=>{
-      sel[c.key]=b.dataset.k;
+      const n=+b.dataset.n;sel[c.key]=n;delete ok[c.key];
       root.querySelectorAll('.pick').forEach(p=>{p.classList.toggle('on',p===b);p.setAttribute('aria-pressed',p===b)});
-      root.querySelector('[data-act=next]').disabled=false;
-      mirror();DK.speak(nameOf(c.key,b.dataset.k));
+      update();
+      DK.speak(stained(c.key,n)?STAIN:nameOf(c.key,n));
     }
   });
-  mirror();
-  function mirror(){
-    const n=sel[c.key]?nameOf(c.key,sel[c.key]):'';
-    root.querySelector('#mirror').innerHTML=`${doll(g,sel,'입은 모습: '+wearText(sel))}<span class="ct">${n?DK.esc(n):'&nbsp;'}</span>`;
+  update();
+  function update(){
+    root.querySelector('#mirror').innerHTML=board(g,sel,'코디 보드: '+wearText(sel),c.key);
+    root.querySelector('[data-act=next]').disabled=!canGo();
+    const box=root.querySelector('#stain'),n=sel[c.key];
+    if(n&&stained(c.key,n)&&!ok[c.key]){
+      box.innerHTML=`<div class="stain"><p>${STAIN}</p><div class="acts two"><button class="btn pri" data-s="change">바꿀래요</button><button class="btn sec" data-s="keep">그대로 입을래요</button></div></div>`;
+      box.querySelector('[data-s=change]').onclick=()=>{
+        delete sel[c.key];
+        root.querySelectorAll('.pick').forEach(p=>{p.classList.remove('on');p.setAttribute('aria-pressed',false)});
+        update();DK.speak('깨끗한 옷을 골라 보세요.');
+        const f=[...root.querySelectorAll('.pick')].find(p=>!stained(c.key,+p.dataset.n));f&&f.focus();
+      };
+      box.querySelector('[data-s=keep]').onclick=()=>{ok[c.key]=true;update();root.querySelector('[data-act=next]').focus()};
+    }else box.innerHTML='';
   }
 }
 
@@ -136,17 +166,19 @@ function done(){
   const n=k=>nameOf(k,sel[k]);
   // 임시: 완성 문장은 요청서에 없어 정했다
   const say=`상의는 ${n('top')}, 하의는 ${n('bottom')}, 신발은 ${n('shoes')}${DK.ieyo(n('shoes'))}.`;
+  // 임시: 얼룩 옷을 그대로 입었을 때 덧붙이는 말
+  const tip=CATS.some(c=>stained(c.key,sel[c.key]))?'얼룩이 있는 옷은 빨아서 깨끗하게 입어요.':'';
   const title='나의 코디가 완성되었어요!';
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.steps(STEPS,4)}
-  <div class="win done"><i class="tp"></i><span class="stamp">완성!</span>${doll(sel.g,sel,'나의 코디: '+wearText(sel))}
-    <div class="wc" style="text-align:center"><h2>${title}</h2>
-    <ul class="wear">${CATS.map(c=>`<li><b>${c.name}</b>${DK.esc(n(c.key))}</li>`).join('')}</ul></div></div>
+  <div class="win done"><i class="tp"></i><span class="stamp">완성!</span>${board(sel.g,sel,'나의 코디: '+wearText(sel))}
+    <div class="wc" style="text-align:center"><h2>${title}</h2>${tip?`<p>${tip}</p>`:''}</div></div>
   ${DK.sayBig(say)}
   <div class="acts"><button class="btn pri" data-act="again">↻ 다시 꾸미기</button><button class="btn sec" data-act="restart">처음부터 (남·여 다시 고르기)</button></div>${DK.DKU}`,{
-    home,again:()=>{sel={g:sel.g};pick(0)},restart:()=>{sel={};gender()}
+    home,again:()=>{sel={g:sel.g};ok={};pick(0)},restart:()=>{sel={};ok={};gender()}
   });
-  DK.speak(title+' '+say);
+  DK.done({top:n('top'),bottom:n('bottom'),shoes:n('shoes')});
+  DK.speak(title+' '+say+(tip?' '+tip:''));
 }
 
 home();

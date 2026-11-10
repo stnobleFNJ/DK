@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=bd2c8a10-3a05-4028-91a3-b045cfb77a74
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f7fb">
+<title>지석 씨의 영화 약속</title>
+<style>
+:root{--ink:#182230;--muted:#667085;--blue:#2463eb;--blue-soft:#edf4ff;--line:#e3e8ef;--bg:#f4f7fb;--white:#fff;--green:#147d56;--green-bg:#eaf8f1;--amber:#74500a;--amber-bg:#fff6df}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Malgun Gothic","맑은 고딕",sans-serif;line-height:1.55}main{width:min(100%,680px);margin:0 auto;padding:20px 16px 36px}.top{display:flex;align-items:center;gap:12px;margin:0 0 14px}.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#dce9ff;color:#1749b5;font-weight:800;font-size:18px;flex:none}.title h1{font-size:21px;line-height:1.25;margin:0}.title p{margin:3px 0 0;color:var(--muted);font-size:14px}.phone{background:var(--white);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 8px 28px #1822300d}.phone-head{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.back{font-size:22px;color:#586579}.contact{font-weight:750}.day{padding:12px;text-align:center;color:#707b8c;font-size:12px;background:#f7f8fa;border-bottom:1px solid var(--line)}.chat{padding:15px 14px;background:#f7f8fa;min-height:150px}.msg{display:flex;margin:12px 0;gap:7px;align-items:flex-end;animation:appear .28s ease-out}.msg.mine{justify-content:flex-end}.sender{font-size:12px;color:#667085;margin:0 0 4px 2px}.bubble{max-width:82%;padding:11px 14px;border-radius:16px;background:#fff;border:1px solid #edf0f4;font-size:16px}.mine .bubble{background:#dceaff;border-color:#dceaff;border-bottom-right-radius:5px}.other .bubble{border-bottom-left-radius:5px}.time{font-size:10px;color:#8993a3;white-space:nowrap;padding-bottom:2px}.controls{padding:13px 16px;border-top:1px solid var(--line);display:flex;justify-content:center;background:#fff}.primary{border:0;border-radius:12px;background:var(--blue);color:#fff;font:inherit;font-weight:750;font-size:16px;padding:12px 20px;cursor:pointer;min-width:190px}.primary:hover{background:#174fca}.primary:disabled{background:#aab6c7;cursor:default}.stage{padding:18px 16px;border-top:1px solid var(--line);background:#fff}.stage h2{font-size:17px;margin:0 0 9px}.rest-card{border:1px solid #dbe5f2;border-radius:16px;background:#f5f9ff;padding:14px 15px;font-size:16px}.rest-card strong{display:block;font-size:13px;color:#41618c;margin-bottom:4px}.question{margin:18px 0 6px;font-weight:750;font-size:18px}.hint{font-size:14px;color:var(--muted);margin:0 0 12px}.choices{display:grid;gap:9px}.choice{width:100%;text-align:left;border:2px solid #d9e1ec;border-radius:14px;background:#fff;padding:13px 14px;font:inherit;font-size:16px;color:var(--ink);cursor:pointer;transition:.15s}.choice:hover{border-color:#8fb1ff;background:#f8fbff}.choice:focus-visible,.primary:focus-visible,.reset:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}.choice[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}.feedback{margin-top:14px;border-radius:14px;padding:14px 15px;background:var(--green-bg);color:#145b42;font-size:15px}.feedback strong{display:block;margin-bottom:4px}.hidden{display:none!important}.actions{display:flex;justify-content:flex-end;margin-top:10px}.reset{border:0;background:transparent;color:#315fbd;font:inherit;font-weight:700;padding:9px 4px;cursor:pointer}.footer{text-align:center;color:#778294;font-size:12px;margin:14px 4px 0}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}@media(min-width:520px){main{padding-top:28px}.chat{padding:18px 20px}.stage{padding:20px}.bubble{font-size:17px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><div class="avatar" aria-hidden="true">지</div><div class="title"><h1>지석 씨의 영화 약속</h1><p>민호와 주고받는 대화를 한 장면씩 살펴보세요.</p></div></header>
+  <section class="phone" aria-label="민호와 지석 씨의 메신저 대화">
+    <div class="phone-head"><span class="back" aria-hidden="true">‹</span><span class="avatar" style="width:34px;height:34px;font-size:15px;background:#e8edf4;color:#475467" aria-hidden="true">민</span><span class="contact">민호</span></div>
+    <div class="day">토요일 오전</div>
+    <div id="chat" class="chat" aria-live="polite" aria-label="대화 내용"></div>
+    <div class="controls"><button id="next" class="primary" type="button">대화 시작하기</button></div>
+    <section id="rest" class="stage hidden" aria-labelledby="rest-title">
+      <h2 id="rest-title">잠깐 쉬고 난 뒤</h2>
+      <div class="rest-card"><strong>지석 씨의 생각</strong>잠깐 누워 쉬고 한숨 자고 일어났어요. 아, 쉬고 났더니 개운하네. 아까 민호가 영화 보자고 했었지. 그 영화 재밌다고 하던데…</div>
+      <p class="question">지금 지석 씨의 마음은 어떨까요?</p>
+      <p class="hint">지석 씨의 마음과 가장 가까운 것을 하나 골라 보세요.</p>
+      <div class="choices" role="group" aria-label="지석 씨의 마음 선택지">
+        <button class="choice" data-feedback="아직 늦지 않았다면 같이 영화를 보고 싶다는 마음이 있군요. 쉬고 난 뒤 마음이 달라질 수 있어요.">아직 늦지 않았으면 좋겠다. 지금이라도 민호와 같이 영화 보면 좋겠어.</button>
+        <button class="choice" data-feedback="오늘은 쉬기로 한 선택이 괜찮게 느껴지는군요. 영화는 다음에 같이 볼 수도 있어요.">오늘은 쉬기로 했으니, 민호와는 다음에 같이 보면 되지.</button>
+        <button class="choice" data-feedback="그때 같이 보자고 할걸 하는 아쉬움이 있군요. 다음에 비슷한 일이 있으면 그때 마음을 말해도 괜찮아요.">아까 같이 보자고 했을 때 좋다고 할걸. 조금 아쉽다.</button>
+        <button class="choice" data-feedback="아직 몸이 피곤하거나 더 쉬고 싶은 마음일 수 있어요. 지금 내 몸 상태를 살펴봐도 좋아요.">지금은 영화보다 조금 더 쉬고 싶어.</button>
+      </div>
+      <div id="feedback" class="feedback hidden" role="status" aria-live="polite"><strong>그런 마음이 들 수 있어요.</strong><span id="feedback-text"></span></div>
+      <div class="actions"><button id="reset-choice" class="reset" type="button">다시 선택하기</button></div>
+    </section>
+  </section>
+  <p class="footer">마음에는 정답이 없어요. 지석 씨의 지금 마음을 생각해 보세요.</p>
+</main>
+<script>
+const conversation=[
+  {who:'민호',side:'other',time:'오전 9:02',text:'지석아, 좋은 아침! 오늘 저녁에 영화 보러 갈래? 요즘 재밌다는 영화가 있더라.'},
+  {who:'지석',side:'mine',time:'오전 9:04',text:'영화? 어떤 영화인데?'},
+  {who:'민호',side:'other',time:'오전 9:05',text:'액션 영화야. 사람들이 재밌다고 하던데, 시간 괜찮으면 같이 보자. 표는 내가 예매할게!'},
+  {who:'지석',side:'mine',time:'오전 9:07',text:'같이 보자고 해줘서 고마워. 그런데 오늘은 몸이 좀 피곤해서 집에서 쉬고 싶어.'},
+  {who:'민호',side:'other',time:'오전 9:08',text:'아, 그렇구나. 알겠어! 오늘은 푹 쉬어. 영화는 다음에 같이 보자.'},
+  {who:'지석',side:'mine',time:'오전 9:09',text:'응, 고마워. 다음에 보자!'}
+];
+const chat=document.getElementById('chat');
+const next=document.getElementById('next');
+const rest=document.getElementById('rest');
+let shown=0;
+function addMessage(message){
+  const row=document.createElement('div');row.className='msg '+message.side;
+  const body=document.createElement('div');
+  if(message.side==='other'){const sender=document.createElement('div');sender.className='sender';sender.textContent=message.who;body.appendChild(sender)}
+  const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=message.text;body.appendChild(bubble);
+  const time=document.createElement('span');time.className='time';time.textContent=message.time;
+  if(message.side==='mine'){row.append(time,body)}else{row.append(body,time)}
+  chat.appendChild(row);row.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+next.addEventListener('click',()=>{
+  if(shown<conversation.length){
+    addMessage(conversation[shown]);shown++;
+    if(shown<conversation.length)next.textContent='다음 메시지 보기';
+    else next.textContent='잠깐 쉬고 난 뒤 보기';
+  }else{
+    rest.classList.remove('hidden');next.closest('.controls').classList.add('hidden');
+    rest.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+});
+const choices=[...document.querySelectorAll('.choice')];
+const box=document.getElementById('feedback');
+const feedbackText=document.getElementById('feedback-text');
+choices.forEach(button=>button.addEventListener('click',()=>{
+  choices.forEach(item=>item.setAttribute('aria-pressed','false'));
+  button.setAttribute('aria-pressed','true');
+  feedbackText.textContent=button.dataset.feedback;
+  box.classList.remove('hidden');
+}));
+document.getElementById('reset-choice').addEventListener('click',()=>{
+  choices.forEach(item=>item.setAttribute('aria-pressed','false'));
+  box.classList.add('hidden');choices[0].focus();
+});
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="bd2c8a10-3a05-4028-91a3-b045cfb77a74" data-app-host="app.netlify.com" data-account-tier="free"></script>

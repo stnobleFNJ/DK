@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 건강계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--l1:#4f86c6;--l2:#4f8a3a;--l3:#d9822b;--l4:#c8443a}
+/* 입력 */
+.inp{position:relative;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:16px 14px 14px;margin:18px 4px 0}
+.inp h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font:var(--hw) 24px var(--fh)}
+.inp h3 span{font-size:26px}
+.num{display:grid;grid-template-columns:60px 1fr 60px;gap:8px;align-items:center}
+.num button{height:60px;border-radius:14px;background:#fff;border:2px solid var(--ac);color:var(--ac);display:grid;place-items:center;font:900 30px/1 var(--fb)}
+.num button:active{background:#fff6f0;transform:scale(.96)}
+.num label{position:relative;display:block}
+.num input{width:100%;height:60px;text-align:center;font:700 30px var(--fm);color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:14px;padding:0 42px 0 8px;-moz-appearance:textfield}
+.num input::-webkit-outer-spin-button,.num input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.num input:focus{outline:none;border-color:var(--ac)}
+.num input.bad{border-color:var(--no);background:#fbeee9}
+.num .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);font:700 16px var(--fb);color:var(--muted);pointer-events:none}
+.hint{margin:8px 0 0;font-size:13px;color:var(--muted);text-align:center}
+.err{margin:8px 0 0;font-size:14px;font-weight:700;color:var(--no);text-align:center}
+/* 결과 */
+.res{position:relative;background:#fff;padding:10px 10px 16px;box-shadow:0 8px 20px rgba(60,40,20,.22);transform:rotate(-1.2deg);margin:26px 8px 0}
+.res img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.res .lvn{display:inline-block;margin:12px 0 0;padding:4px 14px;border-radius:999px;color:#fff;font:800 18px var(--fb);background:var(--c)}
+.res h2{font:var(--lw) 26px/1.35 var(--fl);letter-spacing:-.03em;margin:8px 0 0}
+.res p{margin:6px 0 0;font-size:15px;line-height:1.6}
+.bmi{display:flex;align-items:baseline;gap:8px;margin:18px 0 0;justify-content:center}
+.bmi b{font:var(--lw) 52px/1 var(--fl);color:var(--c)}
+.bmi span{font-size:14px;color:var(--muted)}
+.meter{position:relative;margin:26px 4px 0}
+.meter .bar{display:grid;grid-template-columns:3.5fr 4.5fr 2fr 5fr;height:18px;border-radius:999px;overflow:hidden}
+.meter .bar i:nth-child(1){background:var(--l1)}.meter .bar i:nth-child(2){background:var(--l2)}.meter .bar i:nth-child(3){background:var(--l3)}.meter .bar i:nth-child(4){background:var(--l4)}
+.meter .pin{position:absolute;top:-22px;transform:translateX(-50%);font-size:20px;line-height:1}
+.meter .lab{display:grid;grid-template-columns:3.5fr 4.5fr 2fr 5fr;margin:6px 0 0;font-size:11px;text-align:center;color:var(--muted)}
+.meter .lab span b{display:block;color:var(--ink);font-size:12px}
+.mine{font-size:14px;text-align:center;color:var(--muted);margin:10px 0 0}
+/* 기록 */
+.recs{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.recs li{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 3px 8px rgba(60,40,20,.12);font-size:14px}
+.recs .d{flex:none;font:700 13px var(--fm);color:var(--muted);width:84px}
+.recs .hw{flex:1}
+.recs .hw b{font-size:16px}
+.recs .t{flex:none;padding:3px 10px;border-radius:999px;color:#fff;font-weight:700;font-size:12px;background:var(--c)}
+.empty{margin:18px 0 0;padding:20px;text-align:center;color:var(--muted);background:var(--paper);border:1.5px dashed var(--line);border-radius:12px}
+.priv{margin:12px 0 0;font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>내 키(cm)와 몸무게(kg)를 적어요. <b>−</b>, <b>+</b> 버튼으로 바꿀 수도 있어요.</li><li><b>계산하기</b>를 누르면 체질량지수와 4단계 결과가 나와요.</li><li>결과는 날짜와 함께 기록에 남아요.</li></ol><p>기록은 이 기기에만 저장되고, 어디에도 보내지 않아요. 기록 지우기로 모두 지울 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'건',html:'나의 <b>건강계산기</b>'};
+// 체질량지수 4단계 — 대한비만학회 기준(18.5 미만 / 18.5~22.9 / 23~24.9 / 25 이상)
+// head는 교재 중기 78쪽 문구를 바탕으로 썼다(교재의 "줄었어요/늘었어요"는 한 번 재서는 알 수 없어 "적은/많은 편이에요"로 바꿈).
+// tip은 원본 그림(중8_2체질량지수) 아래에 적힌 문구를 쉽게 풀었다.
+const LV=[
+  {n:1,name:'저체중',max:18.5,c:'var(--l1)',img:'img/bmi-1.jpg',head:'몸무게가 적은 편이에요. 건강을 살펴봐요.',tip:'골고루 잘 먹고, 몸이 어떤지 살펴봐요.'},
+  {n:2,name:'적정 체중',max:23,c:'var(--l2)',img:'img/bmi-2.jpg',head:'몸무게가 알맞아요. 좋아요!',tip:'지금처럼 건강을 챙겨요.'},
+  {n:3,name:'과체중',max:25,c:'var(--l3)',img:'img/bmi-3.jpg',head:'몸무게가 조금 많은 편이에요. 건강을 살펴봐요.',tip:'먹는 것과 운동 같은 건강한 습관을 살펴봐요.'},
+  {n:4,name:'비만',max:Infinity,c:'var(--l4)',img:'img/bmi-4.jpg',head:'몸무게가 아주 많은 편이에요. 도움이 필요해요.',tip:'의사 선생님 같은 전문가와 건강을 상담해요.'}
+];
+const LIM={h:[100,220],w:[20,200]};
+const store=DK.store('dk-m8-2:');   // 이 기기(localStorage)에만 저장
+const root=document.getElementById('app');
+let val={h:160,w:60};
+
+const clear=()=>{try{speechSynthesis.cancel()}catch(e){}};
+const r1=x=>Math.round(x*10)/10;
+const calc=(h,w)=>r1(w/((h/100)**2));
+const level=b=>LV.find(l=>b<l.max);
+const today=()=>{const d=new Date();return `${d.getFullYear()}.${DK.pad(d.getMonth()+1)}.${DK.pad(d.getDate())}`};
+const recs=()=>store.get('records',[]);
+
+function home(){
+  clear();
+  const n=recs().length;
+  const say='나의 건강계산기. 키와 몸무게를 적으면 체질량지수로 내 몸무게가 알맞은지 알려 줘요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My health calculator</span><h1 class="h1">나의<br><em>건강계산기</em></h1><p>키와 몸무게를 적으면, 체질량지수로 내 몸무게가 알맞은지 알려 줘요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/bmi-2.jpg" alt="체중계에 올라선 발" style="object-position:50% 25%"></span><span class="ct">체질량지수(BMI)<small>키와 몸무게로 알아보는 건강 숫자예요</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">계산하러 가기</button><button class="btn line" data-act="list">📋 나의 기록 보기${n?` (${n})`:''}</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:input,list
+  });
+  DK.speak(say);
+}
+
+function box(k,emo,name,unit,step){
+  return `<div class="inp"><h3><span aria-hidden="true">${emo}</span>${name}</h3>
+    <div class="num"><button data-act="dn" data-k="${k}" data-s="${step}" aria-label="${name} 줄이기">−</button>
+    <label><input id="${k}" type="number" inputmode="decimal" step="0.1" min="${LIM[k][0]}" max="${LIM[k][1]}" value="${val[k]}" aria-label="${name} (${unit})"><span class="u">${unit}</span></label>
+    <button data-act="up" data-k="${k}" data-s="${step}" aria-label="${name} 늘리기">+</button></div>
+    <p class="hint">숫자를 눌러 직접 적거나, − + 버튼을 눌러요.</p></div>`;
+}
+
+function input(){
+  clear();
+  const last=recs()[0];
+  if(last)val={h:last.h,w:last.w};
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">키와 몸무게를 적어 주세요</p><p class="qs">${last?`지난 기록(${last.d})을 불러왔어요.`:'내 키와 몸무게를 적어요.'}</p>
+  ${box('h','📏','키','cm',1)}
+  ${box('w','⚖️','몸무게','kg',1)}
+  <p class="err" id="err" aria-live="polite"></p>
+  <div class="acts"><button class="btn pri" data-act="go">계산하기</button><button class="btn line" data-act="list">📋 나의 기록 보기</button></div>${DK.DKU}`,{
+    home,list,go,
+    up:b=>bump(b.dataset.k,+b.dataset.s),dn:b=>bump(b.dataset.k,-b.dataset.s)
+  });
+  ['h','w'].forEach(k=>{const el=root.querySelector('#'+k);el.oninput=()=>{el.classList.remove('bad');root.querySelector('#err').textContent=''}});
+}
+
+function read(k){const v=parseFloat(String(root.querySelector('#'+k).value).replace(',','.'));return isFinite(v)?v:NaN}
+function bump(k,d){
+  const el=root.querySelector('#'+k);let v=read(k);
+  if(isNaN(v))v=k==='h'?160:60;
+  v=Math.min(LIM[k][1],Math.max(LIM[k][0],r1(v+d)));
+  el.value=v;el.classList.remove('bad');root.querySelector('#err').textContent='';
+}
+
+function go(){
+  const h=read('h'),w=read('w');let bad=[];
+  if(!(h>=LIM.h[0]&&h<=LIM.h[1]))bad.push(['h',`키는 ${LIM.h[0]}~${LIM.h[1]}cm 사이로 적어 주세요.`]);
+  if(!(w>=LIM.w[0]&&w<=LIM.w[1]))bad.push(['w',`몸무게는 ${LIM.w[0]}~${LIM.w[1]}kg 사이로 적어 주세요.`]);
+  if(bad.length){bad.forEach(([k])=>root.querySelector('#'+k).classList.add('bad'));const m=bad.map(b=>b[1]).join(' ');root.querySelector('#err').textContent=m;DK.speak(m);return}
+  val={h:r1(h),w:r1(w)};
+  const b=calc(val.h,val.w),l=level(b);
+  // 누적 기록: 같은 날 같은 값이면 한 번만 남긴다
+  const list=recs(),rec={d:today(),h:val.h,w:val.w,b,n:l.n};
+  const top=list[0];
+  if(!(top&&top.d===rec.d&&top.h===rec.h&&top.w===rec.w))store.set('records',[rec,...list].slice(0,100));
+  result(rec);
+}
+
+function result(rec){
+  clear();
+  const l=LV[rec.n-1];
+  const pos=Math.min(98,Math.max(2,(rec.b-15)/15*100));   // 막대: 15~30을 0~100%로
+  const say=`체질량지수는 ${rec.b}이에요. ${l.name}이에요. ${l.head} ${l.tip}`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="bmi" style="--c:${l.c}"><span>나의 체질량지수</span><b>${rec.b}</b></div>
+  <p class="mine">키 ${rec.h}cm · 몸무게 ${rec.w}kg · ${rec.d}</p>
+  <div class="meter" aria-hidden="true"><span class="pin" style="left:${pos}%">▼</span>
+    <div class="bar"><i></i><i></i><i></i><i></i></div>
+    <div class="lab"><span><b>저체중</b>18.5 미만</span><span><b>적정 체중</b>18.5~22.9</span><span><b>과체중</b>23~24.9</span><span><b>비만</b>25 이상</span></div></div>
+  <div class="res" style="--c:${l.c}"><i class="tp"></i><img src="${l.img}" alt="${l.name} 그림"><span class="lvn">${l.n}단계 · ${l.name}</span><h2>${l.head}</h2><p>${l.tip}</p></div>
+  <p class="priv">✔ 기록에 남겼어요. 기록은 이 기기에만 저장돼요.</p>
+  <div class="acts two"><button class="btn sec" data-say="${say}">🔊 듣기</button><button class="btn line" data-act="list">📋 기록 보기</button></div>
+  <div class="acts" style="margin-top:8px"><button class="btn pri" data-act="again">↻ 다시 계산하기</button></div>${DK.DKU}`,{
+    home,list,again:input
+  });
+  DK.done(null,{noText:true});  // 키·몸무게는 보내지 않는다(화면 안내와 같게)
+  DK.speak(say);
+}
+
+function list(){
+  clear();
+  const rs=recs();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">나의 건강 기록</p><p class="qs">계산한 날짜와 결과가 차례대로 쌓여요.</p>
+  ${rs.length?`<ul class="recs">${rs.map(r=>{const l=LV[r.n-1];return `<li style="--c:${l.c}"><span class="d">${r.d}</span><span class="hw"><b>${r.b}</b><br><small>${r.h}cm · ${r.w}kg</small></span><span class="t">${l.name}</span></li>`}).join('')}</ul>`
+    :'<p class="empty">아직 기록이 없어요.<br>키와 몸무게를 적고 계산해 보세요.</p>'}
+  <p class="priv">기록은 이 기기에만 저장되고, 어디에도 보내지 않아요.</p>
+  <div class="acts"><button class="btn pri" data-act="start">${rs.length?'새로 계산하기':'계산하러 가기'}</button>${rs.length?'<button class="btn line" data-act="wipe">🗑 기록 지우기</button>':''}</div>${DK.DKU}`,{
+    home,start:input,
+    wipe:()=>{if(confirm('기록을 모두 지울까요? 지운 기록은 되돌릴 수 없어요.')){store.set('records',[]);try{localStorage.removeItem('dk-m8-2:records')}catch(e){}list()}}
+  });
+}
+
+home();
+</script>
+</body>
+</html>

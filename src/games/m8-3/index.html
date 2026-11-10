@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>생활 뉴스: 참지 마세요</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* TV 틀 */
+.tv{position:relative;margin:16px 2px 0;aspect-ratio:4/3;border:7px solid var(--dark);border-radius:18px;background:#1f2a3a;overflow:hidden;box-shadow:0 10px 24px rgba(60,40,20,.25)}
+.tv .bg{position:absolute;inset:-16px;background-size:cover;background-position:center;filter:blur(14px) brightness(.6)}
+.tv .fg{position:absolute;inset:0 0 22%;display:flex;justify-content:center}
+.tv .fg img{height:100%;width:auto;max-width:100%;object-fit:cover}
+.tv .logo{position:absolute;top:8px;left:8px;z-index:3;font:900 12px var(--fb);background:#fff;color:#1f2a3a;border-radius:4px;padding:2px 7px}
+.tv .flash{position:absolute;top:8px;right:8px;z-index:3;font:900 12px var(--fb);background:var(--ac);color:#fff;border-radius:4px;padding:2px 8px;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.4}}
+/* 아나운서 장면 */
+.tv .anc{position:absolute;left:4%;bottom:22%;height:74%}
+.tv .anc img{height:100%;width:auto;border-radius:6px 6px 0 0}
+.tv .mon{position:absolute;right:4%;top:12%;width:50%;bottom:26%;background:var(--paper);color:var(--ink);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:6px;transform:rotate(1.2deg);box-shadow:2px 3px 0 rgba(0,0,0,.25)}
+.tv .mon small{font:700 12px var(--fb);color:var(--ac)}
+.tv .mon b{font:var(--hw) 22px/1.25 var(--fh)}
+.tv .mon ol{margin:0;padding:0;list-style:none;display:grid;gap:4px;font:700 13px/1.35 var(--fb)}
+.tv .mon li{display:flex;gap:6px;align-items:flex-start}
+.tv .mon li i{flex:none;font-style:normal;width:18px;height:18px;border-radius:50%;background:var(--tape);display:grid;place-items:center;font-size:11px}
+.tv .mon li.sos i{background:var(--ac);color:#fff}
+/* 의사 이야기 */
+.tv .quote{position:absolute;left:7%;right:7%;top:16%;background:var(--paper);color:var(--ink);border-radius:8px;padding:12px 14px;box-shadow:2px 3px 0 rgba(0,0,0,.25);transform:rotate(-1deg)}
+.tv .quote small{display:block;font:700 12px var(--fb);color:var(--ac)}
+.tv .quote q{display:block;font:var(--hw) 21px/1.35 var(--fh);margin-top:4px}
+.tv .quote span{display:block;font-size:12px;color:var(--muted);margin-top:6px}
+/* 자막 띠 */
+.tv .low{position:absolute;left:0;right:0;bottom:0;height:22%;display:flex;align-items:center;background:#fff;z-index:3}
+.tv .low .tag{flex:none;height:100%;display:grid;place-items:center;background:var(--ac);color:#fff;font:900 14px var(--fb);padding:0 10px}
+.tv .low .hl{flex:1;min-width:0;padding:0 10px;font:800 15px/1.3 var(--fb);color:#1f2a3a}
+/* 말 자막 */
+.subt{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;min-height:92px}
+.subt .w{flex:none;font:700 12px var(--fb);color:#fff;background:var(--ink);border-radius:999px;padding:2px 9px;margin-top:4px}
+.subt .w.doc{background:var(--ok)}
+.subt p{flex:1;margin:0;font:var(--hw) 22px/1.45 var(--fh)}
+.ln{display:flex;justify-content:center;gap:5px;margin-top:8px}
+.ln i{width:8px;height:8px;border-radius:50%;background:var(--soft)}
+.ln i.d{background:var(--ac)}
+/* 누구에게 말할까요 */
+.tell{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tell button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;background:var(--paper);border:2px solid var(--line);border-radius:14px;box-shadow:2px 3px 0 var(--line);font:var(--hw) 21px var(--fh);text-align:center}
+.tell button i{font-style:normal;font-size:34px}
+.tell button[aria-pressed=true]{border-color:var(--ok);background:#eef4e4}
+.tell button[aria-pressed=true]::after{content:'✓ 말할래요';font:700 12px var(--fb);color:var(--ok)}
+/* 결과 */
+.res{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px}
+.res .big{font-size:54px;line-height:1}
+.res h2{font:var(--lw) 24px/1.4 var(--fl);letter-spacing:-.04em;margin:12px 0 0}
+.res p{font-size:14px;color:var(--muted);margin:8px 0 0}
+.res .stamp{font-size:17px}
+.memo{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.memo li{display:flex;gap:10px;align-items:center;background:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 3px 8px rgba(60,40,20,.12);font:var(--hw) 20px/1.3 var(--fh)}
+.memo li i{flex:none;font-style:normal;font-size:26px}
+.fake{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 0}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>‘뉴스 보기’를 누르면 생활 뉴스가 시작돼요.</li><li>‘다음’을 누를 때마다 아나운서가 한 문장씩 읽어 줘요.</li><li>뉴스가 끝나면 질문에 답해요.</li><li>몸이 아플 때 누구에게 말할지 골라요.</li></ol><p>이 뉴스는 수업을 위해 만든 가상 뉴스예요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'뉴',html:'생활 뉴스: <b>참지 마세요</b>'};
+// 장면·자막·대사는 프로토타입(m-p79.html, calm-salmiakki-4d2a53.netlify.app, 교재 79쪽 QR '뉴스속보') 그대로.
+// 그림 4장은 프로토타입 안의 base64 그림을 tools/gen_m8_3.py로 꺼낸 원본이다.
+const IMG={anchor:'img/anchor.jpg',s1:'img/s1-pain.jpg',s2:'img/s2-collapse.jpg',s3:'img/s3-hospital.jpg'};
+const SCENES=[
+ {shot:'intro',tag:'속보',hl:'몸이 아픈데 참았다가… 병원에 입원',flash:true,lines:[
+   {who:'아나운서',t:'안녕하세요. 생활 뉴스입니다.'},
+   {who:'아나운서',t:'몸이 아픈데 꾹 참다가, 병원에 입원하게 된 사람의 소식입니다.'}]},
+ {shot:'s1',tag:'참았어요',hl:'가슴이 아팠지만 아무에게도 말하지 않았어요',alt:'가슴을 잡고 아파하는 남자',lines:[
+   {who:'아나운서',t:'50대 김 씨는 3일 전부터 가슴이 답답하고 아팠습니다.',say:'오십 대 김 씨는 삼 일 전부터 가슴이 답답하고 아팠습니다.'},
+   {who:'아나운서',t:'하지만 “괜찮겠지” 하고 아무에게도 말하지 않았습니다.',say:'하지만, 괜찮겠지, 하고 아무에게도 말하지 않았습니다.'}]},
+ {shot:'s2',tag:'더 아파요',hl:'꾹 참고 산책하다 길에서 주저앉아',alt:'산책길에서 무릎을 짚고 주저앉으려는 남자',lines:[
+   {who:'아나운서',t:'김 씨는 아픈 것을 꾹 참고 산책을 나갔습니다.'},
+   {who:'아나운서',t:'그런데 숨이 차고 가슴이 더 아파서, 길에서 주저앉았습니다.'}]},
+ {shot:'s3',tag:'입원',hl:'결국 병원에 입원해 치료받아',alt:'병원 침대에 누워 치료받는 남자',lines:[
+   {who:'아나운서',t:'지나가던 사람이 119에 전화해서, 김 씨는 병원에 갔습니다.',say:'지나가던 사람이 일일구에 전화해서, 김 씨는 병원에 갔습니다.'},
+   {who:'아나운서',t:'검사해 보니, 심장 혈관이 좁아지는 병이었습니다.'},
+   {who:'아나운서',t:'김 씨는 지금 병원에 입원해서 치료를 받고 있습니다.'}]},
+ {shot:'doc',tag:'의사 이야기',hl:'빨리 검사받았으면 좋았을 텐데…',lines:[
+   {who:'아나운서',t:'의사 선생님은 이렇게 말했습니다.'},
+   {who:'의사',t:'처음 아팠을 때 바로 병원에 왔다면, 더 빨리 치료할 수 있었습니다.'},
+   {who:'아나운서',t:'김 씨도 “그때 바로 말할 걸” 하고 후회했습니다.',say:'김 씨도, 그때 바로 말할 걸, 하고 후회했습니다.'}]},
+ {shot:'outro',tag:'생활 건강',hl:'몸이 아프면 참지 말고 말해요',lines:[
+   {who:'아나운서',t:'몸이 아프고 불편하면 참지 마세요.'},
+   {who:'아나운서',t:'가족이나 활동지원사, 복지사 선생님에게 바로 말하세요.'},
+   {who:'아나운서',t:'그리고 병원에 가서 검사를 받으세요.'},
+   {who:'아나운서',t:'가슴이 많이 아프고 숨쉬기 힘들면, 바로 119에 전화하세요.',say:'가슴이 많이 아프고 숨쉬기 힘들면, 바로 일일구에 전화하세요.'},
+   {who:'아나운서',t:'지금까지 생활 뉴스였습니다.'}]}
+];
+const MEMO=[['🗣️','참지 말고 말해요'],['🏥','병원에서 검사받아요'],['🚑','많이 아프면 119']];   // 프로토타입 '기억해요' 화면
+// 뉴스 뒤 질문 2개는 프로토타입에 없고, 교재 79쪽 문제를 그대로 옮겼다.
+const QUIZ={q:'몸이 아프고 불편한데 참으면 어떤 일이 생길까요?',opts:['참으면 금방 괜찮아져요.','치료를 빨리 못 받아요.','병원에 안 가서 좋아요.'],ans:1,
+  // 임시: 정답 풀이 문장은 뉴스 내용으로 지었다.
+  ok:'김 씨는 참다가 치료를 빨리 못 받았어요.',no:'김 씨는 참다가 더 아파서 병원에 입원했어요. 참으면 치료를 빨리 못 받아요.'};
+const TELL=[['👪','부모님'],['🤝','활동지원사'],['🙋','사회복지사'],['🧑','선생님']];   // 교재 79쪽 보기
+const DONE='몸이 아프면 참지 말고 말해요';
+
+const root=document.getElementById('app');
+let timers=[],si=0,li=0,picked=new Set(),quizOk=false;
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const STEPS=SCENES.length+2;
+
+function tv(s){
+  let body='';
+  if(s.shot==='intro'||s.shot==='outro'){
+    const mon=s.shot==='intro'?'<small>오늘의 소식</small><b>몸이 아픈데<br>꾹 참았다가…</b>'
+      :`<small>기억해요</small><ol>${MEMO.map(([e,t],i)=>`<li class="${i===2?'sos':''}"><i>${i===2?'!':i+1}</i>${t}</li>`).join('')}</ol>`;
+    body=`<div class="anc"><img src="${IMG.anchor}" alt="뉴스를 전하는 아나운서"></div><div class="mon">${mon}</div>`;
+  }else if(s.shot==='doc'){
+    body=`<div class="bg" style="background-image:url(${IMG.s3})"></div><div class="quote"><small>의사 선생님 이야기</small><q>처음 아팠을 때 바로 병원에 왔다면, 더 빨리 치료할 수 있었습니다.</q><span>그때 바로 말했으면 좋았을 텐데…</span></div>`;
+  }else{
+    body=`<div class="bg" style="background-image:url(${IMG[s.shot]})"></div><div class="fg"><img src="${IMG[s.shot]}" alt="${s.alt}"></div>`;
+  }
+  return `<div class="tv"><span class="logo">생활뉴스</span>${s.flash?'<span class="flash">속보</span>':''}${body}<div class="low"><span class="tag">${s.tag}</span><span class="hl">${s.hl}</span></div></div>`;
+}
+
+function home(){
+  clear();
+  const say='생활 뉴스, 참지 마세요. 몸이 아프고 불편한데 참으면 어떤 일이 생길까요? 뉴스를 보고 함께 생각해 봐요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Breaking news</span><h1 class="h1">생활 뉴스:<br><em>참지 마세요</em></h1><p>몸이 아프고 불편한데 참으면 어떤 일이 생길까요? 뉴스를 보고 함께 생각해 봐요.</p></section>
+  ${tv(SCENES[0])}
+  <div class="acts"><button class="btn pri" data-act="start">▶ 뉴스 보기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>
+  <p class="fake">이 뉴스는 수업을 위해 만든 가상 뉴스예요. 사진 속 인물과 이야기는 실제 사람이 아니에요.</p>${DK.DKU}`,{start:()=>{picked=new Set();quizOk=false;news(0,0)}});
+}
+
+function news(s,l){
+  clear();si=s;li=l;
+  const S=SCENES[s],L=S.lines[l],lastScene=s===SCENES.length-1,lastLine=l===S.lines.length-1;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(STEPS,s)}
+  ${tv(S)}
+  <div class="subt" aria-live="polite"><span class="w ${L.who==='의사'?'doc':''}">${L.who}</span><p>${L.t}</p><button class="spk" data-say="${DK.esc(L.say||L.t)}" aria-label="다시 듣기">${DK.SPK}</button></div>
+  <div class="ln" aria-hidden="true">${S.lines.map((_,i)=>`<i class="${i<=l?'d':''}"></i>`).join('')}</div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">${lastScene&&lastLine?'질문에 답하기 ›':'다음 ›'}</button></div>${DK.DKU}`,{
+    home,
+    prev:()=>{if(l)news(s,l-1);else if(s)news(s-1,SCENES[s-1].lines.length-1);else home()},
+    next:()=>{if(!lastLine)news(s,l+1);else if(!lastScene)news(s+1,0);else quiz()}
+  });
+  DK.speak(L.say||L.t);
+}
+
+function quiz(){
+  clear();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(STEPS,SCENES.length)}
+  <p class="q">${QUIZ.q}</p><p class="qs">뉴스를 떠올리며 하나를 골라요.</p>
+  <div class="opts">${QUIZ.opts.map((o,j)=>`<button class="opt" data-act="pick" data-j="${j}"><span class="no">${j+1}</span><span>${o}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">다음 질문 ›</button></div>${DK.DKU}`,{
+    home,next:tell,
+    pick:b=>{
+      if(root.querySelector('.opt.ok'))return;
+      const j=+b.dataset.j,ok=j===QUIZ.ans;
+      if(ok&&!root.querySelector('.opt.wrong'))quizOk=true;
+      root.querySelectorAll('.opt').forEach(x=>x.classList.remove('wrong'));
+      b.classList.add(ok?'ok':'wrong');
+      const txt=ok?QUIZ.ok:QUIZ.no;
+      root.querySelector('#fb').innerHTML=`<p class="fb ${ok?'ok':'no'}">${ok?'✓':'✕'}<span>${ok?'맞아요!':'다시 골라 볼까요?'}<small>${txt}</small></span></p>`;
+      DK.speak(txt);
+      root.querySelector('#nx').hidden=!ok;
+      if(ok)later(()=>root.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  DK.speak(QUIZ.q);
+}
+
+function tell(){
+  clear();
+  const q='몸이 이상한 것 같아요. 누구에게 말하면 좋을까요?';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(STEPS,SCENES.length+1)}
+  <p class="q">${q}</p><p class="qs">말하고 싶은 사람을 모두 눌러요. 여러 명 골라도 돼요.</p>
+  <div class="tell">${TELL.map(([e,t],i)=>`<button data-act="t" data-i="${i}" aria-pressed="${picked.has(i)}"><i aria-hidden="true">${e}</i>${t}</button>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="done" ${picked.size?'':'disabled'}>다 골랐어요 ›</button></div>${DK.DKU}`,{
+    home,done:finish,
+    t:b=>{const i=+b.dataset.i;picked.has(i)?picked.delete(i):picked.add(i);b.setAttribute('aria-pressed',picked.has(i));
+      if(picked.has(i))DK.speak(`${TELL[i][1]}에게 말할래요.`);
+      root.querySelector('[data-act=done]').disabled=!picked.size}
+  });
+  DK.speak(q);
+}
+
+function finish(){
+  clear();
+  const names=[...picked].sort().map(i=>TELL[i][1]);
+  const list=names.join(', ');
+  const say=`몸이 아프면 ${list}에게 말해요. ${DONE}. 많이 아프면 바로 일일구에 전화해요.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="res"><i class="stamp">참지<br>마요</i><div class="big" aria-hidden="true">🗣️🏥</div><h2>「${DONE}」</h2><p>몸이 아프면 <b style="color:var(--ac)">${DK.esc(list)}</b>에게 말해요.</p></div>
+  <p class="sl" style="margin:18px 0 8px">기억해요</p>
+  <ul class="memo">${MEMO.map(([e,t])=>`<li><i aria-hidden="true">${e}</i>${t}</li>`).join('')}</ul>
+  <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 뉴스 다시 보기</button></div>${DK.DKU}`,{
+    home,again:()=>{picked=new Set();quizOk=false;news(0,0)},listen:()=>DK.speak(say)
+  });
+  DK.done({tell:names});
+  later(()=>DK.speak(say),300);
+}
+
+home();
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>약을 먹었는데 몸이 이상해요</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+.photo.sq{margin:14px 6px 0}
+.photo.sq .cp{aspect-ratio:1/1}
+.feel{margin:10px 0 0;padding:0 0 0 22px;font-size:16px;line-height:1.7}
+/* 체크 박스 버튼 */
+.mine{display:flex;align-items:center;gap:12px;width:100%;margin:14px 0 0;padding:14px 16px;border-radius:14px;background:var(--paper);border:2.5px solid var(--line);box-shadow:3px 3px 0 var(--line);font:700 17px var(--fb)}
+.mine .bx{flex:none;width:32px;height:32px;border-radius:8px;border:3px solid var(--muted);background:#fff;display:grid;place-items:center;font:900 22px/1 var(--fb);color:#fff}
+.mine[aria-pressed=true]{border-color:var(--ac);background:#fff6f0}
+.mine[aria-pressed=true] .bx{background:var(--ac);border-color:var(--ac)}
+.mine[aria-pressed=true] .bx:after{content:"✓"}
+/* 대응 요령 */
+.todo{display:grid;gap:12px;margin:14px 0 0}
+.do{position:relative;display:flex;gap:12px;align-items:flex-start;background:#fff;padding:14px 14px 14px 12px;border-radius:12px;box-shadow:0 4px 10px rgba(60,40,20,.14)}
+.do .ic{flex:none;width:52px;height:52px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:28px}
+.do .st{position:absolute;left:-6px;top:-8px;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font:700 12px var(--fb);display:grid;place-items:center}
+.do b{display:block;font:var(--hw) 22px/1.3 var(--fh)}
+.do span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.do.urgent{background:#fbeee9;border:2px solid var(--no)}
+.do.urgent .ic{background:var(--no);color:#fff;font:900 16px var(--fb)}
+.do.urgent b{color:var(--no)}
+.arrow{text-align:center;color:var(--muted);font-size:18px;line-height:1;margin:-4px 0}
+/* 한 장에 모아 보기 */
+.mylist{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:#fff6f0;border:1.5px dashed var(--ac);font-size:15px;line-height:1.6}
+.mylist b{color:var(--ac)}
+.mylist .tg{display:inline-block;margin:4px 4px 0 0;padding:2px 10px;border-radius:999px;background:var(--ac);color:#fff;font-size:13px;font-weight:700}
+.sheet{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;margin:16px 2px 0}
+.cell{position:relative;display:block;background:#fff;padding:6px 6px 8px;box-shadow:0 4px 10px rgba(60,40,20,.16);transition:box-shadow .15s}
+.cell:nth-child(odd){transform:rotate(-1.2deg)}.cell:nth-child(even){transform:rotate(1.2deg)}
+.cell img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.cell .cn{display:flex;align-items:center;gap:6px;padding:6px 2px 0;font:var(--hw) 18px/1.2 var(--fh)}
+.cell .cn i{flex:none;width:22px;height:22px;border-radius:6px;border:2.5px solid var(--muted);background:#fff;display:grid;place-items:center;font:900 15px/1 var(--fb);font-style:normal;color:#fff}
+.cell.on{box-shadow:0 0 0 4px var(--ac),0 8px 18px rgba(60,40,20,.24)}
+.cell.on .cn i{background:var(--ac);border-color:var(--ac)}
+.cell.on .cn i:after{content:"✓"}
+.cell .ok{position:absolute;right:-6px;top:-8px;z-index:2;padding:4px 8px;border-radius:999px;background:var(--ac);color:#fff;font:700 12px var(--fb);transform:rotate(8deg)}
+.cell:not(.on) .ok{display:none}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>약을 먹은 다음 생길 수 있는 증상 8가지를 하나씩 봐요.</li><li>겪어 본 적이 있으면 <b>“나도 이런 적 있어요”</b> 네모 칸을 눌러요.</li><li>마지막에 몸이 이상할 때 어떻게 하는지 알아봐요.</li><li><b>한 장에 모아 보기</b>에서 내가 고른 증상을 한눈에 볼 수 있어요.</li></ol><p>모아 보기 화면에서도 네모 칸을 눌러 고칠 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'약',html:'약 먹고 <b>몸이 이상해요</b>'};
+// 증상 이름·설명 — 프로토타입(m2-3.html) 그대로. 사진은 원본 '중2_3이상증상'(tools/gen_m2_3.py)
+const CARDS=[
+  {name:'어지러워요',img:'s-dizzy.jpg',feel:['머리가 빙빙 돌아요.','눈앞이 흐려 보여요.','걸을 때 쓰러질 것 같아요.']},
+  {name:'설사를 해요',img:'s-diarrhea.jpg',feel:['화장실에 자주 가요.','변이 물처럼 나와요.','배가 아프고 급해요.']},
+  {name:'식은땀이 나요',img:'s-sweat.jpg',feel:['덥지 않은데 땀이 나요.','몸이 차갑고 축축해요.','운동하고 나는 땀은 식은땀이 아니에요.']},
+  {name:'속이 울렁거려요',img:'s-nausea.jpg',feel:['토할 것 같아요.','음식 냄새를 맡으면 더 심해요.','배가 꽉 차고 더부룩해요.']},
+  {name:'붉은 점이 생겨요',img:'s-rash.jpg',feel:['피부에 작고 빨간 점이 생겨요.','가려울 수 있어요.','긁으면 더 많아질 수 있어요.']},
+  {name:'다리가 부어요',img:'s-swelling.jpg',feel:['발과 종아리가 퉁퉁 부어요.','신발이 꽉 끼어요.','손가락으로 누르면 자국이 남아요.']},
+  {name:'열이 나요',img:'s-fever.jpg',feel:['몸이 뜨겁고 얼굴이 빨개요.','체온계로 열을 재요.','37.5도보다 높으면 열이 있어요.']},
+  {name:'손발이 떨려요',img:'s-tremor.jpg',feel:['손이나 다리가 저절로 떨려요.','멈추려고 해도 잘 안 멈춰요.']}
+].map(c=>({...c,img:'img/'+c.img}));
+// 대응 요령 — 요청서(알리기 → 의사·약사에게 확인하기 → 위험하면 119), 문구는 프로토타입
+const DOS=[
+  {ic:'🙋',t:'바로 알려요',d:'혼자 참지 않아요. 가족, 활동지원사, 복지사 선생님에게 말해요.'},
+  {ic:'💊',t:'의사·약사에게 물어봐요',d:'약 봉투를 가지고 가요. 다음 약을 먹기 전에 물어봐요.'},
+  {ic:'119',t:'위험하면 119',d:'숨쉬기 힘들 때, 얼굴이나 입술이 부을 때, 정신이 흐려질 때 바로 전화해요.',urgent:true}
+];
+
+const root=document.getElementById('app');
+const mine=new Set();
+let idx=0;
+const clear=()=>{try{speechSynthesis.cancel()}catch(e){}};
+const dosHtml=()=>`<div class="todo">${DOS.map((d,i)=>`${i?'<div class="arrow" aria-hidden="true">▼</div>':''}<div class="do${d.urgent?' urgent':''}"><i class="st">${i+1}</i><span class="ic" aria-hidden="true">${d.ic}</span><div><b>${d.t}</b><span>${d.d}</span></div></div>`).join('')}</div>`;
+const dosSay='몸이 이상할 땐 이렇게 해요. '+DOS.map(d=>d.t+'. '+d.d).join(' ');
+const picked=()=>[...mine].sort((a,b)=>a-b).map(i=>CARDS[i].name);
+
+function home(){
+  clear();
+  const say='약을 먹었는데 몸이 이상해요. 약을 먹은 다음 생길 수 있는 증상 8가지를 알아보고, 내가 겪어 본 증상을 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">After taking medicine</span><h1 class="h1">약을 먹었는데<br><em>몸이 이상해요</em></h1><p>약을 먹은 다음 생길 수 있는 증상 8가지를 알아보고, 내가 겪어 본 증상을 골라 보세요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="${CARDS[0].img}" alt="어지러워하는 사람" style="object-position:50% 30%"></span><span class="ct">약을 먹은 다음 이런 적 있나요?<small>8가지 증상 · 겪어 본 증상에 ✓ 표시</small></span></div>
+  <div class="acts"><button class="btn pri" data-act="start">하나씩 보기</button><button class="btn line" data-act="sheet">한 장에 모아 보기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{
+    start:()=>card(0),sheet
+  });
+  DK.speak(say);
+}
+
+function card(i){
+  clear();idx=i;
+  const c=CARDS[i],last=i===CARDS.length-1,on=mine.has(i);
+  const read=`${c.name}. ${c.feel.join(' ')}`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(CARDS.length+1,i)}
+  <span class="qn">${i+1} / ${CARDS.length}</span>
+  <div class="photo sq ${i%2?'tilt-r':'tilt-l'}"><i class="tp"></i><span class="cp"><img src="${c.img}" alt="${c.name}"></span></div>
+  ${DK.sayBig(c.name)}
+  <ul class="feel">${c.feel.map(f=>`<li>${f}</li>`).join('')}</ul>
+  <button class="mine" data-act="mine" aria-pressed="${on}"><span class="bx" aria-hidden="true"></span>나도 이런 적 있어요</button>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">${last?'정리 보기 ›':'다음 ›'}</button></div>${DK.DKU}`,{
+    home,prev:()=>i?card(i-1):home(),next:()=>last?todo():card(i+1),
+    mine:b=>{const v=!mine.has(i);v?mine.add(i):mine.delete(i);b.setAttribute('aria-pressed',v);if(v)DK.speak('나도 이런 적 있어요.')}
+  });
+  DK.speak(read);
+}
+
+function todo(){
+  clear();
+  const list=picked();
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(CARDS.length+1,CARDS.length)}
+  <p class="q">몸이 이상할 땐<br>이렇게 해요</p>
+  <div class="mylist"><b>내가 겪어 본 증상</b><br>${list.length?list.map(n=>`<span class="tg">${n}</span>`).join(''):'고른 증상이 없어요.'}</div>
+  ${dosHtml()}
+  <div class="acts"><button class="btn pri" data-act="sheet">한 장에 모아 보기</button><div class="acts two" style="margin:0"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn sec" data-say="${dosSay}">🔊 듣기</button></div></div>${DK.DKU}`,{
+    home,sheet,prev:()=>card(CARDS.length-1)
+  });
+  DK.speak(dosSay);
+}
+
+function sheet(){
+  clear();
+  const draw=()=>{
+    const list=picked();
+    root.querySelector('#my').innerHTML=`<b>내가 겪어 본 증상 ${list.length}개</b><br>${list.length?list.map(n=>`<span class="tg">${n}</span>`).join(''):'아직 고르지 않았어요. 겪어 본 증상의 네모 칸을 눌러요.'}`;
+  };
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">한 장에 모아 보기</p><p class="qs">겪어 본 증상을 누르면 ✓ 표시가 돼요. 다시 누르면 지워져요.</p>
+  <div class="mylist" id="my" aria-live="polite"></div>
+  <div class="sheet">${CARDS.map((c,i)=>`<button class="cell${mine.has(i)?' on':''}" data-act="tog" data-i="${i}" aria-pressed="${mine.has(i)}" aria-label="${c.name}"><i class="ok">있어요</i><img src="${c.img}" alt=""><span class="cn"><i aria-hidden="true"></i>${c.name}</span></button>`).join('')}</div>
+  <div class="note"><i class="tp"></i><h3>몸이 이상할 땐 이렇게 해요</h3>${dosHtml()}</div>
+  <div class="acts two"><button class="btn sec" data-act="one">하나씩 보기</button><button class="btn line" data-act="reset">↻ 처음부터</button></div>${DK.DKU}`,{
+    home,one:()=>card(0),
+    reset:()=>{mine.clear();home()},
+    tog:b=>{const i=+b.dataset.i,v=!mine.has(i);v?mine.add(i):mine.delete(i);b.classList.toggle('on',v);b.setAttribute('aria-pressed',v);draw();if(v)DK.speak(CARDS[i].name)}
+  });
+  DK.done({picked:picked()});
+  draw();
+}
+
+home();
+</script>
+</body>
+</html>

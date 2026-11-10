@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>약을 언제 먹나요?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+.qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
+/* 상황 카드: 그림 + 약봉투 */
+.sit{position:relative;display:grid;grid-template-columns:1fr 128px;gap:12px;align-items:center;background:#fff;padding:14px 12px 14px 14px;margin:16px 4px 0;box-shadow:0 6px 14px rgba(60,40,20,.18);transform:rotate(-1deg)}
+.sit .em{font-size:44px;line-height:1.1}
+.sit .tx{font:var(--hw) 22px/1.35 var(--fh);margin:6px 0 0}
+.sit .tx b{color:var(--ac)}
+.bag{position:relative;background:#fbfbf7;border:2px solid #9bbf9a;border-radius:6px 6px 10px 10px;padding:10px 6px 10px;text-align:center;transform:rotate(2deg);box-shadow:2px 3px 0 rgba(60,40,20,.12)}
+.bag:before{content:"";position:absolute;left:-2px;right:-2px;top:-2px;height:9px;background:repeating-linear-gradient(90deg,#9bbf9a 0 6px,transparent 6px 10px);border-radius:6px 6px 0 0}
+.bag small{display:block;font:700 11px var(--fb);color:#4f7a3a;margin-top:6px}
+.bag .pill{font-size:22px;line-height:1.2}
+.bag b{display:block;margin:6px 0 0;padding:5px 2px;border:2px solid var(--c,#b9543c);border-radius:8px;color:var(--c,#b9543c);font:800 17px var(--fb);background:#fff}
+.mean{margin:12px 0 0;font-size:14px;color:var(--muted)}
+.mean b{color:var(--ink)}
+/* 시계 보기 3개 */
+.clocks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 0}
+.ck{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:150px;padding:10px 6px 8px;background:var(--paper);border:2.5px solid var(--line);border-radius:16px;box-shadow:3px 3px 0 var(--line);transition:border-color .15s,background .15s}
+.ck:active{transform:scale(.97)}
+.ck .kn{font:700 11px var(--fb);color:var(--muted)}
+.ck.ok{border-color:var(--ok);background:#f2f6ea}
+.ck.wrong{border-color:var(--no);background:#fbeee9;animation:shake .4s}
+.ck:disabled{opacity:1}
+.ck.dim{opacity:.4}
+.ck svg.an{width:100%;max-width:112px;height:auto}
+.ck.mix svg.an{max-width:84px}
+/* 디지털 시계 */
+.lcd{display:inline-flex;align-items:baseline;justify-content:center;background:#26302a;color:#9ff0a6;border-radius:10px;padding:8px 6px 6px;border:3px solid #55605a;box-shadow:inset 0 0 8px rgba(0,0,0,.6);font:700 24px/1 var(--fm);letter-spacing:0;text-shadow:0 0 6px rgba(159,240,166,.55);max-width:100%}
+.lcd .co{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:.25}}
+.lcd.sm{font-size:19px;padding:5px 7px 4px;min-width:0;border-width:2px;border-radius:8px}
+.ck.dig .lcd{margin:18px 0}
+/* 결과 */
+.score{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 18px;margin:22px 4px 8px}
+.score .n{font:var(--lw) 46px/1.1 var(--fl);letter-spacing:-.03em;margin:4px 0 0}
+.score .n small{font-size:24px;color:var(--muted)}
+.score p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.rv{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
+.rv li{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:8px 10px;box-shadow:0 3px 8px rgba(60,40,20,.12)}
+.rv li svg{flex:none;width:52px;height:52px}
+.rv li span{flex:1;font-size:14px;line-height:1.45}
+.rv li span b{font-size:15px}
+.rv li i{flex:none;font-style:normal;font-weight:700;font-size:13px}
+.rv li i.o{color:var(--ok)}.rv li i.x{color:var(--no)}
+.words{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.words li{display:flex;gap:10px;align-items:center}
+.words b{flex:none;min-width:86px;padding:3px 8px;border-radius:8px;background:#fff;border:1.5px solid var(--c);color:var(--c);font-size:14px;text-align:center}
+.hero-clocks{display:flex;justify-content:center;align-items:center;gap:16px;margin:4px 0 0}
+.hero-clocks svg{width:120px;height:120px}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>그림과 약봉투의 안내 말을 잘 봐요.</li><li>약을 먹을 시간을 보여 주는 시계를 골라요.</li><li>시계는 바늘 시계, 숫자 시계, 둘 다 있는 시계가 나와요.</li><li>6문제를 다 풀면 결과를 볼 수 있어요.</li></ol><p>틀려도 괜찮아요. 다시 고를 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'약',html:'약을 <b>언제 먹나요?</b>'};
+// 약 안내 말 — 교재 중기 18~19쪽(약 안내 단어, 복용 시간 안내)
+const WORDS={
+  '기상 후 즉시':{mean:'일어나서 바로 약을 먹어요.',c:'#c98a1c'},
+  '식전 30분':{mean:'밥 먹기 30분 전에 약을 먹어요.',c:'#4f7a3a'},
+  '식후 즉시':{mean:'밥 먹고 바로 약을 먹어요.',c:'#7a56b8'},
+  '식후 30분':{mean:'밥 먹고 30분 뒤에 약을 먹어요.',c:'#b9543c'},
+  '취침 전':{mean:'자기 바로 전에 약을 먹어요.',c:'#3f6fa8'}
+};
+// 문항 — 교재 중기 21쪽(점심: 12시에 밥, 12시 30분에 다 먹음)과 22쪽(아침 7:00 시작·7:30 다 먹음, 밤 10:00 잠, 아침 6:00 기상)
+// ans = 정답 시각 [시, 분]. alt = 틀린 보기 2개.
+// 임시: 틀린 보기(alt)는 교재에 없어 헷갈리기 쉬운 시각(밥 먹는 시각, 30분 차이)으로 골랐다.
+const ALL=[
+  {em:'🛏️ ⏰',scene:'아침 <b>6시</b>에 일어났어요.',word:'기상 후 즉시',ans:[6,0],alt:[[6,30],[7,0]],why:'일어나서 바로, 6시에 먹어요.'},
+  {em:'🍚 🥢',scene:'아침 <b>7시</b>에 밥을 먹기 시작해요.',word:'식전 30분',ans:[6,30],alt:[[7,0],[7,30]],why:'밥 먹기 30분 전, 6시 30분에 먹어요.'},
+  {em:'🍚 ✅',scene:'아침 <b>7시 30분</b>에 밥을 다 먹었어요.',word:'식후 30분',ans:[8,0],alt:[[7,30],[7,0]],why:'밥을 다 먹고 30분 뒤, 8시에 먹어요.'},
+  {em:'🍱 ✅',scene:'점심 <b>12시 30분</b>에 밥을 다 먹었어요.',word:'식후 즉시',ans:[12,30],alt:[[1,0],[12,0]],why:'밥 먹고 바로, 12시 30분에 먹어요.'},
+  {em:'🍱 ✅',scene:'점심 <b>12시 30분</b>에 밥을 다 먹었어요.',word:'식후 30분',ans:[1,0],alt:[[12,30],[12,0]],why:'밥을 다 먹고 30분 뒤, 1시에 먹어요.'},
+  {em:'🌙 🛏️',scene:'밤 <b>10시</b>에 잠을 자요.',word:'취침 전',ans:[10,0],alt:[[6,0],[10,30]],why:'자기 바로 전, 10시에 먹어요.'}
+];
+const KINDS=[{k:'an',n:'바늘 시계'},{k:'dig',n:'숫자 시계'},{k:'mix',n:'바늘 + 숫자'}];
+
+const root=document.getElementById('app');
+let cur=0,results=[],tries=0,timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const tStr=([h,m])=>`${h}:${DK.pad(m)}`;
+const tSay=([h,m])=>`${h}시${m?` ${m}분`:''}`;
+const plain=s=>s.replace(/<[^>]+>/g,'');
+
+/* 바늘 시계(SVG) — 시침은 짧고 굵게, 분침은 길고 빨갛게 */
+function analog([h,m],cls='an'){
+  const nums=Array.from({length:12},(_,i)=>{const n=i+1,a=n*Math.PI/6;return `<text x="${(50+36*Math.sin(a)).toFixed(1)}" y="${(50-36*Math.cos(a)+4.2).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#453f36" font-family="Noto Sans KR,sans-serif">${n}</text>`}).join('');
+  const ticks=Array.from({length:60},(_,i)=>{const a=i*Math.PI/30,r1=i%5?45:43;return `<line x1="${(50+r1*Math.sin(a)).toFixed(1)}" y1="${(50-r1*Math.cos(a)).toFixed(1)}" x2="${(50+47*Math.sin(a)).toFixed(1)}" y2="${(50-47*Math.cos(a)).toFixed(1)}" stroke="#453f36" stroke-width="${i%5?.6:1.6}"/>`}).join('');
+  const ha=((h%12)+m/60)*30,ma=m*6;
+  return `<svg class="${cls}" viewBox="0 0 100 100" role="img" aria-label="${tSay([h,m])}">
+    <circle cx="50" cy="50" r="49" fill="#d8c9b3"/><circle cx="50" cy="50" r="46.5" fill="#fff" stroke="#453f36" stroke-width="2"/>${ticks}${nums}
+    <line x1="50" y1="50" x2="50" y2="27" stroke="#453f36" stroke-width="5" stroke-linecap="round" transform="rotate(${ha} 50 50)"/>
+    <line x1="50" y1="50" x2="50" y2="12" stroke="#b9543c" stroke-width="3" stroke-linecap="round" transform="rotate(${ma} 50 50)"/>
+    <circle cx="50" cy="50" r="3.6" fill="#453f36"/><circle cx="50" cy="50" r="1.4" fill="#fff"/></svg>`;
+}
+const lcd=(t,sm)=>{const [h,m]=tStr(t).split(':');return `<span class="lcd${sm?' sm':''}" aria-hidden="true">${h}<span class="co">:</span>${m}</span>`};
+function clockHtml(kind,t){
+  if(kind==='an')return analog(t);
+  if(kind==='dig')return lcd(t);
+  return analog(t)+lcd(t,true);
+}
+
+function home(){
+  clear();
+  const say='약을 언제 먹나요? 약봉투의 안내를 보고, 약 먹을 시간을 시계에서 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">When do I take it?</span><h1 class="h1">약을<br><em>언제 먹나요?</em></h1><p>약봉투의 안내를 보고, 약 먹을 시간을 시계에서 골라 보세요.</p></section>
+  <div class="hero-clocks" aria-hidden="true">${analog([8,0])}<span style="font-size:46px">💊</span></div>
+  <div class="note"><i class="tp"></i><h3>약봉투 안내 말</h3>
+    <ul class="words">${Object.entries(WORDS).map(([w,v])=>`<li style="--c:${v.c}"><b>${w}</b><span>${v.mean}</span></li>`).join('')}</ul>
+  </div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start});
+  DK.speak(say);
+}
+
+function start(){cur=0;results=[];ask()}
+
+function ask(){
+  clear();tries=0;
+  const q=ALL[cur],w=WORDS[q.word],last=cur===ALL.length-1;
+  // 시계 모양 3가지에 시각 3개를 섞어서 나눠 준다(정답이 어느 모양에 올지 매번 달라진다)
+  const times=DK.shuffle([q.ans,...q.alt]),kinds=DK.shuffle(KINDS);
+  const opts=kinds.map((k,i)=>({...k,t:times[i],ok:times[i]===q.ans}));
+  const read=`${plain(q.scene)} 약봉투에 ${q.word}라고 쓰여 있어요. 몇 시에 약을 먹을까요?`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(ALL.length,cur)}
+  <span class="qn">${cur+1} / ${ALL.length}</span>
+  <div class="sit"><i class="tp"></i><div><div class="em" aria-hidden="true">${q.em}</div><p class="tx">${q.scene}</p></div>
+    <div class="bag" style="--c:${w.c}"><small>생애약국</small><div class="pill" aria-hidden="true">💊</div><b>${q.word}</b></div></div>
+  <p class="mean"><b>${q.word}</b> : ${w.mean} <button class="spk" data-say="${read}" aria-label="소리로 듣기" style="width:30px;height:30px;vertical-align:middle">${DK.SPK}</button></p>
+  <p class="q">몇 시에 약을 먹을까요?</p><p class="qs">알맞은 시계를 골라요.</p>
+  <div class="clocks">${opts.map((o,i)=>`<button class="ck ${o.k}" data-act="pick" data-i="${i}" aria-label="${o.n} ${tSay(o.t)}">${clockHtml(o.k,o.t)}<span class="kn">${o.n}</span></button>`).join('')}</div>
+  <div id="fb" aria-live="polite"></div>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 문제 ›'}</button></div>${DK.DKU}`,{
+    home,next:()=>{cur++;cur<ALL.length?ask():result()},
+    pick:b=>{
+      const o=opts[+b.dataset.i];tries++;
+      const fb=root.querySelector('#fb');
+      if(!o.ok){
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');b.disabled=true;
+        fb.innerHTML=`<p class="fb no"><span>다시 골라 보세요.<small>${q.word}: ${w.mean}</small></span></p>`;
+        DK.speak(`다시 골라 보세요. ${q.word}는 ${w.mean}`);
+        return;
+      }
+      results.push({q,first:tries===1});
+      root.querySelectorAll('.ck').forEach(x=>{x.disabled=true;if(x!==b)x.classList.add('dim')});
+      b.classList.remove('wrong');b.classList.add('ok');
+      fb.innerHTML=`<p class="fb ok"><span>✅ 맞았어요! ${tSay(q.ans)}<small>${q.why}</small></span></p>`;
+      const nx=root.querySelector('#nx');nx.hidden=false;
+      DK.speak(`맞았어요! ${q.why}`);
+      later(()=>nx.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+    }
+  });
+  later(()=>DK.speak(read),300);
+}
+
+function result(){
+  clear();
+  const right=results.filter(r=>r.first).length,total=ALL.length;
+  const msg=right===total?'모두 한 번에 맞혔어요! 약 먹을 시간을 잘 알아요.':'잘했어요! 약봉투의 안내 말을 다시 한번 살펴봐요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="score"><i class="stamp">${right===total?'모두<br>맞힘':'잘<br>했어요'}</i><div aria-hidden="true" style="font-size:40px">💊</div><p class="n">${right} <small>/ ${total}</small></p><p>한 번에 맞혔어요</p><p style="margin-top:10px;color:var(--ink)">${msg}</p></div>
+  <div class="note"><i class="tp"></i><h3>약 먹을 시간 정리</h3>
+    <ul class="rv">${results.map(r=>`<li>${analog(r.q.ans,'')}<span><b style="color:${WORDS[r.q.word].c}">${r.q.word}</b> · ${tSay(r.q.ans)}<br>${plain(r.q.scene)}</span><i class="${r.first?'o':'x'}">${r.first?'한 번에':'다시 골라서'}</i></li>`).join('')}</ul>
+  </div>
+  <div class="note"><h3>약사님 말이 기억나지 않으면?</h3><p style="margin:0">약봉투에 적힌 안내 말을 살펴봐요. 그래도 모르면 약사님께 다시 물어봐요.</p></div>
+  <div class="acts"><button class="btn pri" data-act="again">↻ 다시 하기</button><button class="btn line" data-act="home">처음으로</button></div>${DK.DKU}`,{
+    home,again:start
+  });
+  DK.done({score:right+'/'+total});
+  DK.speak(`${total}문제 중 ${right}개를 한 번에 맞혔어요. ${msg}`);
+}
+
+home();
+</script>
+</body>
+</html>

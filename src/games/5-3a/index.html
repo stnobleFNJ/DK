@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>시우씨의 이야기 완성하기</title>
+<title>건우 씨의 이야기 완성하기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -37,20 +37,20 @@
 </head>
 <body>
 <div class="stage"><main class="app" id="app"></main></div>
-<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>어머니가 시우 씨의 무엇을 보았는지 골라요.</li><li>시우 씨의 기분을 골라요.</li><li>시우 씨가 어떻게 했을지 골라요.</li><li>‘이야기 보기’를 눌러 시우 씨의 이야기 5장을 읽어요.</li></ol><p>기분에는 정답이 없어요. 고르고 싶은 것이 없으면 ‘직접 입력’에 써 보세요. 사진도 올릴 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>어머니가 건우 씨의 무엇을 보았는지 골라요.</li><li>건우 씨의 기분을 골라요.</li><li>건우 씨가 어떻게 했을지 골라요.</li><li>‘이야기 보기’를 눌러 건우 씨의 이야기 5장을 읽어요.</li></ol><p>기분에는 정답이 없어요. 고르고 싶은 것이 없으면 ‘직접 입력’에 써 보세요. 사진도 올릴 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
-const BRAND={mark:'이',html:'시우씨의 <b>이야기</b>'};
+const BRAND={mark:'이',html:'건우 씨의 <b>이야기</b>'};
 const STEPS=['물건','기분','행동','이야기'];
 // 선택 3단계 — hwpx(전5-3 도입) 기획 문구. s = 이야기에 들어갈 문장
 const Q=[
   {key:'obj',q:'물건을 골라 보세요.',qs:'어머니가 무엇을 허락 없이 보았나요?',opts:[{v:'휴대폰',id:'phone'},{v:'편지',id:'letter'},{v:'가방',id:'bag'}]},
-  {key:'feel',q:'어떤 기분인가요?',qs:'시우 씨는 어떤 기분이었을까요? 정답은 없어요.',opts:[{v:'기분 나빠요',id:'upset',s:'시우 씨는 기분이 나빴습니다.'},{v:'부끄러워요',id:'shy',s:'시우 씨는 부끄러웠습니다.'},{v:'화나요',id:'angry',s:'시우 씨는 화가 났습니다.'}]},
-  {key:'act',q:'나라면 어떻게 할까요?',qs:'시우 씨는 어떻게 했을까요?',opts:[{v:'아무 말도 하지 않아요',id:'silent',s:'시우 씨는 아무 말도 하지 않았습니다.'},{v:'큰 소리로 화를 내요',id:'shout',s:'시우 씨는 큰 소리로 화를 냈습니다.'},{v:'울어요',id:'cry',s:'시우 씨는 울었습니다.'}]}
+  {key:'feel',q:'어떤 기분인가요?',qs:'건우 씨는 어떤 기분이었을까요? 정답은 없어요.',opts:[{v:'기분 나빠요',id:'upset',s:'건우 씨는 기분이 나빴습니다.'},{v:'부끄러워요',id:'shy',s:'건우 씨는 부끄러웠습니다.'},{v:'화나요',id:'angry',s:'건우 씨는 화가 났습니다.'}]},
+  {key:'act',q:'나라면 어떻게 할까요?',qs:'건우 씨는 어떻게 했을까요?',opts:[{v:'아무 말도 하지 않아요',id:'silent',s:'건우 씨는 아무 말도 하지 않았습니다.'},{v:'큰 소리로 화를 내요',id:'shout',s:'건우 씨는 큰 소리로 화를 냈습니다.'},{v:'울어요',id:'cry',s:'건우 씨는 울었습니다.'}]}
 ];
 // 이야기 5장 제목 (1장 제목은 기획서에 없어 임시로 작성)
 const TITLES=['무슨 일이 있었나요?','어떤 기분이었을까요?','어떻게 했을까요?','어머니는 마음을 알 수 있을까요?','어떻게 말하면 좋을까요?'];
-const S4='어머니는 시우 씨가 무엇을 원하는지 정확히 알 수 없었습니다.';
+const S4='어머니는 건우 씨가 무엇을 원하는지 정확히 알 수 없었습니다.';
 const S5='내 마음을 잘 전달하려면 어떻게 말하면 좋을까요?';
 
 const root=document.getElementById('app');
@@ -73,27 +73,27 @@ function past(v){
 const clean=v=>v.trim().replace(/\s+/g,' ').replace(/[.!?~。]+$/,'');
 function sentence(i){
   const o=sel[Q[i].key];
-  if(i===0)return `어머니가 시우 씨의 ${o.v}${DK.eul(o.v)} 허락 없이 보았습니다.`;
+  if(i===0)return `어머니가 건우 씨의 ${o.v}${DK.eul(o.v)} 허락 없이 보았습니다.`;
   if(!o.custom)return o.s;
   const p=past(o.v);
-  if(p)return `시우 씨는 ${p}.`;
-  return i===1?`시우 씨는 ‘${o.v}’ 기분이었습니다.`:`시우 씨는 이렇게 했습니다. ‘${o.v}’`;
+  if(p)return `건우 씨는 ${p}.`;
+  return i===1?`건우 씨는 ‘${o.v}’ 기분이었습니다.`:`건우 씨는 이렇게 했습니다. ‘${o.v}’`;
 }
 // 장면 사진: 고른 사진 → 올린 사진 → (물건) 상황 그림 / (기분·행동) 종이 카드
 function scene(i){
   const o=sel[Q[i].key];
   if(!o.custom)return `<img src="img/${i?'pick':'s1'}-${o.id}.jpg" alt="${DK.esc(o.v)}">`;
   if(o.img)return `<img src="${o.img}" alt="${DK.esc(o.v)}">`;
-  if(i===0)return `<img class="wide" src="img/situation.jpg" alt="어머니가 시우 씨의 물건을 보는 모습">`;
+  if(i===0)return `<img class="wide" src="img/situation.jpg" alt="어머니가 건우 씨의 물건을 보는 모습">`;
   return `<span class="ph"><b>${DK.esc(o.v)}</b></span>`;
 }
 
 function home(){
   clear();reset();
   DK.mount(root,`${DK.hbar(BRAND)}
-  <section class="hero"><span class="eb">Social story</span><h1 class="h1">시우씨의 이야기를<br><em>완성해 볼까요?</em></h1><p>물건, 기분, 행동을 하나씩 고르면 시우 씨의 이야기가 만들어져요.</p></section>
+  <section class="hero"><span class="eb">Social story</span><h1 class="h1">건우 씨의 이야기를<br><em>완성해 볼까요?</em></h1><p>물건, 기분, 행동을 하나씩 고르면 건우 씨의 이야기가 만들어져요.</p></section>
   ${DK.steps(STEPS,0)}
-  <div class="photo tilt-l"><i class="tp"></i><span class="cp wide"><img src="img/situation.jpg" alt="휴대폰을 보는 어머니와 놀란 시우 씨"></span><span class="ct">어머니가 시우 씨의 물건을 허락 없이 보았어요.<small>3번 고르면 이야기 5장이 나와요</small></span></div>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp wide"><img src="img/situation.jpg" alt="휴대폰을 보는 어머니와 놀란 건우 씨"></span><span class="ct">어머니가 건우 씨의 물건을 허락 없이 보았어요.<small>3번 고르면 이야기 5장이 나와요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:()=>step(0)});
 }
 
@@ -107,7 +107,7 @@ function step(i){
   <div class="picks two">${s.opts.map(o=>`<button class="pick photo${cur&&cur.id===o.id?' on':''}" data-act="pick" data-id="${o.id}" aria-label="${o.v} 고르기"><i class="tp"></i><span class="cp"><img src="img/pick-${o.id}.jpg" alt="${o.v}"></span><span class="ct">${o.v}</span></button>`).join('')}
     <button class="pick photo${etc?' on':''}" data-act="etc" aria-label="직접 입력하기"><i class="tp"></i><span class="cp"><span class="ph">✎ 직접 쓰기</span></span><span class="ct">직접 입력</span></button></div>
   <div class="etcbox" id="etcbox" ${etc?'':'hidden'}>
-    <p class="lb">${['어머니가 무엇을 보았나요?','시우 씨는 어떤 기분이었을까요?','시우 씨는 어떻게 했을까요?'][i]}</p>
+    <p class="lb">${['어머니가 무엇을 보았나요?','건우 씨는 어떤 기분이었을까요?','건우 씨는 어떻게 했을까요?'][i]}</p>
     <div class="etc"><input id="etcin" maxlength="20" autocomplete="off" placeholder="${['예) 일기장','예) 속상해요','예) 방으로 들어가요'][i]}" value="${DK.esc(d.text)}" aria-label="직접 입력"></div>
     <div class="up"><label class="btn line">📷 사진 올리기 (안 해도 돼요)<input type="file" id="file" accept="image/*" hidden></label>${d.img?`<img src="${d.img}" alt="올린 사진">`:''}</div>
     <small class="upn">사진은 이 화면에서만 보여요. 어디에도 저장하지 않아요.</small>
@@ -162,7 +162,7 @@ function review(){
 function story(p){
   clear();
   const txt=p<3?sentence(p):p===3?S4:S5,last=p===4;
-  const img=p<3?scene(p):`<img src="img/s${p+1}.jpg" alt="${p===3?'난처한 표정의 어머니':'마주 보고 이야기하는 시우 씨와 어머니'}">`;
+  const img=p<3?scene(p):`<img src="img/s${p+1}.jpg" alt="${p===3?'난처한 표정의 어머니':'마주 보고 이야기하는 건우 씨와 어머니'}">`;
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.seg(5,p)}
   <p class="pg">STORY ${p+1} / 5</p><p class="q">${TITLES[p]}</p>
@@ -174,6 +174,7 @@ function story(p){
     home,prev:()=>p?story(p-1):review(),next:()=>story(p+1),
     other:()=>{clear();reset();step(0)},again:home
   });
+  if(last)DK.done({pick:Q.map(s=>sel[s.key].v)});
   later(()=>DK.speak(txt),350);
 }
 

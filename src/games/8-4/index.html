@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나와 맞는 행사 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 처음 화면: 포스터 세 장 겹치기 */
+.fan{position:relative;height:250px;margin:8px 0 4px}
+.fan .photo{position:absolute;top:10px;width:46%;padding:6px 6px 8px}
+.fan .photo .cp{aspect-ratio:3/4}
+.fan .a{left:2%;transform:rotate(-7deg)}
+.fan .b{left:27%;top:0;transform:rotate(1deg);z-index:1}
+.fan .c{right:2%;transform:rotate(7deg)}
+/* 질문 보기 */
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qopt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 14px;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;box-shadow:2px 2px 0 var(--line);text-align:center;transition:border-color .15s,background .15s}
+.qopt i{font-style:normal;font-size:36px;line-height:1.1}
+.qopt b{font:var(--hw) 23px/1.2 var(--fh)}
+.qopt small{font-size:12px;color:var(--muted)}
+.qopt:hover{border-color:var(--ac)}
+.qopt.on{border-color:var(--ac);background:#fff;box-shadow:0 0 0 3px var(--ac)}
+.qopt.any{grid-column:1/-1;flex-direction:row;justify-content:center;gap:10px;padding:12px}
+.qopt.any i{font-size:24px}
+.qopt.any b{font-size:20px}
+/* 추천 카드 */
+.found{margin:16px 0 4px;padding:10px 14px;border-radius:12px;font:700 15px/1.5 var(--fb)}
+.found.ok{background:#eef4e4;color:var(--ok)}
+.found.near{background:#fdf1cf;color:#7a5a12}
+.recs{display:grid;gap:22px 14px;grid-template-columns:1fr 1fr;padding:10px 4px 0}
+.recs.one{grid-template-columns:minmax(0,260px);justify-content:center}
+.rec .cp{aspect-ratio:3/4!important}
+.rec .ct{font-size:20px!important}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chips span{font:700 11px var(--fb);padding:2px 7px;border-radius:999px;background:#eef4e4;color:var(--ok)}
+.chips span.x{background:#f1ece2;color:#9a8f80}
+.tagline{display:block;margin-top:4px;font:700 12px var(--fb);color:var(--ac)}
+/* 포스터 크게 보기 + 언제/어디/얼마/뭐 하지 (교재 91쪽) */
+.poster{position:relative;margin:18px auto 6px;max-width:320px;background:#fff;padding:8px 8px 12px;box-shadow:0 8px 20px rgba(60,40,20,.22);transform:rotate(-1.2deg)}
+.poster .cp{display:block;aspect-ratio:3/4;overflow:hidden}
+.poster .cp img{width:100%;height:100%;object-fit:cover}
+.poster .pl{position:absolute;left:18px;top:18px;padding:4px 10px;border-radius:999px;background:#ef7d2d;color:#fff;font:800 12px var(--fb)}
+.poster h2{margin:10px 2px 0;font:var(--lw) 24px/1.25 var(--fl);letter-spacing:-.03em}
+.poster h2 small{display:block;font:500 13px var(--fb);color:var(--muted);margin-top:2px}
+.facts{display:grid;gap:8px;margin-top:18px}
+.fact{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px}
+.fact b{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 0;border-radius:12px;background:#e6eefb;color:#23407a;font:800 16px var(--fb);border:1.5px solid #b9cbeb}
+.fact span{padding:10px 12px;border-radius:12px;background:var(--paper);border:1.5px solid var(--line);font:700 16px/1.4 var(--fb)}
+.fact span small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+/* 소개할 말 고르기 */
+.blank{display:inline-block;min-width:5em;padding:0 6px;border-bottom:3px solid var(--ac);color:var(--ac)}
+.blank.empty{color:transparent}
+.sent{font:var(--hw) 22px/1.7 var(--fh);margin:14px 0 6px;padding:14px 16px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.sub{font:700 15px var(--fb);margin:18px 0 8px}
+.etc input{font-size:17px}
+/* 소개 카드 (교재 93쪽 네 칸) */
+.intro{display:grid;gap:12px;margin-top:16px}
+.box{position:relative;padding:14px 14px 12px;border:2.5px solid #ef7d2d;border-radius:16px;background:#fff}
+.box.blue{border-color:#23407a;background:#e8f3fc}
+.box h3{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:800 17px var(--fb);color:#23407a}
+.box h3 i{font-style:normal;width:26px;height:26px;border-radius:50%;background:#ef7d2d;color:#fff;display:grid;place-items:center;font-size:14px}
+.box.blue h3 i{background:#23407a}
+.box p{margin:0;font:700 16px/1.6 var(--fb)}
+.box .ev{display:flex;gap:12px;align-items:center}
+.box .ev img{width:64px;height:86px;object-fit:cover;border-radius:6px;flex:none}
+.box .ev b{font:var(--lw) 21px/1.3 var(--fl)}
+.box dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:15px}
+.box dt{color:var(--muted);font-weight:700}.box dd{margin:0;font-weight:700}
+/* 목록 */
+.grid10{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px;padding:10px 4px 0}
+.grid10 .cp{aspect-ratio:3/4!important}
+.grid10 .ct{font-size:18px!important}
+.grid10 .cn{position:absolute;left:14px;top:14px;background:#ef7d2d;color:#fff;width:26px;height:26px;border-radius:50%;font:800 12px var(--fb);display:grid;place-items:center;z-index:2}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>언제, 어디서, 무엇을 하고 싶은지 골라요.</li><li>나와 맞는 행사가 나와요. 하나를 눌러요.</li><li>포스터를 보고 언제? 어디? 얼마? 뭐 하지?를 확인해요.</li><li>친구에게 소개할 말을 만들어요.</li></ol><p>‘행사 10개 모두 보기’에서 포스터를 다 둘러볼 수도 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'행',html:'나와 맞는 <b>행사 찾기</b>'};
+const STEPS=['계절','장소','좋아하는 것','시간','추천'];
+
+/* 행사 10개. 번호·날짜·시간·장소·계절·실내외·준비물 = 교재 92쪽 행사 카드.
+   이름(name) = 포스터 그림 파일 이름, book = 교재 카드에 적힌 이름.
+   그림에는 글자가 없어 비용(cost)·하는 일(what)·좋아하는 것(likes)·소개 문장 보기(good, tog)는 지어냈다. */
+// 임시: cost, what, likes, good, tog 는 자료에 없어 지어낸 값(기획자 확인 필요)
+const EVENTS=[
+  {n:1,img:'img/ev01.jpg',name:'별빛 재즈 나이트',book:'자라섬 재즈페스티벌',date:'3월 12일',hour:17,time:'오후 5시',place:'자라섬',io:'실외',season:'봄',bring:'돗자리',
+   cost:'무료',likes:['music'],what:'야외 무대에서 재즈 음악을 들어요.',
+   good:['밤하늘 아래 재즈 음악','보랏빛 조명이 예쁜 무대'],tog:['돗자리에 앉아 음악을 함께 들을','공연을 보며 함께 박수를 칠']},
+  {n:2,img:'img/ev02.jpg',name:'도시 책 산책',book:'북페어',date:'10월 5일',hour:10,time:'오전 10시',place:'문화회관',io:'실내',season:'가을',bring:'장바구니',
+   cost:'입장 무료 (책은 사요)',likes:['look','shop'],what:'여러 가지 책을 구경하고 마음에 드는 책을 사요.',
+   good:['여러 가지 책을 한곳에서 볼 수 있는 점','날씨 걱정 없는 실내'],tog:['읽고 싶은 책을 서로 골라 줄','마음에 드는 책을 함께 살']},
+  {n:3,img:'img/ev03.jpg',name:'한여름 워터 나이트',book:'워터밤',date:'7월 25일',hour:18,time:'오후 6시',place:'시민운동장',io:'실외',season:'여름',bring:'우비, 물총',
+   cost:'입장권 30,000원',likes:['music','move'],what:'신나는 음악에 맞춰 물총을 쏘며 놀아요.',
+   good:['시원한 물놀이와 신나는 음악','더운 여름밤을 시원하게 보내는 점'],tog:['물총 놀이를 함께 할','음악에 맞춰 같이 춤출']},
+  {n:4,img:'img/ev04.jpg',name:'설빛 얼음왕국',book:'알프스축제',date:'1월 17일',hour:11,time:'오전 11시',place:'눈꽃공원',io:'실외',season:'겨울',bring:'장갑',
+   cost:'입장권 10,000원',likes:['move','look'],what:'눈썰매를 타고 반짝이는 얼음 성을 구경해요.',
+   good:['반짝이는 얼음 성','신나는 눈썰매'],tog:['눈썰매를 함께 탈','얼음 성 앞에서 같이 사진을 찍을']},
+  {n:5,img:'img/ev05.jpg',name:'호박빛 나이트 퍼레이드',book:'할로윈 축제',date:'10월 31일',hour:19,time:'오후 7시',place:'중앙광장',io:'실외',season:'가을',bring:'코스튬 복장',
+   cost:'무료',likes:['look'],what:'재미있는 옷을 입고 호박 등불 거리를 걸어요.',
+   good:['호박 등불이 가득한 거리','재미있는 옷을 입는 것'],tog:['어울리는 옷을 맞춰 입고 걸을','퍼레이드를 함께 구경할']},
+  {n:6,img:'img/ev06.jpg',name:'벚꽃 버스킹 데이',book:'봄버스킹',date:'4월 18일',hour:14,time:'오후 2시',place:'벚꽃길',io:'실외',season:'봄',bring:'돗자리',
+   cost:'무료',likes:['music'],what:'벚꽃 아래에서 거리 공연을 들어요.',
+   good:['벚꽃과 노래','따뜻한 봄 햇살'],tog:['벚꽃길을 함께 걸을','돗자리에 앉아 노래를 함께 들을']},
+  {n:7,img:'img/ev07.jpg',name:'단풍길 러닝 페스타',book:'단풍마라톤',date:'11월 1일',hour:8,time:'오전 8시',place:'강변공원',io:'실외',season:'가을',bring:'배번표, 운동화, 운동복',
+   cost:'참가비 20,000원',likes:['move'],what:'빨간 단풍길을 따라 달리기를 해요.',
+   good:['빨간 단풍길을 달리는 것','몸이 건강해지는 것'],tog:['서로 응원하며 달릴','끝까지 함께 달릴']},
+  {n:8,img:'img/ev08.jpg',name:'윈터 마켓 빛축제',book:'크리스마스축제',date:'12월 24일',hour:18,time:'오후 6시',place:'별빛광장',io:'실외',season:'겨울',bring:'장갑',
+   cost:'입장 무료 (먹을 것은 사요)',likes:['shop','look'],what:'큰 트리를 보고 시장에서 맛있는 것을 사 먹어요.',
+   good:['반짝이는 크리스마스 트리','따뜻한 간식'],tog:['따뜻한 간식을 나눠 먹을','트리 앞에서 같이 사진을 찍을']},
+  {n:9,img:'img/ev09.jpg',name:'오늘의 아트 산책',book:'전시회',date:'5월 9일',hour:13,time:'오후 1시',place:'시립미술관',io:'실내',season:'봄',bring:'입장권',
+   cost:'입장권 5,000원',likes:['look'],what:'미술관에서 그림과 작품을 천천히 구경해요.',
+   good:['조용히 그림을 보는 시간','멋진 작품'],tog:['좋아하는 그림을 서로 이야기할','천천히 함께 구경할']},
+  {n:10,img:'img/ev10.jpg',name:'서울 패션 위크',book:'패션위크',date:'6월 26일',hour:16,time:'오후 4시',place:'컨벤션홀',io:'실내',season:'여름',bring:'초대권',
+   cost:'초대권이 있으면 무료',likes:['look'],what:'모델들이 멋진 옷을 입고 걷는 패션쇼를 봐요.',
+   good:['멋진 옷과 패션쇼','새로 유행하는 옷'],tog:['마음에 드는 옷을 함께 고를','패션쇼를 함께 구경할']}
+];
+const LIKE={music:'음악·공연',move:'몸 움직이기',look:'구경하기',shop:'사고 먹기'};
+const dayNight=e=>e.hour<17?'낮':'밤';   // 오후 5시부터 밤으로 본다
+const Q=[
+  {key:'season',q:'언제 가고 싶어요?',qs:'가고 싶은 계절을 골라요.',opts:[['봄','🌸','3·4·5월'],['여름','🌊','6·7·8월'],['가을','🍁','9·10·11월'],['겨울','⛄','12·1·2월']],test:(e,v)=>e.season===v},
+  {key:'io',q:'어디가 좋아요?',qs:'안에서 하는 행사? 밖에서 하는 행사?',opts:[['실내','🏛️','건물 안'],['실외','🌳','바깥']],test:(e,v)=>e.io===v},
+  {key:'like',q:'무엇이 좋아요?',qs:'하고 싶은 것을 골라요.',opts:[['music','🎵','음악·공연'],['move','🏃','몸 움직이기'],['look','👀','구경하기'],['shop','🛍️','사고 먹기']],test:(e,v)=>e.likes.includes(v)},
+  {key:'when',q:'언제가 좋아요?',qs:'낮에 갈까요, 밤에 갈까요?',opts:[['낮','☀️','오후 4시까지'],['밤','🌙','오후 5시부터']],test:(e,v)=>dayNight(e)===v}
+];
+const ANY='상관없어요';
+const label=(q,v)=>q.key==='like'?LIKE[v]:v;
+// 고른 것과 다를 때 그 행사의 실제 값을 보여 준다
+const actual=(q,e)=>({season:e.season,io:e.io,when:dayNight(e),like:e.likes.map(k=>LIKE[k]).join('·')})[q.key];
+
+const root=document.getElementById('app');
+let sel={},cur=null,from='rec',say={},timers=[];
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const ev=n=>EVENTS.find(e=>e.n===n);
+
+function home(){
+  clear();sel={};say={};
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Find my event</span><h1 class="h1">우리 동네 행사,<br><em>나와 맞는 건 뭘까?</em></h1><p>내가 좋아하는 것을 고르면 딱 맞는 행사를 찾아 줘요. 포스터를 보고 친구에게 소개도 해 봐요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="fan" aria-hidden="true">${[6,3,8].map((n,i)=>`<span class="photo ${'abc'[i]}"><i class="tp"></i><span class="cp"><img src="${ev(n).img}" alt=""></span></span>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn line" data-act="list">📋 행사 10개 모두 보기</button></div>${DK.DKU}`,{start:()=>ask(0),list});
+}
+
+function ask(i){
+  clear();
+  const s=Q[i],v=sel[s.key];
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(4,i)}
+  <p class="q">${s.q}</p><p class="qs">${s.qs}</p>
+  <div class="qopts">${s.opts.map(([val,em,sm])=>`<button class="qopt${v===val?' on':''}" data-act="pick" data-v="${val}" aria-label="${label(s,val)}"><i aria-hidden="true">${em}</i><b>${label(s,val)}</b><small>${sm}</small></button>`).join('')}
+   <button class="qopt any${v===ANY?' on':''}" data-act="pick" data-v="${ANY}"><i aria-hidden="true">🙆</i><b>${ANY}</b></button></div>
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next" ${v?'':'disabled'}>다음 ›</button></div>${DK.DKU}`,{
+    home,prev:()=>i?ask(i-1):home(),next:()=>sel[s.key]&&(i<Q.length-1?ask(i+1):recs()),
+    pick:b=>{sel[s.key]=b.dataset.v;root.querySelectorAll('.qopt').forEach(p=>p.classList.toggle('on',p===b));root.querySelector('[data-act=next]').disabled=false;
+      DK.speak(b.dataset.v===ANY?ANY:label(s,b.dataset.v));later(()=>i<Q.length-1?ask(i+1):recs(),650)}
+  });
+  DK.speak(s.q);
+}
+
+/* 고른 조건 중 몇 개가 맞는지 센다. 모두 맞는 행사가 없으면 가장 많이 맞는 행사를 보여 준다. */
+function score(e){return Q.filter(q=>sel[q.key]&&sel[q.key]!==ANY).map(q=>({q,ok:q.test(e,sel[q.key])}))}
+function recs(){
+  clear();from='rec';
+  const all=EVENTS.map(e=>{const r=score(e);return {e,r,s:r.filter(x=>x.ok).length,max:r.length}});
+  const best=Math.max(...all.map(x=>x.s)),max=all[0].max;
+  const top=all.filter(x=>x.s===best);
+  const perfect=best===max;
+  const msg=perfect?(top.length>1?`나와 딱 맞는 행사가 ${top.length}개 있어요!`:'나와 딱 맞는 행사를 찾았어요!'):'딱 맞는 행사는 없어요. 가장 가까운 행사를 골랐어요.';
+  const chosen=Q.map(q=>sel[q.key]===ANY?null:label(q,sel[q.key])).filter(Boolean);
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,4)}
+  <p class="q">나와 맞는 행사</p><p class="qs">내가 고른 것: ${chosen.length?chosen.join(' · '):'모두 상관없어요'}</p>
+  <p class="found ${perfect?'ok':'near'}" role="status">${perfect?'🎉':'🔎'} ${msg}<br><small style="font-weight:500">${perfect?'':'✗ 표시는 내가 고른 것과 다른 점이에요. '}마음에 드는 포스터를 눌러 보세요.</small></p>
+  <div class="recs${top.length===1?' one':''}">${top.map(({e,r})=>`<button class="pick photo rec" data-act="open" data-n="${e.n}" aria-label="${e.name} 보기"><i class="tp"></i><span class="cp"><img src="${e.img}" alt="${e.name}"></span><span class="ct">${e.name}<small>${e.date} ${e.time} · ${e.place}</small></span>${r.length?`<span class="chips">${r.map(x=>x.ok?`<span>✓${label(x.q,sel[x.q.key])}</span>`:`<span class="x" title="고른 것과 달라요">✗${actual(x.q,e)}</span>`).join('')}</span>`:''}</button>`).join('')}</div>
+  <div class="acts"><button class="btn line" data-act="list">📋 행사 10개 모두 보기</button><button class="btn sec" data-act="restart">↻ 처음부터 다시 하기</button></div>${DK.DKU}`,{
+    home,list,restart:home,open:b=>detail(+b.dataset.n)
+  });
+  DK.speak(msg);
+}
+
+function list(){
+  clear();from='list';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">우리 동네 행사 10개</p><p class="qs">포스터를 눌러 언제, 어디서 하는지 봐요.</p>
+  <div class="grid10">${EVENTS.map(e=>`<button class="pick photo" data-act="open" data-n="${e.n}" aria-label="${e.name} 보기"><i class="cn">${e.n}</i><span class="cp"><img src="${e.img}" alt="${e.name}" loading="lazy"></span><span class="ct">${e.name}<small>${e.date} ${e.time}<br>${e.season} · ${e.io} · ${e.place}</small></span></button>`).join('')}</div>
+  <div class="acts">${Object.keys(sel).length===Q.length?'<button class="btn sec" data-act="back">‹ 추천 행사로 돌아가기</button>':'<button class="btn pri" data-act="start">나와 맞는 행사 찾기</button>'}<button class="btn sec" data-act="restart">↻ 처음부터 다시 하기</button></div>${DK.DKU}`,{
+    home,restart:home,back:recs,start:()=>{sel={};ask(0)},open:b=>detail(+b.dataset.n)
+  });
+}
+
+function detail(n){
+  clear();cur=ev(n);const e=cur;
+  const read=`${e.name}. 언제? ${e.date} ${e.time}. 어디? ${e.place}, ${e.io}. 얼마? ${e.cost}. 뭐 하지? ${e.what} 챙길 것은 ${e.bring}.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="poster"><i class="tp"></i><span class="cp"><img src="${e.img}" alt="${e.name} 포스터"></span><span class="pl">우리 동네 · ${e.season}</span><h2>${e.name}<small>${e.book}</small></h2></div>
+  <p class="sub">포스터에서 행사 정보를 찾아봐요.</p>
+  <div class="facts">
+   <div class="fact"><b>📅 언제?</b><span>${e.date} ${e.time}<small>${e.season} · ${dayNight(e)}</small></span></div>
+   <div class="fact"><b>📍 어디?</b><span>${e.place}<small>${e.io}</small></span></div>
+   <div class="fact"><b>💰 얼마?</b><span>${e.cost}</span></div>
+   <div class="fact"><b>🎈 뭐 하지?</b><span>${e.what}</span></div>
+   <div class="fact"><b>🎒 챙겨요</b><span>${e.bring}</span></div>
+  </div>
+  <div class="acts"><button class="btn sec" data-say="${DK.esc(read)}">🔊 행사 정보 듣기</button><button class="btn pri" data-act="intro">친구에게 소개하기 ›</button>
+   <div class="acts two" style="margin:0"><button class="btn sec" data-act="back">‹ ${from==='list'?'목록':'추천'}으로</button><button class="btn sec" data-act="restart">↻ 처음부터</button></div></div>${DK.DKU}`,{
+    home,restart:home,back:()=>from==='list'?list():recs(),intro:()=>{say={};intro()}
+  });
+  DK.speak(e.name);
+}
+
+const sentence=(g,t)=>`이 행사는 ${g}${DK.iga(g)} 좋아요. 같이 가면 ${t} 수 있어요.`;
+function intro(){
+  clear();const e=cur;
+  const g=say.good,t=say.tog;
+  const bl=(v,w)=>v?`<span class="blank">${v}</span>`:`<span class="blank empty">${w}</span>`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">친구에게 소개할 말을 만들어요.</p><p class="qs">「${e.name}」${DK.eul(e.name)} 친구에게 소개해 봐요.</p>
+  <p class="sent" id="sent">이 행사는 ${bl(g,'좋은 점')}${g?DK.iga(g):'이'} 좋아요.<br>같이 가면 ${bl(t,'할 수 있는 것')} 수 있어요.</p>
+  <p class="sub">① 이 행사의 좋은 점은?</p>
+  <div class="opts">${e.good.map((o,i)=>`<button class="opt${g===o?' on':''}" data-act="g" data-v="${o}"><span class="no">${i+1}</span>${o}</button>`).join('')}</div>
+  <p class="sub">② 같이 가면 무엇을 할 수 있어요?</p>
+  <div class="opts">${e.tog.map((o,i)=>`<button class="opt${t===o?' on':''}" data-act="t" data-v="${o}"><span class="no">${i+1}</span>${o} 수 있어요</button>`).join('')}</div>
+  <p class="sub">③ 같이 갈 친구 이름 <small style="font-weight:500;color:var(--muted)">(안 써도 돼요)</small></p>
+  <div class="etc"><input id="fr" maxlength="12" placeholder="예: 민아" autocomplete="off" value="${DK.esc(say.friend||'')}"></div>
+  <div class="acts two"><button class="btn sec" data-act="back">‹ 포스터</button><button class="btn pri" data-act="make" ${g&&t?'':'disabled'}>소개 카드 만들기</button></div>${DK.DKU}`,{
+    home,back:()=>detail(e.n),
+    g:b=>{say.good=b.dataset.v;keep();DK.speak(b.dataset.v);intro()},
+    t:b=>{say.tog=b.dataset.v;keep();DK.speak(b.dataset.v+' 수 있어요');intro()},
+    make:()=>{keep();card()}
+  });
+  // 입력값은 화면 안에서만 쓰고 저장하거나 보내지 않는다.
+  function keep(){say.friend=(root.querySelector('#fr').value||'').trim()}
+}
+
+function card(){
+  clear();const e=cur,txt=sentence(say.good,say.tog),fr=say.friend;
+  const full=`${fr?fr+', ':''}${e.name}에 같이 가자! ${txt}`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <p class="q">나의 행사 소개 카드</p><p class="qs">친구에게 이렇게 말해 봐요.</p>
+  <div class="intro">
+   <div class="box"><h3><i>1</i>내가 고른 행사</h3><div class="ev"><img src="${e.img}" alt=""><b>${e.name}</b></div></div>
+   <div class="box"><h3><i>2</i>행사 정보</h3><dl><dt>날짜</dt><dd>${e.date} ${e.time}</dd><dt>장소</dt><dd>${e.place} (${e.io})</dd><dt>비용</dt><dd>${e.cost}</dd><dt>좋은 점</dt><dd>${say.good}</dd></dl></div>
+   <div class="box"><h3><i>3</i>친구에게 소개할 말</h3><p>이 행사는 <u>${say.good}</u>${DK.iga(say.good)} 좋아요.<br>같이 가면 <u>${say.tog}</u> 수 있어요.</p></div>
+   <div class="box blue"><h3><i>4</i>같이 갈 친구</h3><p>${fr?DK.esc(fr):'친구 이름을 생각해 봐요.'}</p></div>
+  </div>
+  ${DK.sayBig(full)}
+  <div class="acts"><div class="acts two" style="margin:0"><button class="btn sec" data-act="other">다른 행사 보기</button><button class="btn sec" data-act="list">📋 모두 보기</button></div><button class="btn pri" data-act="restart">↻ 처음부터 다시 하기</button></div>${DK.DKU}`,{
+    home,restart:home,list,other:()=>Object.keys(sel).length===Q.length?recs():list()
+  });
+  DK.done({event:e.name},{noText:true});  // 친구 이름은 보내지 않는다
+  later(()=>DK.speak(full),300);
+}
+
+home();
+</script>
+</body>
+</html>

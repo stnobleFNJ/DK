@@ -134,21 +134,32 @@ const PROD='https://dnefit.mycafe24.com/dk/';  // 내 PC(로컬)에서 열었을
 const LOCAL=location.protocol==='file:'||/^(localhost|127\.|10\.|192\.168\.|\[?::1)/.test(location.hostname);
 const COURSE={'성인 전기':'#f07c54','성인 중기':'#3da27c','성인 후기':'#8e5aa8'};
 function gameUrl(href){return new URL(href,LOCAL?PROD:location.href).href}
-function makeQR(url){const q=qrcode(0,'M');q.addData(url);q.make();return q}
-function qrSvg(q){const n=q.getModuleCount();let d='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c} ${r}h1v1h-1z`;
- return `<svg viewBox="-2 -2 ${n+4} ${n+4}" shape-rendering="crispEdges" aria-hidden="true"><rect x="-2" y="-2" width="${n+4}" height="${n+4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
+function makeQR(url){const q=qrcode(0,'H');q.addData(url);q.make();return q}  // H: 가운데 로고가 가려도 읽힘
+// 꾸민 QR(SVG): 둥근 점 + 과정 색 눈 + 가운데 「오늘의 게임」 로고. text=false면 로고 글자는 빼고 그림만(캔버스에서 글자를 따로 씀)
+let LOGO=.22;  // 가운데 로고 크기(QR 폭 비율). 크면 판독이 어려워진다
+function shade(h,k){const v=parseInt(h.slice(1),16);return'#'+[16,8,0].map(t=>Math.round((v>>t&255)*k).toString(16).padStart(2,'0')).join('')}
+function qrArt(q,color,text){
+ const n=q.getModuleCount(),Q=2,V=n+Q*2,ink='#2b2420',deep=shade(color,.62);  // 눈은 과정 색을 진하게(판독 대비)
+ let L=Math.round(n*LOGO);if((n-L)%2)L++;const lo=(n-L)/2,hi=lo+L;           // 로고 칸(모듈 단위)
+ const eye=(r,c)=>(r<8&&c<8)||(r<8&&c>=n-8)||(r>=n-8&&c<8),inLogo=(r,c)=>r>=lo-.5&&r<hi+.5&&c>=lo-.5&&c<hi+.5;
+ let dots='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c)&&!eye(r,c)&&!inLogo(r,c))dots+=`<circle cx="${c+.5}" cy="${r+.5}" r=".43"/>`;
+ const eyes=[[0,0],[0,n-7],[n-7,0]].map(([r,c])=>`<rect x="${c}" y="${r}" width="7" height="7" rx="1.1" fill="${deep}"/><rect x="${c+1}" y="${r+1}" width="5" height="5" rx=".75" fill="#fff"/><rect x="${c+2}" y="${r+2}" width="3" height="3" rx=".5" fill="${ink}"/>`).join('');
+ const logo=`<rect x="${lo-.3}" y="${lo-.3}" width="${L+.6}" height="${L+.6}" rx="${L*.24}" fill="#fff"/><rect x="${lo+.35}" y="${lo+.35}" width="${L-.7}" height="${L-.7}" rx="${L*.2}" fill="#fff" stroke="${color}" stroke-width=".55"/>`
+  +(text?`<text x="${n/2}" y="${n/2-L*.06}" text-anchor="middle" font-family="Gaegu,'Noto Sans KR',sans-serif" font-weight="700" font-size="${L*.26}" fill="${deep}">오늘의</text><text x="${n/2}" y="${n/2+L*.3}" text-anchor="middle" font-family="Gaegu,'Noto Sans KR',sans-serif" font-weight="700" font-size="${L*.4}" fill="${deep}">게임</text>`:'');
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-Q} ${-Q} ${V} ${V}" aria-hidden="true"><rect x="${-Q}" y="${-Q}" width="${V}" height="${V}" fill="#fff"/><g fill="${ink}">${dots}</g>${eyes}${logo}</svg>`;
+}
 function qrButton(g,course){
  const url=gameUrl(g.href),b=document.createElement('button');
  b.type='button';b.className='qr';b.title='QR 코드 이미지 저장 · '+url;
  b.setAttribute('aria-label',g.code+' '+(g.name||'')+' QR 코드 이미지로 저장');
- b.innerHTML=qrSvg(makeQR(url))+'<span>QR 저장</span>';
+ b.innerHTML=qrArt(makeQR(url),COURSE[course]||'#453f36',true)+'<span>QR 저장</span>';
  b.onclick=()=>saveQR(g,url,COURSE[course]||'#453f36');
  return b;
 }
 function wrapText(x,t,max){const out=[];let line='';for(const w of t.split(' ')){const tryL=line?line+' '+w:w;if(x.measureText(tryL).width>max&&line){out.push(line);line=w}else line=tryL}if(line)out.push(line);
  return out.flatMap(l=>{if(x.measureText(l).width<=max)return[l];const r=[];let cur='';for(const ch of l){if(x.measureText(cur+ch).width>max){r.push(cur);cur=ch}else cur+=ch}return r.concat(cur)})}
 async function saveQR(g,url,color){
- try{await Promise.all([document.fonts.load('700 34px "Noto Sans KR"'),document.fonts.load('700 26px "Space Mono"')])}catch(e){}
+ try{await Promise.all([document.fonts.load('700 34px "Noto Sans KR"'),document.fonts.load('700 40px Gaegu','오늘의 게임')])}catch(e){}
  const q=makeQR(url),n=q.getModuleCount(),W=640,pad=56,qs=W-pad*2,cell=qs/(n+4);
  const m=g.name&&g.name.match(/^(.*\S)\s+(\([^()]*\))$/),title=m?m[1]:(g.name||g.code),sub=m?m[2]:'';
  const c=document.createElement('canvas'),x=c.getContext('2d');
@@ -157,8 +168,12 @@ async function saveQR(g,url,color){
  c.width=W;c.height=H;
  // 둥근 상자(과정 색 테두리) + 흰 바탕
  const bw=10,rr=56;x.beginPath();x.roundRect(bw/2,bw/2,W-bw,H-bw,rr);x.fillStyle='#fff';x.fill();x.lineWidth=bw;x.strokeStyle=color;x.stroke();
- // QR (조용한 구역 2칸 포함)
- x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(Math.floor(pad+(k+2)*cell),Math.floor(pad+(r+2)*cell),Math.ceil(cell),Math.ceil(cell));
+ // 꾸민 QR: SVG 그림을 캔버스에 그리고, 가운데 로고 글자는 웹글꼴로 직접 쓴다
+ const art=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(qrArt(q,color,false))});
+ x.imageSmoothingEnabled=true;x.drawImage(art,pad,pad,qs,qs);
+ {let L=Math.round(n*LOGO);if((n-L)%2)L++;const u=qs/(n+4),cx=pad+qs/2,cy=pad+qs/2;x.fillStyle=shade(color,.62);x.textAlign='center';x.textBaseline='alphabetic';
+  x.font=`700 ${L*u*.26}px Gaegu,"Noto Sans KR",sans-serif`;x.fillText('오늘의',cx,cy-L*u*.06);
+  x.font=`700 ${L*u*.4}px Gaegu,"Noto Sans KR",sans-serif`;x.fillText('게임',cx,cy+L*u*.3);}
  // 차시 표시 + 게임 이름(교재처럼 QR 아래 가운데)
  let y=pad+qs+28;x.textAlign='center';x.textBaseline='top';
  const code=g.code;x.font='700 24px "Noto Sans KR",sans-serif';const cw=x.measureText(code).width+32;

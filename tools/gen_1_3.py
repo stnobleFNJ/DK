@@ -1,63 +1,55 @@
-"""전1-3 「내일 계획 만들기」 활동 사진 16장(아직 없음)을 임시 일러스트로 만든다.
-사용: python tools/gen_1_3.py   → src/games/1-3/img/act-*.jpg, tools/placeholder_manifest/1-3.json
-진짜 사진이 오면 같은 파일 이름으로 덮어쓰면 된다. 주제 표지(theme-*.jpg)와 첫 화면(start.jpg)은
-실제 사진이므로 optimize_images.py 1-3 으로 만든다.
+"""전1-3 「하루 계획하기(내일 계획 만들기)」 사진을 11/18 수정 의견(오승은) 원본 사진으로 만든다.
+사용: python tools/gen_1_3.py   → src/games/1-3/img/*.jpg
+원본: data/큐알활동/게임(전기)1단원 수정의견261118/…/전1-3 하루 계획하기/
+  - 하루계획 첫장면.png → start.jpg
+  - 주제 콜라주 4장 → theme-*.jpg  (파일 「내 생활을 돌봐요.png」 = 주제 「내 생활을 챙겨요」)
+  - 활동12개/*.png → act-*.jpg
+예전의 임시생성 그림(act-*.jpg 16장)은 모두 실제 사진으로 바뀌었다.
 """
-import json
-import sys
 from pathlib import Path
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / 'tools'))
-from placeholder import scene  # noqa: E402
-
+SRC = ROOT / 'data' / '큐알활동' / '게임(전기)1단원 수정의견261118' / '게임(전기)1단원 수정의견261118' / '전1-3 하루 계획하기'
 OUT = ROOT / 'src' / 'games' / '1-3' / 'img'
-SIZE = (1200, 800)
-BGNAME = {'room': '거실(크림 벽·원목 바닥·창문·화분)', 'kitchen': '부엌(크림 벽·조리대·원목 바닥)',
-          'bedroom': '침실(크림 벽·침대·원목 바닥)', 'outdoor': '야외(하늘·나무·잔디·산책길)',
-          'town': '동네 거리(하늘·건물)', 'bath': '욕실(타일)', 'paper': '종이'}
 
-# (파일, 활동 이름, 이모지, 배경, 주제, 콜라주에 있는 활동인지)
-ITEMS = [
-    ('act-meal.jpg', '밥 먹기', '🍚', 'kitchen', '나를 돌봐요', True),
-    ('act-walk.jpg', '산책하기', '🚶', 'outdoor', '나를 돌봐요', True),
-    ('act-sleep.jpg', '푹 자기', '😴', 'bedroom', '나를 돌봐요', True),
-    ('act-stretch.jpg', '스트레칭', '🧘', 'room', '나를 돌봐요', False),
-    ('act-cafe.jpg', '카페 가기', '☕', 'town', '사람들과 함께 해요', True),
-    ('act-family.jpg', '가족과 식사', '👪', 'kitchen', '사람들과 함께 해요', True),
-    ('act-program.jpg', '지역 프로그램', '🏫', 'room', '사람들과 함께 해요', True),
-    ('act-call.jpg', '친구와 전화', '📞', 'room', '사람들과 함께 해요', False),
-    ('act-market.jpg', '장보기', '🛒', 'town', '내 생활을 챙겨요', True),
-    ('act-laundry.jpg', '빨래하기', '🧺', 'room', '내 생활을 챙겨요', True),
-    ('act-clean.jpg', '청소하기', '🧹', 'room', '내 생활을 챙겨요', True),
-    ('act-dishes.jpg', '설거지하기', '🍽️', 'kitchen', '내 생활을 챙겨요', False),
-    ('act-movie.jpg', '영화 보기', '🍿', 'town', '내가 하고 싶은 일을 해요', True),
-    ('act-karaoke.jpg', '노래방 가기', '🎤', 'town', '내가 하고 싶은 일을 해요', True),
-    ('act-camping.jpg', '캠핑하기', '⛺', 'outdoor', '내가 하고 싶은 일을 해요', True),
-    ('act-draw.jpg', '그림 그리기', '🎨', 'room', '내가 하고 싶은 일을 해요', False),
-]
+FILES = {
+    'start.jpg': '하루계획 첫장면.png',
+    'theme-self.jpg': '나를 돌봐요.png',
+    'theme-life.jpg': '내 생활을 돌봐요.png',
+    'theme-people.jpg': '사람들과 함께 해요.png',
+    'theme-fun.jpg': '내가 하고 싶은 일을 해요.png',
+    'act-meal.jpg': '활동12개/01_식사하기_16대9_1920x1080.png',
+    'act-exercise.jpg': '활동12개/02_운동하기_16대9_1920x1080.png',
+    'act-hospital.jpg': '활동12개/03_병원가기_16대9_1920x1080.png',
+    'act-market.jpg': '활동12개/04_장보기_16대9_1920x1080.png',
+    'act-laundry.jpg': '활동12개/05_세탁하기_16대9_1920x1080.png',
+    'act-clean.jpg': '활동12개/06_청소하기_16대9_1920x1080.png',
+    'act-friend.jpg': '활동12개/07_친구와_함께하기_16대9_1920x1080.png',
+    'act-family.jpg': '활동12개/08_가족과_함께하기_16대9_1920x1080.png',
+    'act-program.jpg': '활동12개/09_센터프로그램_지역행사참여하기_16대9_1920x1080.png',
+    'act-movie.jpg': '활동12개/10_영화보기_16대9_1920x1080.png',
+    'act-travel.jpg': '활동12개/11_여행가기_16대9_1920x1080.png',
+    'act-dining.jpg': '활동12개/12_외식하기_16대9_1920x1080.png',
+}
+OLD_TEMP = ['act-sleep.jpg', 'act-stretch.jpg', 'act-walk.jpg', 'act-cafe.jpg', 'act-call.jpg',
+            'act-dishes.jpg', 'act-karaoke.jpg', 'act-camping.jpg', 'act-draw.jpg']
 
 
 def main():
-    sys.stdout.reconfigure(encoding='utf-8')
-    man = []
-    for name, text, emoji, bg, theme, real in ITEMS:
-        out = OUT / name
-        scene(out, None, emoji, bg, size=SIZE)
-        print(f'{out.relative_to(ROOT)}\t{out.stat().st_size // 1024}KB')
-        src = (f'콜라주 「{theme}」에 나오는 활동 — 콜라주를 자르거나 낱장 사진으로 교체'
-               if real else '콜라주에 없는 네 번째 활동(임시로 정함) — 활동을 확정한 뒤 사진 교체')
-        man.append({
-            'file': f'src/games/1-3/img/{name}',
-            'desc': f'「{theme}」 주제의 활동 「{text}」 사진 대용 그림. {src}',
-            'structure': f'배경: {BGNAME[bg]} / 가운데 그림: 이모지 {emoji} (그림자 포함) / 이름표: 없음(활동 이름은 화면 글자로 표시) '
-                         f'/ 도장: 오른쪽 위, 짧은 변의 26% 크기 빨간 원형 「임시생성」 / {SIZE[0]}×{SIZE[1]}px JPEG',
-            'used_in': f'주제 고르기 화면 「{theme}」의 활동 카드, 결과 화면 「나의 내일은?」의 작은 사진',
-        })
-    mp = ROOT / 'tools' / 'placeholder_manifest' / '1-3.json'
-    mp.parent.mkdir(parents=True, exist_ok=True)
-    mp.write_text(json.dumps(man, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(mp.relative_to(ROOT), len(man))
+    OUT.mkdir(parents=True, exist_ok=True)
+    for out, src in FILES.items():
+        im = Image.open(SRC / src).convert('RGB')
+        if out.startswith('act-'):  # 활동 사진은 위아래에 흐린 띠(약 140px)가 있어 사진 부분만 자른다
+            im = im.crop((0, 150, im.width, im.height - 152))
+        im.thumbnail((1200, 1200), Image.LANCZOS)
+        im.save(OUT / out, 'JPEG', quality=82, optimize=True, progressive=True)
+        print(out, im.size, (OUT / out).stat().st_size // 1024, 'KB')
+    for n in OLD_TEMP:
+        p = OUT / n
+        if p.exists():
+            p.unlink()
+            print('삭제', n)
 
 
 if __name__ == '__main__':

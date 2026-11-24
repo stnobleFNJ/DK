@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>옆집 아주머니 이야기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+:root{--aunt:#a24a62;--dong:#3f6fa8;--police:#2f6f6a;--narr:#807669}
+/* 처음 화면: 이야기 3개 */
+.stories{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px;padding:12px 2px 0}
+.story{position:relative;display:block}
+.story:nth-child(1){transform:rotate(-1.8deg)}.story:nth-child(3){transform:rotate(1.6deg)}
+.story .cp{aspect-ratio:334/470}
+.story .ct{font-size:19px;text-align:center}
+.story .ct small{font-size:11px}
+.story .ck{position:absolute;right:-6px;top:-8px;z-index:3;width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font:700 15px var(--fb);transform:rotate(8deg);box-shadow:1px 2px 0 rgba(0,0,0,.2)}
+.three{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.three li{display:flex;gap:8px;align-items:center;font-weight:700}
+.three li i{font-style:normal;flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:12px}
+/* 이야기 화면 */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0 0}
+.tab{text-align:center;padding:8px 4px;border-radius:12px;background:var(--paper);border:1.5px solid var(--line);font:700 15px var(--fb);line-height:1.2}
+.tab small{display:block;font:400 11px var(--fb);color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ac);border-color:var(--ac);color:var(--on)}
+.tab[aria-selected="true"] small{color:inherit;opacity:.85}
+.sname{margin:12px 0 0;font:var(--hw) 21px/1.3 var(--fh);letter-spacing:-.02em}
+.cut{display:flex;gap:12px;align-items:flex-start;margin:12px 0 0}
+.cut .photo{flex:none;width:44%;margin:4px 0 0 4px}
+.cut .photo .cp{aspect-ratio:334/470}
+.read{flex:1;min-width:0}
+.count{margin:0;font:var(--lw) 15px var(--fl);color:var(--muted);font-variant-numeric:tabular-nums}
+.count b{font-size:28px;color:var(--ink)}
+.lines{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
+.lines li{padding:8px 10px;border-radius:12px;background:var(--paper);border:1px solid var(--line);font:600 18px/1.45 var(--fb);overflow-wrap:anywhere;transition:background .2s,opacity .2s,border-color .2s}
+.lines li .who{display:block;font:700 12px var(--fb);letter-spacing:.02em;margin-bottom:1px}
+.lines li.n .who{color:var(--narr)}.lines li.a .who{color:var(--aunt)}.lines li.d .who{color:var(--dong)}.lines li.p .who{color:var(--police)}
+.lines.playing li{opacity:.55}
+.lines.playing li.done{opacity:.85}
+.lines.playing li.now{opacity:1;background:#fff;border-color:var(--ac);box-shadow:2px 2px 0 var(--line)}
+.lines li.msg{color:var(--no);font-weight:800}
+@media (max-width:420px){.lines li{font-size:17px}}
+/* 아래 고정 조작판 */
+.dock{position:sticky;bottom:0;z-index:5;margin:16px -16px 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 94%,transparent);border-top:1px solid var(--line);backdrop-filter:blur(4px)}
+.bar{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px}
+.bar button{height:18px;border-radius:4px;background:var(--soft)}
+.bar button.past{background:color-mix(in srgb,var(--ac) 45%,var(--soft))}
+.bar button.cur{background:var(--ac)}
+.ctrl{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:8px;margin-top:10px}
+.ctrl .btn{padding:13px 6px;font-size:16px}
+.ctrl .btn.pri{font-size:18px}
+.more{margin-top:8px}
+.more summary{cursor:pointer;font:700 13px var(--fb);color:var(--muted);text-align:center;list-style:none;padding:4px}
+.more summary::-webkit-details-marker{display:none}
+.more .in{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:center;padding:8px 0 2px;font-size:14px;color:var(--ink)}
+.more label{display:flex;align-items:center;gap:6px}
+.more input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac)}
+.more select{font:inherit;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:5px 8px;max-width:180px}
+.more .sm{padding:6px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font:700 13px var(--fb)}
+.tts{margin:6px 0 0;text-align:center;font-size:12px;color:var(--muted)}
+.tts.warn{color:var(--no);font-weight:700}
+/* 끝 화면 */
+.win .wp{aspect-ratio:334/470;max-width:240px;margin:0 auto}
+.win h2{text-align:center;color:var(--no)}
+.win .wc p{text-align:center;font-size:15px;opacity:.85}
+.done3{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.done3 li{display:flex;align-items:center;gap:10px;font-weight:700}
+.done3 li span{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted);font-size:13px}
+.done3 li.on span{background:var(--ok);color:#fff}
+.done3 li small{font-weight:400;color:var(--muted)}
+/* 큰 화면(발표용) */
+:fullscreen .app{max-width:none}
+:fullscreen .cut .photo{width:38%}
+:fullscreen .lines li{font-size:clamp(20px,2.4vw,34px)}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>보고 싶은 이야기를 골라요. (비밀번호 · 통장 · 신분증)</li><li><b>▶ 재생</b>을 누르면 장면을 읽어 주고, 다음 장면으로 넘어가요.</li><li><b>◀ 이전 · 다음 ▶</b>이나 아래 칸 20개를 눌러 장면을 옮길 수 있어요.</li><li>20번째 장면까지 보면 꼭 기억할 약속이 나와요.</li></ol><p>키보드: 스페이스 = 재생·멈춤, ← → = 이전·다음 장면</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'옆',html:'옆집 <b>아주머니 이야기</b>'};
+const WHO={n:'해설',a:'아주머니',d:'동현 씨',p:'경찰'};
+const N=20;
+// 이야기·대사는 참고자료(7-3 추가 제작 「옆집 아주머니 이야기.html」) 그대로. 그림: img/{img}-01~20.jpg (tools/gen_m7_3.py)
+// [말하는 사람, 화면 글, (읽는 글 — 숫자를 한글로), (1=꼭 기억할 말)]
+const S=[
+{key:'비밀번호',img:'pw',title:'비밀번호를 알려 달라는 옆집 아주머니',thumb:5,rule:'비밀번호는 알려주면 안 됩니다!',cuts:[
+[['n','동현 씨는 옆집 아주머니와 친하게 지내요.'],['a','동현 씨, 안녕하세요!']],
+[['n','아주머니는 가끔 맛있는 음식을 나눠 줘요.'],['a','동현 씨, 반찬 좀 가져가요.']],
+[['n','동현 씨는 아주머니가 좋은 이웃이라고 생각해요.'],['d','감사합니다! 잘 먹을게요.']],
+[['n','어느 날, 아주머니가 동현 씨에게 도움을 요청했어요.'],['a','동현 씨, 내 핸드폰이 이상해요.']],
+[['n','아주머니는 동현 씨의 핸드폰 비밀번호를 알려 달라고 했어요.'],['a','핸드폰 비밀번호 좀 알려 주세요.']],
+[['n','동현 씨는 잠시 고민했어요.'],['d','비밀번호요…?','비밀번호요?']],
+[['n','결국, 동현 씨는 비밀번호를 알려줬어요.'],['d','네… 알려 드릴게요.','네. 알려 드릴게요.']],
+[['n','아주머니는 동현 씨의 핸드폰을 잠시 빌려갔어요.'],['a','잠깐만 쓸게요.']],
+[['n','아주머니는 핸드폰을 약 5분 동안 사용했어요.','아주머니는 핸드폰을 약 오 분 동안 사용했어요.']],
+[['n','아주머니는 핸드폰을 돌려주고 집으로 돌아갔어요.'],['a','고마워요, 동현 씨.'],['d','네!']],
+[['n','아주머니가 핸드폰을 돌려주었어요.']],
+[['a','고마워요, 동현 씨!'],['n','아주머니는 집으로 돌아갔어요.']],
+[['n','동현 씨는 아무 일도 없다고 생각했어요.'],['d','다행이다.']],
+[['n','그로부터 1달 후, 시간이 흘렀어요.','그로부터 한 달 후, 시간이 흘렀어요.']],
+[['n','동현 씨의 핸드폰으로 결제 알림이 왔어요.']],
+[['d','어? 이게 뭐야…?','어? 이게 뭐야?'],['n','동현 씨는 놀랐어요.']],
+[['n','핸드폰 결제로 2,000,000원이 청구되었어요.','핸드폰 결제로 이백만 원이 청구되었어요.'],['d','200만 원이나요?','이백만 원이나요?']],
+[['n','동현 씨는 너무 당황하고 속상했어요.']],
+[['d','아… 아주머니가 핸드폰을 썼을 때 결제한 걸까?','아. 아주머니가 핸드폰을 썼을 때 결제한 걸까?'],['n','동현 씨는 이렇게 생각했어요.']],
+[['n','비밀번호는 알려주면 안 됩니다!',null,1],['n','비밀번호는 다른 사람에게 알려주지 마세요.']]
+]},
+{key:'통장',img:'bank',title:'통장을 빌려 달라는 옆집 아주머니',thumb:5,rule:'통장은 빌려주면 안 됩니다.',cuts:[
+[['n','옆집 아주머니는 인사도 잘하고, 평소에 친절한 이웃이에요.']],
+[['n','어느 날, 편의점에서 계산을 못 해 당황한 동현 씨를 아주머니가 도와줬어요.'],['a','동현 씨, 제가 도와줄게요.']],
+[['n','동현 씨는 아주머니가 고마웠어요.'],['d','아, 감사합니다!']],
+[['n','며칠 뒤, 아주머니가 동현 씨 집에 찾아왔어요.'],['a','동현 씨, 잠깐 할 말이 있어요.']],
+[['n','아주머니는 통장이 급하게 필요하다고 말했어요.'],['a','통장이 급하게 필요해요.']],
+[['a','잠깐만 빌려주세요.'],['n','아주머니는 이렇게 부탁했어요.']],
+[['n','동현 씨는 통장을 확인했어요.'],['d','내 통장에 돈이 없는데….','내 통장에 돈이 없는데.']],
+[['n','통장에 돈이 0원이라 괜찮을 것 같았어요.','통장에 돈이 영 원이라 괜찮을 것 같았어요.'],['d','돈이 없으니까 괜찮겠지.']],
+[['n','동현 씨는 아주머니에게 통장을 빌려줬어요.'],['d','네… 잠깐 빌려드릴게요.','네. 잠깐 빌려드릴게요.']],
+[['n','아주머니는 통장을 받아 기뻐하며 집으로 돌아갔어요.'],['a','정말 고마워요!']],
+[['n','아주머니는 통장을 돌려주며 고맙다고 했어요.'],['a','통장 고마워요.']],
+[['d','네, 괜찮아요.'],['n','동현 씨도 아무 일 없다고 생각했어요.']],
+[['n','동현 씨는 통장도 돌려받고 마음이 놓였어요.']],
+[['n','하지만 한 달 후, 예상하지 못한 일이 생겼어요.']],
+[['n','경찰서에서 전화가 왔어요.'],['d','여보세요? 네?']],
+[['p','동현 씨 통장이 범죄에 쓰였어요. 조사를 받으셔야 해요.'],['n','경찰은 동현 씨의 통장이 범죄에 사용되었다고 말했어요.']],
+[['n','동현 씨는 너무 놀랐어요.']],
+[['n','통장을 빌려준 것이 큰 문제가 될 수 있다는 걸 뒤늦게 알게 되었어요.']],
+[['n','동현 씨는 조사도 받아야 하고, 마음도 많이 힘들어졌어요.']],
+[['n','통장은 빌려주면 안 됩니다.',null,1],['n','통장에 돈이 없어도 빌려주면 안 됩니다.']]
+]},
+{key:'신분증',img:'id',title:'신분증을 빌려 달라는 옆집 아주머니',thumb:8,rule:'신분증은 빌려주면 안 됩니다!',cuts:[
+[['n','동현 씨는 동네 마트에서 옆집 아주머니를 만났어요.']],
+[['n','아주머니는 언제나 먼저 인사해요.'],['a','동현 씨, 안녕하세요!']],
+[['n','동현 씨도 반갑게 인사했어요.'],['d','네, 안녕하세요!']],
+[['n','아주머니는 늘 친근하게 말을 걸어요.'],['a','장 보러 왔어요?']],
+[['d','네, 장 보러 왔어요.'],['n','동현 씨는 아주머니를 좋은 이웃이라고 생각해요.']],
+[['n','어느 날, 아주머니가 동현 씨를 불렀어요.'],['a','동현 씨, 잠깐만요!']],
+[['n','아주머니는 급한 일이 있다고 했어요.'],['a','제가 지금 급한 일이 있어요.']],
+[['n','아주머니는 신분증을 빌려 달라고 부탁했어요.'],['a','신분증 좀 빌려주세요.'],['a','잠깐 쓰고 돌려줄게요.']],
+[['n','동현 씨는 잠시 고민했어요.'],['d','제 신분증을요?']],
+[['n','결국 동현 씨는 신분증을 빌려줬어요.'],['d','금방 돌려주세요.']],
+[['n','6시간 뒤, 아주머니가 신분증을 돌려줬어요.','여섯 시간 뒤, 아주머니가 신분증을 돌려줬어요.'],['a','고마워요. 이제 됐어요.']],
+[['d','네, 다행이네요.'],['n','동현 씨는 아무 일도 없다고 생각했어요.']],
+[['n','동현 씨는 안심하고 평소처럼 지냈어요.']],
+[['n','그로부터 1달 후, 시간이 흘렀어요.','그로부터 한 달 후, 시간이 흘렀어요.']],
+[['n','동현 씨에게 우편물이 도착했어요.']],
+[['n','동현 씨가 우편물을 열어 보았어요.']],
+[['d','어? 이게 뭐지? 카드 명세서?'],['n','그런데 신용카드 명세서였어요.']],
+[['d','카드도 없는데… 450만 원?','카드도 없는데. 사백오십만 원?'],['n','동현 씨는 만든 적 없는 신용카드로 450만 원이 청구된 사실을 알게 되었어요.','동현 씨는 만든 적 없는 신용카드로 사백오십만 원이 청구된 사실을 알게 되었어요.']],
+[['n','동현 씨는 너무 놀라고 걱정이 되었어요.']],
+[['n','신분증은 빌려주면 안 됩니다!',null,1],['n','신분증은 다른 사람에게 빌려주지 마세요.']]
+]}];
+const src=(st,i)=>`img/${st.img}-${DK.pad(i+1)}.jpg`;
+
+const root=document.getElementById('app');
+const $=id=>document.getElementById(id);
+const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+let si=0,ci=0,playing=false,tok=0,voices=[];
+const watched=new Set();
+const opt={sound:true,narr:true,rate:'0.9',voice:''};
+
+/* ---- 목소리: 해설·아주머니는 여자 목소리, 동현 씨·경찰은 남자 목소리(없으면 높낮이로 구분) ---- */
+function loadVoices(){
+  if(!synth)return;
+  voices=synth.getVoices().filter(v=>/^ko/i.test(v.lang));
+  fillVoices();ttsNote();
+}
+function fillVoices(){
+  const sel=$('voice');if(!sel)return;
+  sel.length=1;
+  voices.forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=v.name.replace(/Microsoft |\(.*?\)| - Korean.*$/g,'').trim()||v.name;sel.appendChild(o)});
+  sel.value=[...sel.options].some(o=>o.value===opt.voice)?opt.voice:'';
+}
+const MALE=/InJoon|Hyunsu|BongJin|GookMin|Male|남/i;
+function pick(role){
+  const chosen=voices.find(v=>v.name===opt.voice);
+  const nat=v=>/Natural|Online|Neural/i.test(v.name)?1:0;
+  const sorted=[...voices].sort((x,y)=>nat(y)-nat(x));
+  const male=sorted.find(v=>MALE.test(v.name)),female=sorted.find(v=>!MALE.test(v.name));
+  const wantMale=role==='d'||role==='p';
+  let v,pitch=1;
+  if(chosen){v=chosen;pitch={n:1,a:1.15,d:.8,p:.6}[role]}
+  else if(wantMale){v=male||female;pitch=male?(role==='p'?.8:1):(role==='p'?.55:.75)}
+  else{v=female||male;pitch=role==='a'?(female?1.15:1.4):(female?1:1.2)}
+  return {v,pitch};
+}
+function ttsNote(){
+  const n=$('tts');if(!n)return;
+  const no=!synth||!voices.length;
+  n.className='tts'+(no?' warn':'');
+  n.textContent=no?'이 기기에는 한국어 목소리가 없어 소리 없이 넘어가요. 엣지(Edge)나 크롬에서 열면 소리가 나요.':'스페이스: 재생·멈춤 · ← →: 이전·다음 장면';
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function say(role,text){
+  const rate=parseFloat(opt.rate),silentMs=Math.max(2200,text.length*190/rate);
+  if(!synth||!voices.length||!opt.sound)return wait(silentMs);
+  return new Promise(res=>{
+    const u=new SpeechSynthesisUtterance(text),{v,pitch}=pick(role);
+    if(v)u.voice=v;u.lang='ko-KR';u.rate=rate;u.pitch=pitch;
+    let done=false;const fin=()=>{if(!done){done=true;clearTimeout(t);res()}};
+    const t=setTimeout(fin,silentMs*2+4000);
+    u.onend=fin;u.onerror=fin;
+    synth.speak(u);
+  });
+}
+const hush=()=>{tok++;playing=false;try{synth&&synth.cancel()}catch(e){}};
+
+/* ---- 처음 화면 ---- */
+function home(){
+  hush();
+  const intro='옆집 아주머니 이야기. 친한 사람이 부탁해도 지켜야 하는 세 가지. 보고 싶은 이야기를 골라 보세요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">My neighbor's request</span><h1 class="h1">옆집 아주머니<br><em>이야기</em></h1>
+  <p>친한 사람이 부탁해도 지켜야 하는 세 가지가 있어요.<br>이야기를 골라 20개 장면을 끝까지 보세요.</p></section>
+  <div class="stories">${S.map((st,i)=>`<button class="photo story" data-act="story" data-i="${i}" aria-label="이야기 ${i+1}, ${st.key}${watched.has(i)?', 봤어요':''}"><i class="tp"></i>${watched.has(i)?'<span class="ck" aria-hidden="true">✓</span>':''}<span class="cp"><img src="${src(st,st.thumb-1)}" alt=""></span><span class="ct">${st.key}<small>이야기 ${i+1}</small></span></button>`).join('')}</div>
+  <div class="note"><i class="tp"></i><h3>꼭 지켜요</h3>
+    <ul class="three">${S.map((st,i)=>`<li><i>${i+1}</i>${st.key}${DK.eun(st.key)} ${i?'빌려주지':'알려주지'} 않아요.</li>`).join('')}</ul></div>
+  <div class="acts"><button class="btn pri" data-act="story" data-i="${S.findIndex((_,i)=>!watched.has(i))<0?0:S.findIndex((_,i)=>!watched.has(i))}">${watched.size?'이어서 보기':'이야기 1부터 보기'}</button><button class="btn sec" data-say="${intro}">🔊 듣기</button></div>${DK.DKU}`,{
+    story:b=>story(+b.dataset.i,true)
+  });
+}
+
+/* ---- 이야기 화면(한 번 그리고, 장면은 그 자리에서 바꾼다) ---- */
+function story(i,autoplay){
+  hush();si=i;ci=0;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="tabs" role="tablist" aria-label="이야기 고르기">${S.map((st,k)=>`<button class="tab" role="tab" data-act="tab" data-i="${k}"><small>이야기 ${k+1}</small>${st.key}</button>`).join('')}</div>
+  <p class="sname" id="sname"></p>
+  <div class="cut">
+    <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img id="img" alt=""></span></div>
+    <div class="read"><p class="count"><b id="cnum">1</b> / ${N} 장면</p><ul class="lines" id="lines" aria-live="polite"></ul></div>
+  </div>
+  <div class="dock">
+    <div class="bar" id="bar" aria-label="장면 고르기">${Array.from({length:N},(_,k)=>`<button type="button" data-act="go" data-i="${k}" aria-label="${k+1}번 장면"></button>`).join('')}</div>
+    <div class="ctrl"><button class="btn sec" data-act="prev">◀ 이전</button><button class="btn pri" data-act="play" id="play">▶ 재생</button><button class="btn sec" data-act="next" id="next">다음 ▶</button></div>
+    <details class="more"><summary>⚙ 소리 설정 · 처음부터</summary><div class="in">
+      <button class="sm" data-act="first">⏮ 처음부터</button>
+      <label><input type="checkbox" id="sound" ${opt.sound?'checked':''}> 소리 켜기</label>
+      <label><input type="checkbox" id="narr" ${opt.narr?'checked':''}> 해설도 읽기</label>
+      <label>속도 <select id="rate">${[['0.75','느리게'],['0.9','보통'],['1.05','빠르게']].map(([v,t])=>`<option value="${v}" ${opt.rate===v?'selected':''}>${t}</option>`).join('')}</select></label>
+      <label>목소리 <select id="voice"><option value="">자동</option></select></label>
+      <button class="sm" data-act="full" id="full">큰 화면</button>
+    </div></details>
+    <p class="tts" id="tts"></p>
+  </div>`,{
+    home,
+    tab:b=>{const k=+b.dataset.i;if(k===si)return;const was=playing;hush();si=k;ci=0;render();if(was)play()},
+    go:b=>go(+b.dataset.i),
+    prev:()=>go(ci-1),
+    next:()=>ci===N-1?finish():go(ci+1),
+    first:()=>go(0),
+    play:()=>playing?(hush(),render()):play(),
+    full:()=>{const el=document.documentElement;
+      if(document.fullscreenElement)document.exitFullscreen();
+      else if(el.requestFullscreen)el.requestFullscreen().catch(()=>{})}
+  });
+  ['sound','narr','rate','voice'].forEach(id=>$(id).onchange=e=>{const t=e.target;opt[id]=t.type==='checkbox'?t.checked:t.value;if(playing)play()});
+  fillVoices();ttsNote();render();
+  if(autoplay)play();
+}
+function render(){
+  const st=S[si],ls=st.cuts[ci];
+  const im=$('img');if(!im)return;
+  im.src=src(st,ci);im.alt=ls.map(l=>l[1]).join(' ');
+  if(ci<N-1)new Image().src=src(st,ci+1);
+  $('sname').textContent=`이야기 ${si+1} · ${st.title}`;
+  $('cnum').textContent=ci+1;
+  const ul=$('lines');ul.classList.toggle('playing',playing);
+  ul.innerHTML=ls.map(l=>`<li class="${l[0]}${l[3]?' msg':''}"><span class="who">${WHO[l[0]]}</span>${DK.esc(l[1])}</li>`).join('');
+  root.querySelectorAll('#bar button').forEach((b,k)=>{b.className=k<ci?'past':k===ci?'cur':'';b.setAttribute('aria-current',k===ci?'true':'false')});
+  root.querySelectorAll('.tab').forEach((b,k)=>b.setAttribute('aria-selected',k===si?'true':'false'));
+  $('play').textContent=playing?'❚❚ 멈춤':'▶ 재생';
+  $('next').textContent=ci===N-1?'끝 ▶':'다음 ▶';
+}
+function go(i){const was=playing;hush();ci=Math.max(0,Math.min(N-1,i));render();if(was)play()}
+async function play(){
+  const my=++tok;playing=true;try{synth&&synth.cancel()}catch(e){}
+  render();await wait(350);if(my!==tok)return;
+  const ls=S[si].cuts[ci],items=[...$('lines').children];
+  for(let i=0;i<ls.length;i++){
+    if(ls[i][0]==='n'&&!opt.narr&&ls.some(x=>x[0]!=='n')){items[i].classList.add('done');continue}
+    items[i].classList.add('now');
+    await say(ls[i][0],ls[i][2]||ls[i][1]);if(my!==tok)return;
+    items[i].classList.remove('now');items[i].classList.add('done');
+    await wait(450);if(my!==tok)return;
+  }
+  await wait(ci===N-1?1500:1100);if(my!==tok)return;
+  if(ci<N-1){ci++;play()}else{playing=false;finish()}
+}
+
+/* ---- 끝 화면: 이야기 하나를 끝까지 보면 ---- */
+function finish(){
+  hush();watched.add(si);
+  const st=S[si],last=st.cuts[N-1],nextI=[1,2,0].map(d=>(si+d)%3).find(k=>!watched.has(k))??(si+1)%3;  // 다 봤으면 다음 이야기
+  const all=watched.size===S.length;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  <div class="win"><i class="tp"></i><i class="stamp">${all?'세 가지<br>약속':'꼭<br>기억!'}</i><span class="wp"><img src="${src(st,N-1)}" alt=""></span>
+    <div class="wc"><h2>${DK.esc(st.rule)}</h2><p>${DK.esc(last[1][1])}</p></div></div>
+  ${DK.sayBig(st.rule)}
+  <div class="note"><i class="tp"></i><h3>${all?'세 이야기를 모두 봤어요!':'본 이야기'}</h3>
+    <ul class="done3">${S.map((s,k)=>`<li class="${watched.has(k)?'on':''}"><span>${watched.has(k)?'✓':k+1}</span><div>${s.key}${DK.eun(s.key)} ${k?'빌려주지':'알려주지'} 않아요.<br><small>${watched.has(k)?'봤어요':'아직 안 봤어요'}</small></div></li>`).join('')}</ul>
+    ${all?'<p style="margin:10px 0 0">친한 사람이 부탁해도 <b>비밀번호 · 통장 · 신분증</b>은 지켜요. 이상하면 믿을 수 있는 사람에게 말해요.</p>':''}</div>
+  <div class="acts"><button class="btn pri" data-act="other">다른 이야기 보기 ›</button><button class="btn line" data-act="replay">↻ 이 이야기 다시 보기</button><button class="btn sec" data-act="home">처음으로</button></div>${DK.DKU}`,{
+    home,other:()=>story(nextI,true),replay:()=>story(si,true)
+  });
+  DK.done({story:st.key,stories:S.filter((_,k)=>watched.has(k)).map(s=>s.key)});
+  if(opt.sound)DK.speak(st.rule+' '+last[1][1]);
+}
+
+document.addEventListener('keydown',e=>{
+  if(!$('lines')||/SELECT|INPUT|SUMMARY/.test(e.target.tagName)||document.querySelector('dialog[open]'))return;
+  if(e.key===' '){e.preventDefault();if(playing){hush();render()}else play()}
+  else if(e.key==='ArrowRight'){ci===N-1?finish():go(ci+1)}
+  else if(e.key==='ArrowLeft')go(ci-1);
+});
+document.addEventListener('fullscreenchange',()=>{const b=$('full');if(b)b.textContent=document.fullscreenElement?'작은 화면':'큰 화면'});
+addEventListener('pagehide',()=>{try{synth&&synth.cancel()}catch(e){}});
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
+home();
+</script>
+</body>
+</html>

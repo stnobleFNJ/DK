@@ -1,64 +1,40 @@
-"""전1-4 「내가 원하는 프로그램 고르기」 이미지(모두 없음)를 임시 일러스트로 만든다.
-사용: python tools/gen_1_4.py   → src/games/1-4/img/*.jpg, tools/placeholder_manifest/1-4.json
-프로그램 10개의 이름은 아직 정해지지 않아 임시로 정했다. 진짜 사진이 오면 같은 파일 이름으로 덮어쓰면 된다.
+"""전1-4 내가 원하는 프로그램 고르기: 11/18 수정 의견(오승은)의 실사 사진 10장을 게임용으로 줄인다.
+
+    python tools/gen_1_4.py
+
+- img/p-<id>.jpg : 프로그램 카드에 마우스를 올리거나 누르면 보이는 활동 사진(1200×675)
+- img/start.jpg  : 첫 화면 표지 — 사진 4장의 가운데(실제 사진 부분)를 나란히 붙인 그림(1200×675)
+
+원본은 16:9 가운데에 세로 사진이 있고 양옆은 흐리게 채운 그림이다. 카드에서는 16:9 그대로 쓴다.
 """
-import json
-import sys
 from pathlib import Path
+from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / 'tools'))
-from placeholder import scene  # noqa: E402
+SRC = ROOT / 'data/큐알활동/게임(전기)1단원 수정의견261118/게임(전기)1단원 수정의견261118/전1-4 일주일 계획하기/실사이미지10종'
+OUT = ROOT / 'src/games/1-4/img'
 
-OUT = ROOT / 'src' / 'games' / '1-4' / 'img'
-SIZE = (1200, 800)
-BGNAME = {'room': '거실(크림 벽·원목 바닥·창문·화분)', 'kitchen': '부엌(크림 벽·조리대·원목 바닥)',
-          'bedroom': '침실(크림 벽·침대·원목 바닥)', 'outdoor': '야외(하늘·나무·잔디·산책길)',
-          'town': '동네 거리(하늘·건물)', 'bath': '욕실(타일)', 'paper': '종이'}
-
-# (파일, 프로그램 이름, 이모지, 배경) — 프로그램 이름은 모두 임시
-PROGRAMS = [
-    ('prog-cook.jpg', '요리 교실', '🍳', 'kitchen'),
-    ('prog-art.jpg', '미술 교실', '🎨', 'room'),
-    ('prog-exercise.jpg', '건강 체조', '🤸', 'room'),
-    ('prog-sing.jpg', '노래 교실', '🎤', 'room'),
-    ('prog-computer.jpg', '컴퓨터 교실', '💻', 'room'),
-    ('prog-garden.jpg', '원예 교실', '🌱', 'outdoor'),
-    ('prog-book.jpg', '책 읽기 모임', '📚', 'room'),
-    ('prog-dance.jpg', '댄스 교실', '💃', 'room'),
-    ('prog-photo.jpg', '사진 교실', '📷', 'outdoor'),
-    ('prog-bowling.jpg', '볼링', '🎳', 'town'),
-]
-
-
-def entry(name, desc, emoji, bg, used):
-    return {
-        'file': f'src/games/1-4/img/{name}',
-        'desc': desc,
-        'structure': f'배경: {BGNAME[bg]} / 가운데 그림: 이모지 {emoji} (그림자 포함) / 이름표: 없음(이름은 화면 글자로 표시) '
-                     f'/ 도장: 오른쪽 위, 짧은 변의 26% 크기 빨간 원형 「임시생성」 / {SIZE[0]}×{SIZE[1]}px JPEG',
-        'used_in': used,
-    }
+# 파일 번호 → 게임 속 프로그램 id
+MAP = {'01': 'craft', '02': 'yoga', '03': 'pingpong', '04': 'cook', '05': 'drawing',
+       '06': 'drone', '07': 'nanta', '08': 'movie', '09': 'camp', '10': 'computer'}
 
 
 def main():
-    sys.stdout.reconfigure(encoding='utf-8')
-    man = []
-    out = OUT / 'start.jpg'
-    scene(out, None, '📅✏️', 'room', size=SIZE)
-    print(f'{out.relative_to(ROOT)}\t{out.stat().st_size // 1024}KB')
-    man.append(entry('start.jpg', '첫 화면 표지 그림: 일주일 시간표(달력)와 연필 — 수강신청을 시작하는 장면 대용',
-                     '📅✏️', 'room', '첫 화면 표지 사진'))
-    for name, text, emoji, bg in PROGRAMS:
-        out = OUT / name
-        scene(out, None, emoji, bg, size=SIZE)
-        print(f'{out.relative_to(ROOT)}\t{out.stat().st_size // 1024}KB')
-        man.append(entry(name, f'프로그램 「{text}」(이름 임시) 사진 대용 그림 — 프로그램 목록이 정해지면 사진 교체',
-                         emoji, bg, '프로그램 고르기 카드, 시간표 칸의 작은 사진, 결과 시간표 「내 프로그램 내 손으로」'))
-    mp = ROOT / 'tools' / 'placeholder_manifest' / '1-4.json'
-    mp.parent.mkdir(parents=True, exist_ok=True)
-    mp.write_text(json.dumps(man, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(mp.relative_to(ROOT), len(man))
+    OUT.mkdir(parents=True, exist_ok=True)
+    pics = {}
+    for f in sorted(SRC.glob('*.png')):
+        pid = MAP[f.name[:2]]
+        im = ImageOps.fit(Image.open(f).convert('RGB'), (1200, 675), Image.LANCZOS)
+        im.save(OUT / f'p-{pid}.jpg', quality=82, optimize=True, progressive=True)
+        pics[pid] = im
+        print('p-%s.jpg' % pid)
+    sheet = Image.new('RGB', (1200, 675), (255, 255, 255))
+    for i, pid in enumerate(['craft', 'cook', 'pingpong', 'camp']):
+        src = pics[pid].crop((360, 0, 840, 675))          # 가운데 실제 사진 부분
+        tile = ImageOps.fit(src, (296, 675), Image.LANCZOS)
+        sheet.paste(tile, (i * 301, 0))
+    sheet.save(OUT / 'start.jpg', quality=82, optimize=True, progressive=True)
+    print('start.jpg')
 
 
 if __name__ == '__main__':

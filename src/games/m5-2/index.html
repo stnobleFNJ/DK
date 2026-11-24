@@ -41,7 +41,7 @@
 .qn{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;padding:3px 12px;border-radius:999px;background:var(--tape);font:700 14px var(--fb)}
 .qn .tok{width:22px;height:22px;font-size:11px;border-width:1px}
 .scene{margin:14px 6px 0;transform:rotate(-1deg)}
-.scene .cp{aspect-ratio:16/10}
+.scene .cp{aspect-ratio:4/3}
 .scene .lb{position:absolute;left:14px;top:14px;z-index:2;padding:2px 10px;border-radius:999px;background:var(--no);color:#fff;font:700 12px var(--fb)}
 .pick.photo .ct{font-size:19px}
 .picks.tall{grid-template-columns:1fr 1fr}.picks.tall .cp{aspect-ratio:2/3}
@@ -69,7 +69,7 @@
 </head>
 <body>
 <div class="stage"><main class="app" id="app"></main></div>
-<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>몇 팀이 함께 할지 골라요. (2~4팀)</li><li>내 팀 차례에 주사위를 굴려요. (1~4)</li><li>나온 숫자만큼 말이 앞으로 가요.</li><li>멈춘 칸의 상황을 보고, 내 권리를 더 예의 있게 표현하는 말을 골라요.</li><li>맞히면 ✓, 틀리면 △가 칸에 표시돼요. 다시 기회는 없어요.</li></ol><p>도착 칸에 가장 먼저 도착한 팀이 승리해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>몇 팀이 함께 할지 골라요. (2~4팀)</li><li>내 팀 차례에 주사위를 굴려요. (1~4)</li><li>나온 숫자만큼 말이 앞으로 가요.</li><li>멈춘 칸의 상황을 보고, 내 권리를 표현하는 말을 골라요.</li><li>○ 내 권리를 표현해요 · △ 표현하지 못하고 참아요. 고른 것이 칸에 ○·△로 표시돼요. 다시 기회는 없어요.</li></ol><p>도착 칸에 가장 먼저 도착한 팀이 승리해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
 /* ── 게임 내용: 중5-2 나의권리말판게임.html 그대로 ── */
@@ -78,48 +78,49 @@ const G={
   brand:{mark:'권',html:'나의 권리 <b>말판 게임</b>'},
   eb:'My rights',
   h1:'나의 권리 <em>말판 게임</em>',
-  intro:'주사위를 굴리며 나의 권리를 예의 있게 표현해요. 말이 멈춘 칸의 상황을 보고, 내 마음을 어떻게 말하면 좋을지 골라 보세요.',
+  intro:'주사위를 굴리며 나의 권리를 표현해 봐요. 말이 멈춘 칸의 상황을 보고, 내 권리를 표현하는 말을 골라 보세요.',
   scene:'권리 침해 상황',
-  ask:'내 권리를 더 예의 있게 표현하는 말은 무엇일까요?',
+  ask:'내 권리를 어떻게 표현할까요?',
   quote:true, // 보기 문구를 말풍선(“ ”)으로 보여 줄지
-  done:'내 권리를 차분하고 예의 있게 말해 보세요.'
+  done:'불편할 때는 참지 말고, 내 권리를 차분하게 말해 보세요.'
 };
-// 칸 2~12 미션. 그림: img/qNN-scene.jpg(상황) · qNN-good.jpg(⭕) · qNN-bad.jpg(❌)
-// lay: 보기 그림 모양 — tall(세로로 긴 그림 2장 나란히), wide(가로로 긴 그림 위아래), std(4:3 나란히)
+// 칸 2~12 미션 = 「말판 내용 참고.hwp」(11/14, 나관엽) 그대로. [말, 설명]
+// ok = ○ 내 권리를 표현해요 · no = △ 표현하지 못하고 참아요
+// 그림: img/qNN-scene.jpg(상황) · qNN-good.jpg(○) · qNN-bad.jpg(△) — 모두 4:3, tools/gen_m5_2.py
 const T={
-  2:{lay:'wide',text:'먹고 싶은 메뉴를 묻지 않고 주문해요.',
-     ok:['저도 먹고 싶은 메뉴가 있어요. 저에게도 물어봐 주세요.','맞아요! 화내지 않고 내 권리를 부드럽게 표현하는 방법이에요.'],
-     no:['왜 마음대로 시켜요! 짜증나게 하지 마세요!','아니에요. 같은 마음이라도 화내며 말하면 오해를 살 수 있어요.']},
-  3:{lay:'wide',text:'계속 반말로 나에게 말해요.',
-     ok:['저에게 존댓말로 말씀해 주세요.','맞아요! 차분하게 부탁하는 말투가 내 권리를 잘 전달해요.'],
-     no:['말버릇이 그게 뭐예요! 당장 그만해요!','아니에요. 소리치듯 말하면 대화가 더 어려워질 수 있어요.']},
-  4:{lay:'wide',text:'갑자기 손목을 잡아 당겨요.',
-     ok:['먼저 말씀해 주시고 잡아 주세요.','맞아요! 놀랐던 마음을 침착하게 부탁하는 말로 전하는 것이 좋아요.'],
-     no:['왜 함부로 만져요! 손 치워요!','아니에요. 놀랄 수는 있지만, 화내듯 소리치면 상대방도 놀라게 돼요.']},
-  5:{lay:'wide',text:'다른 사람 앞에서 나의 가족 이야기를 해요.',
-     ok:['제 가족 이야기는 다른 분께 하지 말아 주세요.','맞아요! 분명하지만 예의 있게 부탁하는 말이에요.'],
-     no:['당신이 뭔데 그런 얘기를 해요!','아니에요. 따지듯 말하면 내 뜻이 오히려 잘 전달되지 않아요.']},
-  6:{lay:'wide',text:'하기 싫다는 활동을 계속 시켜요.',
-     ok:['저는 하고 싶지 않아요.','맞아요! 짧고 분명하게, 침착하게 내 마음을 말하는 것이 좋아요.'],
-     no:['싫다고 몇 번을 말해요! 그만 좀 하세요!','아니에요. 화를 내며 말하면 내 뜻이 아니라 화만 전달될 수 있어요.']},
-  7:{lay:'tall',text:'도와달라는 표현을 무시해요.',
-     ok:['저 좀 도와주세요.','맞아요! 다시 한 번 침착하게 부탁하는 것이 좋은 방법이에요.'],
-     no:['왜 못 들은 척해요! 답답하게!','아니에요. 화를 내면 오히려 도움을 요청하기 더 어려워질 수 있어요.']},
-  8:{lay:'wide',text:'가고 싶은 장소를 정할 때 내 말을 듣지 않아요.',
-     ok:['저도 가고 싶은 곳이 있어요. 제 이야기도 들어주세요.','맞아요! 내 의견이 있다는 것을 차분하게 알리는 것이 좋아요.'],
-     no:['왜 내 말은 무시해요! 마음대로 정하지 마요!','아니에요. 따지듯 말하면 대화가 더 어려워질 수 있어요.']},
-  9:{lay:'wide',text:'머리를 쓰다듬으며 어린아이처럼 대해요.',
-     ok:['저는 어린아이가 아니에요. 존중해서 대해 주세요.','맞아요! 내 마음을 분명하고 침착하게 전하는 표현이에요.'],
-     no:['만지지 마요! 나를 무시하는 거예요?','아니에요. 다그치듯 말하면 오해가 생길 수 있어요.']},
-  10:{lay:'wide',text:'허락 없이 내 몸의 자세를 바꿔요.',
-     ok:['먼저 말씀해 주시고 자세를 바꿔 주세요.','맞아요! 놀란 마음을 부탁하는 말로 차분하게 전하는 것이 좋아요.'],
-     no:['왜 허락도 없이 만져요! 하지 마요!','아니에요. 소리치듯 말하면 상대방도 놀라고 대화가 어려워져요.']},
-  11:{lay:'wide',text:'나의 개인적인 고민을 다른 사람에게 말해요.',
-     ok:['제 고민은 다른 분께 말하지 말아 주세요.','맞아요! 분명하지만 예의 있게 부탁하는 말이에요.'],
-     no:['당신이 뭔데 내 얘기를 떠들어요!','아니에요. 따지듯 말하면 내 마음이 잘 전달되지 않을 수 있어요.']},
-  12:{lay:'wide',text:'내가 고른 물건 대신 다른 물건을 사요.',
-     ok:['제가 고른 물건으로 사고 싶어요. 제 선택을 존중해 주세요.','맞아요! 내 선택을 차분하고 분명하게 말하는 것이 좋아요.'],
-     no:['왜 마음대로 바꿔요! 짜증나게!','아니에요. 짜증내듯 말하면 내 뜻보다 화가 먼저 전달돼요.']}
+  2:{text:'먹고 싶은 메뉴를 묻지 않고 주문해요.',
+     ok:['저도 먹고 싶은 메뉴가 있어요. 저에게도 물어봐 주세요.','선생님에게 먹고 싶은 메뉴를 말해요.'],
+     no:['네… 아무거나 괜찮아요.','먹고 싶지 않은 음식을 그냥 먹어요.']},
+  3:{text:'계속 반말로 나에게 말해요.',
+     ok:['저에게 존댓말로 말씀해 주세요.','선생님을 보고 차분하게 말해요.'],
+     no:['……네, 알겠어.','기분이 나쁘지만 반말을 계속 들어요.']},
+  4:{text:'갑자기 손목을 잡아 당겨요.',
+     ok:['먼저 말씀해 주시고 잡아 주세요.','걸음을 멈추고 선생님에게 말해요.'],
+     no:['아… 네, 갈게요.','손목이 아프지만 끌려가요.']},
+  5:{text:'다른 사람 앞에서 나의 가족 이야기를 해요.',
+     ok:['제 가족 이야기는 다른 분께 하지 말아 주세요.','이야기를 멈춰 달라고 말해요.'],
+     no:['……네, 맞아요.','창피하지만 가만히 듣고 있어요.']},
+  6:{text:'하기 싫다는 활동을 계속 시켜요.',
+     ok:['저는 하고 싶지 않아요.','하고 싶지 않다고 분명하게 말해요.'],
+     no:['네… 그냥 할게요.','하기 싫지만 참고 활동을 해요.']},
+  7:{text:'도와달라는 표현을 무시해요.',
+     ok:['저 좀 도와주세요.','선생님 앞으로 가서 다시 말해요.'],
+     no:['괜찮아요. 안 도와주셔도 돼요.','도움이 필요하지만 혼자 끙끙대요.']},
+  8:{text:'가고 싶은 장소를 정할 때 내 말을 듣지 않아요.',
+     ok:['저도 가고 싶은 곳이 있어요. 제 이야기도 들어주세요.','가고 싶은 곳을 말해요.'],
+     no:['네… 거기로 가요.','가고 싶지 않은 곳에 따라가요.']},
+  9:{text:'머리를 쓰다듬으며 어린아이처럼 대해요.',
+     ok:['저는 어린아이가 아니에요. 존중해서 대해 주세요.','선생님의 손을 멈추게 하고 말해요.'],
+     no:['헤헤… 네.','기분이 나쁘지만 웃으며 가만히 있어요.']},
+  10:{text:'허락 없이 내 몸의 자세를 바꿔요.',
+     ok:['먼저 말씀해 주시고 자세를 바꿔 주세요.','불편하다고 선생님에게 말해요.'],
+     no:['……네.','불편하지만 아무 말 없이 참아요.']},
+  11:{text:'나의 개인적인 고민을 다른 사람에게 말해요.',
+     ok:['제 고민은 다른 분께 말하지 말아 주세요.','선생님에게 따로 말해요.'],
+     no:['……괜찮아요.','속상하지만 다음부터 고민을 혼자 숨겨요.']},
+  12:{text:'내가 고른 물건 대신 다른 물건을 사요.',
+     ok:['제가 고른 물건으로 사고 싶어요. 제 선택을 존중해 주세요.','내가 고른 물건을 가리키며 말해요.'],
+     no:['네… 이걸로 할게요.','마음에 들지 않는 물건을 그냥 받아요.']}
 };
 const LAST=13,DIE=4; // 1 출발 · 2~12 미션 · 13 도착, 주사위 1~4 (프로토타입과 같음)
 
@@ -144,13 +145,13 @@ function board(me){
   for(let c=1;c<=LAST;c++){
     const [x,y]=spot(c),here=me!=null&&P[me]&&P[me].pos===c;
     const tks=P.map((p,i)=>p.pos===c?tok(i,i===me?'me':''):'').join('');
-    const mks=P.map((p,i)=>p.res.has(c)?`<i class="mk" style="background:${TC[i]}">${p.res.get(c)?'✓':'△'}</i>`:'').join('');
+    const mks=P.map((p,i)=>p.res.has(c)?`<i class="mk" style="background:${TC[i]}">${p.res.get(c)?'○':'△'}</i>`:'').join('');
     const inner=c===1?'<b>🚩</b>출발':c===LAST?'<b>🏆</b>도착':`<img src="img/q${DK.pad(c)}-thumb.jpg" alt="" loading="lazy"><span class="no">${c}</span>`;
     cells.push(`<div class="cell${c===1||c===LAST?' end':''}${c===LAST?' fin':''}${here?' here':''}" style="grid-column:${x+1};grid-row:${y+1}" aria-label="${c===1?'출발':c===LAST?'도착':c+'번 칸'}">${inner}${mks?`<span class="mks">${mks}</span>`:''}<span class="tks">${tks}</span></div>`);
   }
   return `<div class="board" aria-label="말판: 출발에서 도착까지 ${LAST}칸">${cells.join('')}</div>`;
 }
-const legend=()=>`<p class="blg"><span>✓ 맞힌 칸</span><span>△ 틀린 칸</span><span>칸 번호 순서로 ㄹ자로 가요</span></p>`;
+const legend=()=>`<p class="blg"><span>○ 권리를 표현한 칸</span><span>△ 참은 칸</span><span>칸 번호 순서로 ㄹ자로 가요</span></p>`;
 
 function home(){
   clear();P=[];
@@ -175,7 +176,7 @@ function people(){
   });
 }
 
-// 기록: pos 말 위치(1=출발), res 칸별 결과(true 맞힘 / false 틀림)
+// 기록: pos 말 위치(1=출발), res 칸별 결과(true ○ 권리 표현 / false △ 참음)
 function newGame(){P=Array.from({length:n},()=>({pos:1,res:new Map()}));cur=0;turn()}
 
 function turn(){
@@ -222,7 +223,7 @@ function quiz(c){
   <div class="photo scene"><i class="tp"></i><span class="lb">${G.scene}</span><span class="cp"><img src="img/q${N}-scene.jpg" alt="${DK.esc(t.text)}"></span></div>
   ${DK.sayBig(t.text)}
   <p class="q">${G.ask}</p>
-  <div class="picks ${t.lay}">${opts.map((o,k)=>`<button class="pick photo" data-act="pick" data-k="${k}"><i class="tp"></i><span class="cn">${k+1}</span><span class="cp"><img src="${o.img}" alt=""></span><span class="ct">${DK.esc(q(o.t))}</span></button>`).join('')}</div>
+  <div class="picks std">${opts.map((o,k)=>`<button class="pick photo" data-act="pick" data-k="${k}"><i class="tp"></i><span class="cn">${k+1}</span><span class="cp"><img src="${o.img}" alt=""></span><span class="ct">${DK.esc(q(o.t))}</span></button>`).join('')}</div>
   <div id="fb" aria-live="polite"></div><div class="acts" id="nx"></div>${DK.DKU}`,{
     home,
     pick:b=>{
@@ -230,13 +231,14 @@ function quiz(c){
       bs.forEach(x=>x.disabled=true);
       P[cur].res.set(c,o.ok);
       b.classList.add(o.ok?'ok':'bad');
-      // 틀렸을 때도 바른 행동 그림에 ⭕를 보여 준다
-      bs.forEach((x,k)=>x.insertAdjacentHTML('afterbegin',`<span class="mk" aria-hidden="true">${opts[k].ok?'⭕':'❌'}</span>`));
+      // △를 골랐을 때도 권리를 표현하는 그림에 ○를 보여 준다
+      bs.forEach((x,k)=>x.insertAdjacentHTML('afterbegin',`<span class="mk" aria-hidden="true">${opts[k].ok?'○':'△'}</span>`));
       if(!o.ok)bs.forEach((x,k)=>opts[k].ok&&x.classList.add('ok'));
-      fb.innerHTML=o.ok?`<p class="fb ok"><span>⭕</span><span>정답이에요!<small>${DK.esc(o.why)}</small></span></p>`
-        :`<p class="fb no"><span>❌</span><span>아쉬워요!<small>${DK.esc(o.why)}</small></span></p>`;
+      const good=opts.find(x=>x.ok);
+      fb.innerHTML=o.ok?`<p class="fb ok"><span>○</span><span>잘했어요! 내 권리를 표현했어요.<small>${DK.esc(o.why)}</small></span></p>`
+        :`<p class="fb no"><span>△</span><span>표현하지 못하고 참았어요. 참지 말고 표현해 봐요.<small>${DK.esc(o.why)} → ○ ${DK.esc(good.why)}</small></span></p>`;
       nx.innerHTML=`<button class="btn pri" id="nb">다음 팀 차례 ›</button>`;nx.querySelector('#nb').onclick=next;
-      DK.speak((o.ok?'정답이에요! ':'아쉬워요! ')+o.why);fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+      DK.speak(o.ok?'잘했어요! 내 권리를 표현했어요. '+o.why:'표현하지 못하고 참았어요. 참지 말고 표현해 봐요. '+good.t);fb.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
   });
   later(()=>DK.speak(`${c}번 칸. ${t.text} ${G.ask}`),300);
@@ -248,14 +250,14 @@ function win(){
   clear();
   const w=cur,name=TEAM[w];
   const say=`${name} 승리! 가장 먼저 도착했어요!`;
-  // 임시: 팀별 정리(맞힌 미션·어려웠던 미션)는 프로토타입에 없어 덧붙임
+  // 임시: 팀별 정리(○ 표현한 미션·△ 참은 미션)는 프로토타입에 없어 덧붙임
   const rk=P.map((p,i)=>({p,i})).sort((a,b)=>(b.i===w)-(a.i===w)||b.p.pos-a.p.pos);
   DK.mount(root,`${DK.hbar(G.brand,true)}
   <div class="win"><span class="stamp">${tok(w)}<br>승리!</span><span class="wp" style="aspect-ratio:auto">${board(w)}</span><div class="wc"><h2>${name} 승리!</h2><p>가장 먼저 도착했어요!</p></div></div>
   ${DK.sayBig(say)}
   <div class="note"><h3>🎲 팀별 결과</h3><ul class="plist">${rk.map(({p,i})=>{
     const ok=[...p.res.values()].filter(Boolean).length,bad=[...p.res].filter(([,v])=>!v).map(([c])=>c).sort((a,b)=>a-b);
-    return `<li>${tok(i)}<div><b>${TEAM[i]}</b><p>미션 ${p.res.size}개 중 ${ok}개 맞힘${bad.length?'<br>'+bad.map(c=>`${c}번 칸 → <span>${DK.esc(q(T[c].ok[0]))}</span>`).join('<br>'):p.res.size?' 👍':''}</p></div><span class="rk">${i===w?'🏆 도착':p.pos+'번 칸'}</span></li>`}).join('')}</ul>
+    return `<li>${tok(i)}<div><b>${TEAM[i]}</b><p>미션 ${p.res.size}개 중 ${ok}개 권리 표현${bad.length?'<br>'+bad.map(c=>`${c}번 칸 → <span>${DK.esc(q(T[c].ok[0]))}</span>`).join('<br>'):p.res.size?' 👍':''}</p></div><span class="rk">${i===w?'🏆 도착':p.pos+'번 칸'}</span></li>`}).join('')}</ul>
   <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">${G.done}</p></div>
   <div class="acts"><button class="btn pri" data-act="again">↻ 다시 하기</button><button class="btn line" data-act="home">처음으로</button></div>${DK.DKU}`,{
     home,again:people

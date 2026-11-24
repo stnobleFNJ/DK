@@ -52,11 +52,12 @@
 const BRAND={mark:'마',html:'내 마음 <b>표현하기</b>'};
 const STEPS=['상황','마음','이유'];
 // 상황·마음·이유 문장과 사진 = 「사진 적용시 참고 사항」(전3-3) 그대로. 사진은 tools/gen_3_3.py로 만든 실제 사진.
-// link: 마지막 문장 앞부분(상황 문장의 연결형). 예) 여자친구를 만나서 + 기뻐요. 그 이유는 + 오랜만에 만나서요.
+// 11/18 수정(조가영): 성별 빼고 「친구를 만났어요.」, 설레요→즐거워요(하트 없는 사진), 문장은 「그 이유는 …요.」만.
+// link: 상황 문장의 연결형(이유 고르기 화면의 안내 음성에 씀). 예) 친구를 만나서 + 기뻐요.
 // 사진 파일: sN-sit.jpg(상황) · sN-fK.jpg(마음 K번째) · sN-wK.jpg(이유 K번째)
 const SITS=[
-  {cap:'여자친구를 만났어요.',link:'여자친구를 만나서',
-   feels:['기뻐요','설레요','긴장돼요','미안해요'],
+  {cap:'친구를 만났어요.',link:'친구를 만나서',
+   feels:['기뻐요','즐거워요','긴장돼요','미안해요'],
    whys:['오랜만에 만나서요','함께 놀러 갈 거라서요','무슨 말을 해야 할지 몰라서요','약속 시간에 늦어서요']},
   {cap:'약속이 취소되었어요.',link:'약속이 취소되어서',
    feels:['슬퍼요','실망스러워요','속상해요','짜증 나요'],
@@ -68,8 +69,8 @@ const SITS=[
    feels:['기뻐요','고마워요','궁금해요','실망스러워요'],
    whys:['갖고 싶었던 선물을 받아서요','내 생일을 기억하고 선물을 준비해 줘서요','포장 안에 무엇이 들어 있는지 몰라서요','내가 좋아하는 선물이 아니라서요']}
 ].map((s,i)=>({...s,img:`img/s${i+1}-sit.jpg`,fimg:k=>`img/s${i+1}-f${k+1}.jpg`,wimg:k=>`img/s${i+1}-w${k+1}.jpg`}));
-// 문장: "여자친구를 만나서 기뻐요. 그 이유는 오랜만에 만나서요." (요청서 예시 형식)
-const sentence=(s,a)=>`${s.link} ${s.feels[a.f]}. 그 이유는 ${s.whys[a.w]}.`;
+// 문장: "그 이유는 오랜만에 만나서요." — 11/18 요청: 상황·마음은 빼고 이유만
+const sentence=(s,a)=>`그 이유는 ${s.whys[a.w]}.`;
 const card=(cls,img,text,k,on)=>`<button class="pc ${cls}${on?' on':''}" data-act="pick" data-k="${k}" aria-label="${DK.esc(text)}" aria-pressed="${on?'true':'false'}"><span class="pi"><img src="${img}" alt=""></span><span class="pv">${text}</span></button>`;
 
 const root=document.getElementById('app');
@@ -81,7 +82,7 @@ function home(){
   clear();ans=[];
   const intro='내 마음을 표현해 보세요!';
   DK.mount(root,`${DK.hbar(BRAND)}
-  <section class="hero"><span class="eb">Express my feelings</span><h1 class="h1">내 마음을<br><em>표현해 보세요!</em></h1><p>상황을 보고, 어떤 마음이 드는지와 그 이유를 골라요. 4가지 상황이 있어요.</p></section>
+  <section class="hero"><span class="eb">Express my feelings</span><h1 class="h1">내 마음을<br><em>표현해 보세요!</em></h1><p>상황을 보고 마음과 이유를 골라요.</p></section>
   ${DK.steps(STEPS,0)}
   <div class="hero-faces" aria-hidden="true"><img src="img/s1-f1.jpg" alt=""><img src="img/s2-f1.jpg" alt=""><img src="img/s3-f3.jpg" alt=""><img src="img/s4-f2.jpg" alt=""></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${intro}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>feel(0)});
@@ -146,9 +147,9 @@ function finish(){
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.steps(STEPS,2)}
   <p class="q">${head}</p><p class="qs">4가지 상황에서 내 마음은 이랬어요.</p>
-  <div class="rl">${SITS.map((s,i)=>`<div class="rc"><div class="top"><span class="cp"><img src="${s.img}" alt=""></span><span style="flex:1"><span class="no">상황 ${i+1}</span><br>${s.cap}</span><img class="fi" src="${s.fimg(ans[i].f)}" alt="${DK.esc(s.feels[ans[i].f])}"></div><p><span>${all[i]}</span><button class="spk" data-say="${DK.esc(all[i])}" aria-label="소리로 듣기">${DK.SPK}</button></p></div>`).join('')}</div>
+  <div class="rl">${SITS.map((s,i)=>`<div class="rc"><div class="top"><span class="cp"><img src="${s.img}" alt=""></span><span style="flex:1"><span class="no">상황 ${i+1}</span><br>${s.cap}</span><img class="fi" src="${s.fimg(ans[i].f)}" alt="${DK.esc(s.feels[ans[i].f])}"></div><p><span><b>${s.feels[ans[i].f]}</b> ${all[i]}</span><button class="spk" data-say="${DK.esc(s.feels[ans[i].f]+'. '+all[i])}" aria-label="소리로 듣기">${DK.SPK}</button></p></div>`).join('')}</div>
   <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 해 보기</button></div>${DK.DKU}`,{
-    home,again:()=>{ans=[];feel(0)},listen:()=>DK.speak(`${head} ${all.join(' ')}`)
+    home,again:()=>{ans=[];feel(0)},listen:()=>DK.speak(`${head} ${SITS.map((s,i)=>s.feels[ans[i].f]+'. '+all[i]).join(' ')}`)
   });
   DK.done();
   later(()=>DK.speak(head),400);

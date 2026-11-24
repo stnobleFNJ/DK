@@ -4,6 +4,7 @@
 원본: data/_1102/게임(전기3,4단원)/게임(전기3,4)/전3-3 오늘의 마음 살펴보기/<상황>/{상황,감정,이유}/<문장>.png
   상황 → sN-sit.jpg, 감정 → sN-f1~f4.jpg, 이유 → sN-w1~w4.jpg (번호 순서 = 「사진 적용시 참고 사항」의 보기 순서)
 원본은 1672×941 PNG(사진). 비율은 그대로 두고 긴 변 1200px, JPEG quality 83으로 줄인다. 도장은 찍지 않는다.
+11/18 수정 요청(조가영): 상황1의 「설레요」 사진은 「즐거워요」로 쓰고, 사람 주위의 하트를 지운다(clean_hearts).
 여러 번 실행해도 같은 결과가 나온다.
 """
 import sys
@@ -38,8 +39,25 @@ def find(folder, text):
     return hits[0]
 
 
-def save(src, out):
+def clean_hearts(im):
+    """흰 배경에 떠 있는 분홍 하트를 지운다. 사람(가운데)·옷(아래)에는 손대지 않는다."""
+    import cv2
+    import numpy as np
+    a = np.array(im)
+    r, g, b = (a[..., i].astype(int) for i in range(3))
+    h, w = r.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    side = (xx < w * 0.32) | (xx > w * 0.68)
+    mask = ((r - g > 18) & (r > 150) & side & (yy < h * 0.68)).astype('uint8') * 255
+    mask = cv2.dilate(mask, np.ones((9, 9), 'uint8'))
+    a = cv2.inpaint(a, mask, 7, cv2.INPAINT_TELEA)
+    return Image.fromarray(a)
+
+
+def save(src, out, fix=None):
     im = Image.open(src).convert('RGB')
+    if fix:
+        im = fix(im)
     if max(im.size) > MAXW:
         k = MAXW / max(im.size)
         im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
@@ -54,7 +72,7 @@ def main():
         d = SRC / folder
         save(find(d / '상황', sit), OUT / f's{n}-sit.jpg')
         for k, t in enumerate(feels, 1):
-            save(find(d / '감정', t), OUT / f's{n}-f{k}.jpg')
+            save(find(d / '감정', t), OUT / f's{n}-f{k}.jpg', clean_hearts if (n, t) == (1, '설레요') else None)
         for k, t in enumerate(whys, 1):
             save(find(d / '이유', t), OUT / f's{n}-w{k}.jpg')
 

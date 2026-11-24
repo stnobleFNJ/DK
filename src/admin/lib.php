@@ -92,6 +92,21 @@ function schema($db)
         last_login DATETIME NULL,
         UNIQUE KEY username (username)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // 모두의 작품 모음(전4-1 옷차림 · 전4-2 공간): 고른 번호만 저장, 삭제는 view_state='D'
+    $db->query('CREATE TABLE IF NOT EXISTS ' . T('gallery') . " (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        game VARCHAR(20) NOT NULL,
+        name VARCHAR(40) NOT NULL,
+        data TEXT NOT NULL,
+        ip VARCHAR(45) NOT NULL,
+        ua VARCHAR(255) NOT NULL DEFAULT '',
+        view_state CHAR(1) NOT NULL DEFAULT 'Y',
+        deleted_at DATETIME NULL,
+        deleted_by VARCHAR(40) NULL,
+        created_at DATETIME NOT NULL,
+        KEY game_view (game, view_state, id),
+        KEY ip_time (ip, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     if ($db->error) fail('표를 만들 수 없습니다: ' . $db->error);
     // 나중에 더한 칸: 결과 화면 HTML(게임 결과 화면 보기)
     if (!$db->query('SHOW COLUMNS FROM ' . T('play') . " LIKE 'snap'")->num_rows)
@@ -196,6 +211,7 @@ function head_html($title, $u = null, $on = '')
     $nav = '';
     if ($u) {
         $nav = '<nav><a href="index.php" class="' . ($on === 'r' ? 'on' : '') . '">게임 기록</a>'
+            . '<a href="gallery_admin.php" class="' . ($on === 'g' ? 'on' : '') . '">작품 모음</a>'
             . ($u['role'] === 'super' ? '<a href="admins.php" class="' . ($on === 'a' ? 'on' : '') . '">관리자 관리</a>' : '')
             . '<span class="who">' . h($u['name'] ?: $u['username']) . ' (' . h($u['username']) . ')</span>'
             . '<form method="post" action="logout.php" class="inl"><input type="hidden" name="csrf" value="' . h(csrf()) . '"><button class="lk">로그아웃</button></form></nav>';

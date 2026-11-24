@@ -49,12 +49,14 @@
 /* 완성 */
 .win .room{margin:0}
 .win h2{font-size:26px}
+.gal .room{margin:0}
 </style>
 </head>
 <body>
 <div class="stage"><main class="app" id="app"></main></div>
-<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>커튼과 가구를 하나씩 골라요. (7가지)</li><li>아래 가구를 누르면 방에 들어가요.</li><li>방의 다른 곳을 누르거나, 끌어서 옮겨요.</li><li>6개를 모두 놓으면 ‘완성!’을 눌러요.</li></ol><p>정답은 없어요. 내 마음에 드는 방을 만들어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>커튼과 가구를 하나씩 골라요. (7가지)</li><li>아래 가구를 누르면 방에 들어가요.</li><li>방의 다른 곳을 누르거나, 끌어서 옮겨요.</li><li>6개를 모두 놓으면 ‘완성!’을 눌러요.</li><li>이름을 적어 올리면 다른 사람의 공간과 함께 볼 수 있어요.</li></ol><p>정답은 없어요. 내 마음에 드는 방을 만들어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
+<script src="../common/gallery.js"></script>
 <script>
 const BRAND={mark:'방',html:'나의 <b>공간 꾸미기</b>'};
 const STEPS=['가구 고르기','가구 놓기','완성'];
@@ -218,10 +220,18 @@ function done(){
   ${DK.steps(STEPS,2)}
   <div class="win"><i class="tp"></i><span class="stamp">완성!</span>${roomHTML(true)}<div class="wc"><h2>${msg}</h2><p>${DK.esc(nameOf('curtain'))} · ${FURN.map(t=>DK.esc(nameOf(t.k))).join(' · ')}</p></div></div>
   <div class="acts two"><button class="btn sec" data-say="${msg}">🔊 다시 듣기</button><button class="btn sec" data-act="move">가구 옮기기</button></div>
-  <div class="acts" style="margin-top:8px"><button class="btn pri" data-act="again">↻ 다시 꾸미기</button></div>${DK.DKU}`,{
+  <div class="acts" style="margin-top:8px"><button class="btn pri" data-act="again">↻ 다시 꾸미기</button></div>
+  <div id="gal"></div>${DK.DKU}`,{
     home,move:place,again:()=>{reset();choose(0)}
   });
   DK.done();
+  // 모두의 공간: 고른 가구 번호와 놓은 자리만 올리고, 다른 사람 방도 같은 그림으로 다시 그린다
+  const mine={pick:{...pick},pos:Object.fromEntries(FURN.map(t=>[t.k,{x:+pos[t.k].x.toFixed(2),y:+pos[t.k].y.toFixed(2)}]))};
+  const other=(d,f)=>{const keep=[pick,pos,cur];pick=d.pick;pos=d.pos;cur=null;try{return f()}finally{[pick,pos,cur]=keep}};
+  DKGallery.mount(root.querySelector('#gal'),{game:'4-2',title:'모두의 공간 보기',what:'공간',data:mine,cw:'200px',
+    render:d=>other(d,()=>roomHTML(true).replace(' id="room"','')),
+    alt:d=>other(d,()=>[nameOf('curtain'),...FURN.map(t=>nameOf(t.k))].join(', ')),
+    shareText:'나의 공간 아름답게 꾸미기 — 나도 내 방을 꾸며 보세요!'});
   const r=root.querySelector('#room');r.setAttribute('role','img');r.setAttribute('aria-label',roomAlt());
   DK.speak(msg);
 }

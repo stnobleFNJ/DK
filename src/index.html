@@ -50,6 +50,18 @@ a.card:active{transform:scale(.97)}
 a.card .img{margin-top:6px}
 div.card{background:var(--paper);border:1.5px dashed var(--line)}
 div.card .code{color:var(--muted)}
+/* QR: 교재(교재_생애주기_전기.pdf)의 둥근 QR 상자 모양. 과정 색 = 교재 표지 색(전기 주황·중기 초록·후기 보라) */
+.grid li{position:relative}
+a.card.has-qr .img,a.card.has-qr .go{margin-right:78px}
+.qr{position:absolute;right:12px;bottom:12px;z-index:2;width:66px;padding:5px 5px 3px;border:2.5px solid var(--qc,#453f36);border-radius:12px;background:#fff;cursor:pointer;font:700 9px/1.2 var(--fb);color:var(--qc,#453f36);text-align:center;transform:rotate(-1.5deg);transition:transform .2s,box-shadow .2s}
+.grid li:nth-child(even) .qr{transform:rotate(1.5deg)}
+.qr svg{display:block;width:100%;height:auto}
+.qr span{display:block;margin-top:2px;letter-spacing:-.02em}
+.qr:hover,.qr:focus-visible{transform:rotate(0) scale(1.06);box-shadow:0 6px 14px rgba(60,40,20,.25);outline:none}
+.qr:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.sec-early{--qc:#f07c54}.sec-middle{--qc:#3da27c}.sec-late{--qc:#8e5aa8}
+a.card .go{white-space:nowrap}
+@media (max-width:639px){a.card.has-qr .go{margin-right:56px;font-size:13px;padding:6px 10px}a.card.has-qr .img{margin-right:56px}.qr{width:50px;right:10px;padding:4px 4px 2px;border-width:2px;border-radius:10px}.qr span{font-size:8px}}
 @media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (min-width:900px){.wrap{padding:44px 32px 88px}.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:30px 20px}}
 @media (prefers-reduced-motion:reduce){a.card{transition:none}}
@@ -60,6 +72,7 @@ div.card .code{color:var(--muted)}
 <header><span class="eb">생애주기 · 성인</span><h1>오늘의 <em>게임</em> 목록</h1></header>
 <div id="games"></div>
 </div>
+<script src="games/common/qrcode.js"></script>
 <script>
 // 이름은 docs/게임개발목록.md 기준. 요청서에 없는 차시는 name을 비워 두면 굵은 '미정'으로 표시된다.
 // 게임이 완성되면 href를 채우면 카드가 링크로 바뀐다. isNew: 1=NEW(새 게임) · 2=UPDATE(실제 사진·자료 반영) — 11/02·11/09·11/24 자료 기준
@@ -116,12 +129,51 @@ const LATE=[
  {code:'후5-2',name:'나의 추억 카드 만들기',href:'games/h5-2/index.html',img:'ok',isNew:1}
 ];
 const SECTIONS=[['성인 전기','EARLY',EARLY],['성인 중기','MIDDLE',MIDDLE],['성인 후기','LATE',LATE]];
+// ── QR 코드: 내용은 「시작하기」를 눌렀을 때 들어가는 주소. 누르면 교재용 PNG로 저장 ──
+const PROD='https://dnefit.mycafe24.com/dk/';  // 내 PC(로컬)에서 열었을 때는 실제 서버 주소로 만든다
+const LOCAL=location.protocol==='file:'||/^(localhost|127\.|10\.|192\.168\.|\[?::1)/.test(location.hostname);
+const COURSE={'성인 전기':'#f07c54','성인 중기':'#3da27c','성인 후기':'#8e5aa8'};
+function gameUrl(href){return new URL(href,LOCAL?PROD:location.href).href}
+function makeQR(url){const q=qrcode(0,'M');q.addData(url);q.make();return q}
+function qrSvg(q){const n=q.getModuleCount();let d='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c} ${r}h1v1h-1z`;
+ return `<svg viewBox="-2 -2 ${n+4} ${n+4}" shape-rendering="crispEdges" aria-hidden="true"><rect x="-2" y="-2" width="${n+4}" height="${n+4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
+function qrButton(g,course){
+ const url=gameUrl(g.href),b=document.createElement('button');
+ b.type='button';b.className='qr';b.title='QR 코드 이미지 저장 · '+url;
+ b.setAttribute('aria-label',g.code+' '+(g.name||'')+' QR 코드 이미지로 저장');
+ b.innerHTML=qrSvg(makeQR(url))+'<span>QR 저장</span>';
+ b.onclick=()=>saveQR(g,url,COURSE[course]||'#453f36');
+ return b;
+}
+function wrapText(x,t,max){const out=[];let line='';for(const w of t.split(' ')){const tryL=line?line+' '+w:w;if(x.measureText(tryL).width>max&&line){out.push(line);line=w}else line=tryL}if(line)out.push(line);
+ return out.flatMap(l=>{if(x.measureText(l).width<=max)return[l];const r=[];let cur='';for(const ch of l){if(x.measureText(cur+ch).width>max){r.push(cur);cur=ch}else cur+=ch}return r.concat(cur)})}
+async function saveQR(g,url,color){
+ try{await Promise.all([document.fonts.load('700 34px "Noto Sans KR"'),document.fonts.load('700 26px "Space Mono"')])}catch(e){}
+ const q=makeQR(url),n=q.getModuleCount(),W=640,pad=56,qs=W-pad*2,cell=qs/(n+4);
+ const m=g.name&&g.name.match(/^(.*\S)\s+(\([^()]*\))$/),title=m?m[1]:(g.name||g.code),sub=m?m[2]:'';
+ const c=document.createElement('canvas'),x=c.getContext('2d');
+ x.font='700 34px "Noto Sans KR",sans-serif';const lines=wrapText(x,title,W-pad*2).slice(0,3);
+ const H=pad+qs+28+36+lines.length*46+(sub?36:0)+pad-8;
+ c.width=W;c.height=H;
+ // 둥근 상자(과정 색 테두리) + 흰 바탕
+ const bw=10,rr=56;x.beginPath();x.roundRect(bw/2,bw/2,W-bw,H-bw,rr);x.fillStyle='#fff';x.fill();x.lineWidth=bw;x.strokeStyle=color;x.stroke();
+ // QR (조용한 구역 2칸 포함)
+ x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(Math.floor(pad+(k+2)*cell),Math.floor(pad+(r+2)*cell),Math.ceil(cell),Math.ceil(cell));
+ // 차시 표시 + 게임 이름(교재처럼 QR 아래 가운데)
+ let y=pad+qs+28;x.textAlign='center';x.textBaseline='top';
+ const code=g.code;x.font='700 24px "Noto Sans KR",sans-serif';const cw=x.measureText(code).width+32;
+ x.beginPath();x.roundRect((W-cw)/2,y,cw,36,18);x.fillStyle=color;x.fill();x.fillStyle='#fff';x.fillText(code,W/2,y+3);y+=36+12;
+ x.font='700 34px "Noto Sans KR",sans-serif';x.fillStyle='#222';lines.forEach(l=>{x.fillText(l,W/2,y);y+=46});
+ if(sub){x.font='500 24px "Noto Sans KR",sans-serif';x.fillStyle='#6b6259';x.fillText(sub,W/2,y+2)}
+ const a=document.createElement('a');a.download=('QR_'+g.code+'_'+title).replace(/[\\/:*?"<>|]/g,'')+'.png';
+ c.toBlob(bl=>{a.href=URL.createObjectURL(bl);document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},'image/png');
+}
 const IMG={ok:'있음',part:'일부',none:'없음',na:'필요 없음'};
 const root=document.getElementById('games');
-SECTIONS.forEach(([title,en,games])=>{
+SECTIONS.forEach(([title,en,games])=>{const course=title;
 const h=document.createElement('h2');h.className='sec';h.textContent=title;
 const e=document.createElement('span');e.textContent=en+' · '+games.length;h.append(e);
-const list=document.createElement('ul');list.className='grid';
+const list=document.createElement('ul');list.className='grid sec-'+en.toLowerCase();
 root.append(h,list);
 games.forEach(g=>{
  const li=document.createElement('li');
@@ -134,7 +186,7 @@ games.forEach(g=>{
  n.className='name';
  if(g.name){
   // '이름 (설명)'은 괄호 부분을 다음 줄로 내린다
-  const m=g.name.match(/^(.*?)\s*(\(.*\))$/);
+  const m=g.name.match(/^(.*\S)\s+(\([^()]*\))$/);
   n.textContent=m?m[1]:g.name;
   if(m){const s=document.createElement('small');s.textContent=m[2];n.append(s)}
  }
@@ -150,7 +202,9 @@ games.forEach(g=>{
  if(g.imgNote){const s=document.createElement('small');s.textContent=g.imgNote;img.append(s)}
  el.append(img);
  if(g.href){const go=document.createElement('span');go.className='go';go.textContent='시작하기 →';el.append(go)}
- li.append(el);list.append(li);
+ li.append(el);
+ if(g.href&&window.qrcode){el.classList.add('has-qr');li.append(qrButton(g,course))}
+ list.append(li);
 });
 });
 </script>

@@ -130,7 +130,7 @@ const LATE=[
 ];
 const SECTIONS=[['성인 전기','EARLY',EARLY],['성인 중기','MIDDLE',MIDDLE],['성인 후기','LATE',LATE]];
 // ── QR 코드: 내용은 「시작하기」를 눌렀을 때 들어가는 주소. 누르면 교재용 PNG로 저장 ──
-const PROD='https://dnefit.mycafe24.com/dk/';  // 내 PC(로컬)에서 열었을 때는 실제 서버 주소로 만든다
+const PROD='https://jpon.co.kr/dk/';  // 단국대 홈페이지. 내 PC(로컬)에서 열었을 때도 이 주소로 QR을 만든다
 const LOCAL=location.protocol==='file:'||/^(localhost|127\.|10\.|192\.168\.|\[?::1)/.test(location.hostname);
 const COURSE={'성인 전기':'#f07c54','성인 중기':'#3da27c','성인 후기':'#8e5aa8'};
 function gameUrl(href){return new URL(href,LOCAL?PROD:location.href).href}

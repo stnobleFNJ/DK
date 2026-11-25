@@ -40,6 +40,7 @@
 .rc .fi{flex:none;width:22%;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
 .rc .no{font:700 11px var(--fm);color:var(--ac);letter-spacing:.1em}
 .rc p{display:flex;gap:10px;align-items:flex-start;margin:8px 2px 0;font:var(--hw) 20px/1.45 var(--fh);color:#3d352b}
+.rc .cap{font:var(--hw) 20px/1.45 var(--fh);color:#3d352b}
 .rc p span{flex:1}
 .rc .spk{width:34px;height:34px}
 </style>
@@ -52,12 +53,13 @@
 const BRAND={mark:'마',html:'내 마음 <b>표현하기</b>'};
 const STEPS=['상황','마음','이유'];
 // 상황·마음·이유 문장과 사진 = 「사진 적용시 참고 사항」(전3-3) 그대로. 사진은 tools/gen_3_3.py로 만든 실제 사진.
-// 11/18 수정(조가영): 성별 빼고 「친구를 만났어요.」, 설레요→즐거워요(하트 없는 사진), 문장은 「그 이유는 …요.」만.
+// 11/18 수정(조가영): 성별 빼고 「친구를 만났어요.」, 문장은 「그 이유는 …요.」만.
+// 11/25 수정(조가영): 즐거워요→쑥스러워요(새 사진, tools/gen_1125.py), 결과의 상황 글꼴 통일·마음 뒤 마침표.
 // link: 상황 문장의 연결형(이유 고르기 화면의 안내 음성에 씀). 예) 친구를 만나서 + 기뻐요.
 // 사진 파일: sN-sit.jpg(상황) · sN-fK.jpg(마음 K번째) · sN-wK.jpg(이유 K번째)
 const SITS=[
   {cap:'친구를 만났어요.',link:'친구를 만나서',
-   feels:['기뻐요','즐거워요','긴장돼요','미안해요'],
+   feels:['기뻐요','쑥스러워요','긴장돼요','미안해요'],
    whys:['오랜만에 만나서요','함께 놀러 갈 거라서요','무슨 말을 해야 할지 몰라서요','약속 시간에 늦어서요']},
   {cap:'약속이 취소되었어요.',link:'약속이 취소되어서',
    feels:['슬퍼요','실망스러워요','속상해요','짜증 나요'],
@@ -147,7 +149,7 @@ function finish(){
   DK.mount(root,`${DK.hbar(BRAND,true)}
   ${DK.steps(STEPS,2)}
   <p class="q">${head}</p><p class="qs">4가지 상황에서 내 마음은 이랬어요.</p>
-  <div class="rl">${SITS.map((s,i)=>`<div class="rc"><div class="top"><span class="cp"><img src="${s.img}" alt=""></span><span style="flex:1"><span class="no">상황 ${i+1}</span><br>${s.cap}</span><img class="fi" src="${s.fimg(ans[i].f)}" alt="${DK.esc(s.feels[ans[i].f])}"></div><p><span><b>${s.feels[ans[i].f]}</b> ${all[i]}</span><button class="spk" data-say="${DK.esc(s.feels[ans[i].f]+'. '+all[i])}" aria-label="소리로 듣기">${DK.SPK}</button></p></div>`).join('')}</div>
+  <div class="rl">${SITS.map((s,i)=>`<div class="rc"><div class="top"><span class="cp"><img src="${s.img}" alt=""></span><span style="flex:1"><span class="no">상황 ${i+1}</span><br><span class="cap">${s.cap}</span></span><img class="fi" src="${s.fimg(ans[i].f)}" alt="${DK.esc(s.feels[ans[i].f])}"></div><p><span><b>${s.feels[ans[i].f]}.</b> ${all[i]}</span><button class="spk" data-say="${DK.esc(s.feels[ans[i].f]+'. '+all[i])}" aria-label="소리로 듣기">${DK.SPK}</button></p></div>`).join('')}</div>
   <div class="acts two"><button class="btn sec" data-act="listen">🔊 다시 듣기</button><button class="btn pri" data-act="again">↻ 다시 해 보기</button></div>${DK.DKU}`,{
     home,again:()=>{ans=[];feel(0)},listen:()=>DK.speak(`${head} ${SITS.map((s,i)=>s.feels[ans[i].f]+'. '+all[i]).join(' ')}`)
   });

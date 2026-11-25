@@ -9,7 +9,7 @@ const DK=(()=>{
   const bat=w=>{const c=w.charCodeAt(w.length-1);return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28!==0};
   const ieyo=w=>bat(w)?'이에요':'예요', eul=w=>bat(w)?'을':'를', wa=w=>bat(w)?'과':'와', iga=w=>bat(w)?'이':'가', eun=w=>bat(w)?'은':'는';
 
-  function speak(text){try{const s=speechSynthesis;s.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=.9;const v=s.getVoices().find(v=>/ko/i.test(v.lang));if(v)u.voice=v;s.speak(u)}catch(e){}}
+  function speak(text,opt){try{const s=speechSynthesis;s.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=.9;Object.assign(u,opt||{});const v=s.getVoices().find(v=>/ko/i.test(v.lang));if(v)u.voice=v;s.speak(u)}catch(e){}}
 
   /* 이 기기에만 저장 */
   const store=prefix=>({get(k,d){try{const v=localStorage.getItem(prefix+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(prefix+k,JSON.stringify(v))}catch(e){}}});

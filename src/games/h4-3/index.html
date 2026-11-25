@@ -52,8 +52,6 @@
 .me .row{display:grid;grid-template-columns:1fr 1.3fr;gap:8px}
 .me .btn{padding:12px 6px;font-size:15px}
 .me.on{box-shadow:0 0 0 3px var(--ok)}
-.hang{width:60px;height:60px;border-radius:50%;background:#e5483d;display:grid;place-items:center;font-size:26px;margin:0 auto}
-.hang+p{margin:4px 0 0;font-size:12px;color:#bbb}
 /* 결과 */
 .res{position:relative;text-align:center;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:24px 14px 18px;margin:24px 4px 8px}
 .res .big{font:800 54px var(--fb);color:#c4372a;letter-spacing:.06em;line-height:1}
@@ -73,21 +71,26 @@
 <script src="../common/game.js"></script>
 <script>
 const BRAND={mark:'신',html:'119 <b>신고 연습</b>'};
-// 증상 3가지 = 요청서 문구. 사진 = 「후 4-3」 진짜 사진(tools/gen_h4_3.py).
+// 증상 4가지 = 요청서 문구. 사진 = 「후 4-3」 진짜 사진(tools/gen_h4_3.py), leg = 11/25 요청서(tools/gen_1125.py).
 // 이 게임은 연습용이다. 실제로 전화를 걸지 않는다(tel: 링크를 쓰지 않는다).
 const S=[
   {k:'face',name:'얼굴이 비뚤어졌어요'},
   {k:'arm',name:'한쪽 팔에 힘이 없어요'},
-  {k:'chest',name:'가슴이 쥐어짜듯이 아파요'}
+  {k:'chest',name:'가슴이 쥐어짜듯이 아파요'},
+  {k:'leg',name:'갑자기 다리에 힘이 없어요'}   // 11/25 추가
 ];
 const NUM='119';
 const ANSWER='119입니다. 무슨 일이세요?';   // 요청서 음성 문구
 const PICKED='구급대원이 받았어요';          // 요청서 문구
 // 임시: 아래 문구들은 요청서에 없어 지었다.
 const WRONG='1, 1, 9를 차례대로 눌러요';
-const REPLY='알겠어요. 구급차가 바로 갈게요.';
+const REPLY='구급차가 바로 갈게요. 절대 전화를 끊지 마세요.';   // 11/25 요청서 문구
 const MUST='위급 상황에서는 꼭 119에 전화해요!';
 
+// 읽을 때: 119 → 일일구(백십구로 읽지 않게). 구급대원 말은 급하게(빠르고 높게) 읽는다.
+const tts=t=>t.replace(/119/g,'일일구').replace(/1, 1, 9/g,'일, 일, 구');
+const speak=(t,o)=>DK.speak(tts(t),o);
+const urgent=t=>speak(t.replace(/\. /g,'! ').replace(/\.$/,'!'),{rate:1.25,pitch:1.2});
 const root=document.getElementById('app');
 let timers=[],typed='';
 const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
@@ -103,7 +106,7 @@ function home(){
   <section class="hero"><span class="eb">Call 119</span><h1 class="h1">휴대전화로<br><em>119 신고하기</em></h1><p>위급한 일이 생기면 무조건 119에 신고해요. 1, 1, 9를 누르고 말하는 연습을 해 봐요.</p></section>
   <p class="mini" aria-hidden="true">📱🚑</p>
   <p class="must">연습이라서 진짜 전화는 걸리지 않아요.</p>
-  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${say}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>sit(0)});
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${tts(say)}">🔊 듣기</button></div>${DK.DKU}`,{start:()=>sit(0)});
 }
 
 function sit(si){
@@ -115,8 +118,8 @@ function sit(si){
   <span class="alert">🚨 위급 상황 ${si+1}</span>
   <div class="photo sit tilt-l"><i class="tp"></i><span class="cp"><img src="${img(s)}" alt="${s.name}"></span><span class="ct">${s.name}</span></div>
   <p class="must">🚑 ${MUST}</p>
-  <div class="acts two"><button class="btn sec" data-say="${say}">🔊 듣기</button><button class="btn pri" data-act="go">📱 휴대폰 열기 ›</button></div>${DK.DKU}`,{home,go:()=>dial(si)});
-  DK.speak(say);
+  <div class="acts two"><button class="btn sec" data-say="${tts(say)}">🔊 듣기</button><button class="btn pri" data-act="go">📱 휴대폰 열기 ›</button></div>${DK.DKU}`,{home,go:()=>dial(si)});
+  speak(say);
 }
 
 function dial(si){
@@ -137,11 +140,11 @@ function dial(si){
       const d=b.dataset.d;
       if(d!==NUM[typed.length]){
         b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');
-        toast(WRONG);DK.speak(`${d==='*'?'별표':d==='#'?'우물 정자':d}가 아니에요. ${WRONG}.`);return;
+        toast(WRONG);speak(`${d==='*'?'별표':d==='#'?'우물 정자':d}가 아니에요. ${WRONG}.`);return;
       }
-      typed+=d;DK.speak(d==='1'?'일':'구');
+      typed+=d;speak(d==='1'?'일':'구');
       paint();
-      if(typed===NUM){const c=root.querySelector('#call');c.disabled=false;c.classList.add('go');later(()=>DK.speak('잘했어요! 신고 연습 버튼을 눌러요.'),700)}
+      if(typed===NUM){const c=root.querySelector('#call');c.disabled=false;c.classList.add('go');later(()=>speak('잘했어요! 신고 연습 버튼을 눌러요.'),700)}
     },
     del:()=>{typed=typed.slice(0,-1);paint();const c=root.querySelector('#call');c.disabled=true;c.classList.remove('go')},
     call:()=>typed===NUM&&call(si)
@@ -152,7 +155,7 @@ function dial(si){
   };
   const toast=t=>{const e=root.querySelector('#toast');e.textContent=t;e.classList.add('show');later(()=>e.classList.remove('show'),1500)};
   paint();
-  DK.speak('1, 1, 9를 차례대로 눌러요.');
+  speak('1, 1, 9를 차례대로 눌러요.');
 }
 
 function call(si){
@@ -162,24 +165,24 @@ function call(si){
   ${DK.seg(S.length,si)}
   <div class="phone">${sbar()}<div class="ph-call">
     <div><div class="ce" aria-hidden="true">🚑</div><div class="cn">119</div><div class="cs" id="cs">📞 ${PICKED}</div></div>
-    <div class="bub" role="status"><span><small>구급대원</small>“${ANSWER}”</span><button class="spk" data-say="${ANSWER}" aria-label="다시 듣기">${DK.SPK}</button></div>
+    <div class="bub" role="status"><span><small>구급대원</small>“${ANSWER}”</span><button class="spk" data-act="say1" aria-label="다시 듣기">${DK.SPK}</button></div>
     <div class="me" id="me"><small>👉 이렇게 말해요</small><p class="big">“${s.name}”</p>
       <div class="row"><button class="btn sec" data-act="listen">🔊 들어 보기</button><button class="btn pri" data-act="said">🗣 말했어요</button></div></div>
-    <div class="bub" id="reply" hidden><span><small>구급대원</small>“${REPLY}”</span><button class="spk" data-say="${REPLY}" aria-label="다시 듣기">${DK.SPK}</button></div>
-    <div id="end" hidden><button class="hang" data-act="next" aria-label="전화 끊기">📞</button><p>전화 끊기</p></div>
+    <div class="bub" id="reply" hidden><span><small>구급대원</small>“${REPLY}”</span><button class="spk" data-act="say2" aria-label="다시 듣기">${DK.SPK}</button></div>
   </div></div>
   <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">${last?'결과 보기 ›':'다음 연습 ›'}</button></div>${DK.DKU}`,{
     home,
-    listen:()=>DK.speak(s.name),
+    say1:()=>urgent(ANSWER),say2:()=>urgent(REPLY),
+    listen:()=>speak(s.name),
     said:b=>{
       b.disabled=true;root.querySelector('#me').classList.add('on');
-      root.querySelector('#reply').hidden=false;root.querySelector('#end').hidden=false;root.querySelector('#nx').hidden=false;
-      DK.speak(`잘했어요! ${REPLY}`);
+      root.querySelector('#reply').hidden=false;root.querySelector('#nx').hidden=false;
+      urgent(REPLY);
       later(()=>root.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
     },
     next:()=>last?finish():sit(si+1)
   });
-  DK.speak(ANSWER);   // 누른 순간(사용자 동작 안)에 말해야 휴대폰에서도 소리가 난다
+  urgent(ANSWER);   // 누른 순간(사용자 동작 안)에 말해야 휴대폰에서도 소리가 난다
 }
 
 function finish(){
@@ -191,7 +194,7 @@ function finish(){
   <p class="must">🚑 ${MUST}</p>
   <div class="acts"><button class="btn pri" data-act="again">↻ 다시 연습하기</button></div>${DK.DKU}`,{home,again:()=>sit(0)});
   DK.done();
-  later(()=>DK.speak(`${head} ${MUST}`),300);
+  later(()=>speak(`${head} ${MUST}`),300);
 }
 
 home();

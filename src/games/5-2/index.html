@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>우리집 한바퀴</title>
+<title>공간 바르게 사용하기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@
 <dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>함께 할 사람 수를 골라요. (1~4명)</li><li>내 차례에 주사위를 굴려요. (1~3)</li><li>멈춘 칸에서 알맞은 행동 그림을 골라요.</li><li>지나친 칸과 틀린 칸은 도착하기 전에 다시 풀어요.</li><li>8칸 문제를 모두 맞히면 도착이에요!</li></ol><p>가장 먼저 도착한 사람이 승리해요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
-const BRAND={mark:'집',html:'우리집 <b>한바퀴</b>'};
+const BRAND={mark:'집',html:'공간 <b>바르게 사용하기</b>'};
 const SP={living:['거실','img/sp-living.jpg'],room:['내 방','img/sp-room.jpg'],kitchen:['주방(식탁)','img/sp-kitchen.jpg'],bath:['화장실','img/sp-bath.jpg']};
 // 칸 1~8 (교재 보드판 순서). 보기 그림 2장: ok=true가 알맞은 행동.
 // q1·q3·q4·q6·q8의 알맞은 행동 사진(*-good.jpg)은 11/09 추가 사진(tools/gen_5_2.py).
@@ -115,7 +115,7 @@ const die=v=>`<div class="die" data-v="${v}" aria-hidden="true">${'<b></b>'.repe
 function board(me){
   const p=P[me];
   const marks=p?Q.map((_,k)=>{const c=k+1,[x,y]=SQ[c];return p.done.has(c)?`<i class="ck" style="left:${x+7.5}%;top:${y+6}%">✓</i>`:p.seen.has(c)?`<i class="ck no" style="left:${x+7.5}%;top:${y+6}%">!</i>`:''}).join(''):'';
-  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="우리집 한바퀴 보드판: 출발, 1 거실, 2 내 방, 3 주방, 4 거실, 5 내 방, 6 화장실, 7 내 방, 8 주방, 도착">${marks}
+  return `<div class="board" aria-label="보드판"><div class="bi"><img src="img/board.jpg" alt="공간 바르게 사용하기 보드판: 출발, 1 거실, 2 내 방, 3 주방, 4 거실, 5 내 방, 6 화장실, 7 내 방, 8 주방, 도착">${marks}
   ${P.map((q,i)=>{const [x,y]=SQ[q.pos],[dx,dy]=n>1?OFF[i]:[0,0];return `<i class="tok t${i+1}${i===me?' me':''}" data-p="${i}" style="left:${x+dx}%;top:${y+dy}%">${i+1}</i>`}).join('')}</div></div>
   ${p?`<p class="blg"><span><i></i>맞힌 칸</span><span><i class="no"></i>다시 풀 칸</span><span>${n>1?`${me+1}번 사람 · `:''}남은 문제 ${rest(p).length}개</span></p>`:''}`;
 }
@@ -123,10 +123,10 @@ function board(me){
 function home(){
   clear();
   DK.mount(root,`${DK.hbar(BRAND)}
-  <section class="hero"><span class="eb">Around my home</span><h1 class="h1">우리집 <em>한바퀴</em></h1><p>주사위를 굴려 우리집을 한 바퀴 돌아요. 거실, 내 방, 주방, 화장실에서 알맞은 행동을 골라 보세요.</p></section>
-  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="우리집 한바퀴 보드판"></span><span class="ct">출발에서 도착까지<small>8칸 문제를 모두 맞히면 도착해요</small></span></div>
+  <section class="hero"><span class="eb">Around my home</span><h1 class="h1">공간 <em>바르게 사용하기</em></h1><p>주사위를 굴려 우리집을 한 바퀴 돌아요. 거실, 내 방, 주방, 화장실에서 알맞은 행동을 골라 보세요.</p></section>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="공간 바르게 사용하기 보드판"></span><span class="ct">출발에서 도착까지<small>8칸 문제를 모두 맞히면 도착해요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:people});
-  DK.speak('우리집 한바퀴. 주사위를 굴려 우리집을 한 바퀴 돌아요.');
+  DK.speak('공간 바르게 사용하기. 주사위를 굴려 우리집을 한 바퀴 돌아요.');
 }
 
 function people(){

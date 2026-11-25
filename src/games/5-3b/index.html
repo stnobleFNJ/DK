@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>내 마음 전하기 상황판</title>
+<title>내 마음 전하기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
 <dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>두 사람이 번갈아 상황판을 돌려요.</li><li>화살표가 가리킨 상황을 보고, 나의 기분을 말해요.</li><li>말하기 예시를 보고 내 마음을 소리 내어 말해요.</li><li>다 말하면 ‘말했어요 ✓’를 눌러요. 한 사람이 3칸씩, 모두 6칸을 채우면 끝이에요.</li></ol><p>상대를 존중하며 내 마음을 말해 보세요. 예시와 다르게 말해도 괜찮아요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
 <script src="../common/game.js"></script>
 <script>
-const BRAND={mark:'마',html:'내 마음 <b>상황판</b>'};
+const BRAND={mark:'마',html:'내 마음 <b>전하기</b>'};
 // 상황 4가지 (최신 요청서·그림). desc·feel·say는 기획서에 문구가 없어 임시로 작성
 const CASES=[
   {t:'노크 없이 들어온 엄마',c:'#d9606f',desc:'내 방에서 공부하고 있는데, 엄마가 노크 없이 문을 열고 들어왔어요.',feel:['깜짝 놀라요','당황스러워요','기분 나빠요'],say:'엄마, 들어오기 전에 노크해 주세요. 갑자기 들어오면 깜짝 놀라요.'},
@@ -77,7 +77,7 @@ function home(){
   clear();reset();
   DK.mount(root,`${DK.hbar(BRAND)}
   <section class="hero"><span class="eb">Speak my mind</span><h1 class="h1">상황판을 돌려<br><em>내 마음을 말해 볼까요?</em></h1><p>두 사람이 번갈아 상황판을 돌려요. 화살표가 가리킨 상황에서 내 마음을 말해 보세요.</p></section>
-  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="상황 그림 4개가 있는 상황판 보드"></span><span class="ct">내 마음 전하기 상황판<small>한 사람이 3번씩, 모두 6번 말해요</small></span></div>
+  <div class="photo tilt-l"><i class="tp"></i><span class="cp"><img src="img/board.jpg" alt="상황 그림 4개가 있는 상황판 보드"></span><span class="ct">내 마음 전하기<small>한 사람이 3번씩, 모두 6번 말해요</small></span></div>
   <div class="acts"><button class="btn pri" data-act="start">시작하기</button></div>${DK.DKU}`,{start:play});
 }
 
@@ -92,7 +92,7 @@ function play(){
   <div id="res" aria-live="polite"></div>${DK.DKU}`,{home,spin});
   const svg=root.querySelector('.wheel svg');
   svg.style.transition='none';svg.style.transform=`rotate(${rot}deg)`;
-  DK.speak(`${p+1}번 사람 차례예요. 상황판을 돌려 보세요.`);
+  DK.speak(`${['일','이'][p]}번 사람 차례예요. 상황판을 돌려 보세요.`);
 }
 
 function spin(){

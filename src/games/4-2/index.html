@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>나의 공간 아름답게 꾸미기</title>
+<title>나의 공간 꾸미기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -231,7 +231,7 @@ function done(){
   DKGallery.mount(root.querySelector('#gal'),{game:'4-2',title:'모두의 공간 보기',what:'공간',data:mine,cw:'200px',
     render:d=>other(d,()=>roomHTML(true).replace(' id="room"','')),
     alt:d=>other(d,()=>[nameOf('curtain'),...FURN.map(t=>nameOf(t.k))].join(', ')),
-    shareText:'나의 공간 아름답게 꾸미기 — 나도 내 방을 꾸며 보세요!'});
+    shareText:'나의 공간 꾸미기 — 나도 내 방을 꾸며 보세요!'});
   const r=root.querySelector('#room');r.setAttribute('role','img');r.setAttribute('aria-label',roomAlt());
   DK.speak(msg);
 }

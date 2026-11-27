@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나만의 건강검진 순서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../common/paper.css">
+<style>
+/* 처음 화면: 교재 질문 카드 3장 */
+.qgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 2px 0}
+.qgrid figure{margin:0;background:#fff;border-radius:8px;box-shadow:0 3px 8px rgba(60,40,20,.14);overflow:hidden}
+.qgrid img{width:100%;aspect-ratio:5/3;object-fit:cover}
+.qgrid figcaption{padding:5px 6px 7px;font:700 12px/1.35 var(--fb);color:#3d352b}
+.pace{text-align:center;font:var(--hw) 22px var(--fh);color:var(--ac);margin:16px 0 0}
+.src{text-align:center;font-size:12px;color:var(--muted);margin:6px 0 0}
+/* 1단계: 순서 만들기 */
+.slots{display:grid;gap:8px;margin:14px 2px 0}
+.slot{display:flex;align-items:center;gap:10px;min-height:62px;padding:6px 10px;border:2px dashed var(--line);border-radius:12px;background:var(--paper)}
+.slot b{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted);font:700 15px var(--fb)}
+.slot.on{border:2px solid var(--ok);background:#fff}
+.slot.on b{background:var(--ok);color:#fff}
+.slot.next{border-color:var(--ac)}
+
+.slot span{font:var(--hw) 21px var(--fh)}
+.slot+.slot{position:relative}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 2px 0}
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:70px;padding:10px 6px;background:#fff;border:2.5px solid var(--line);border-radius:12px;box-shadow:0 3px 8px rgba(60,40,20,.12);font:var(--hw) 20px var(--fh);color:#3d352b}
+
+.card.used{visibility:hidden}
+.card.wrong{border-color:var(--no);animation:shake .4s}
+.card.hint{border-color:var(--tape);box-shadow:0 0 0 3px var(--tape)}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+/* 2단계: 검사 */
+.grp{display:inline-block;margin-top:14px;font:700 12px var(--fb);color:#fff;background:var(--ac);border-radius:999px;padding:3px 12px}
+.stn{display:flex;align-items:center;gap:8px;margin:8px 0 0;font:var(--hw) 26px/1.25 var(--fh)}
+
+.dots{display:flex;justify-content:center;gap:10px;margin:12px 0 0}
+.dots i{width:32px;height:32px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font:700 14px var(--fb);color:var(--muted);font-style:normal}
+.dots i.d{background:var(--ok);color:#fff}
+.dots i.c{background:var(--ac);color:#fff;transform:scale(1.12)}
+.shot{margin:14px 4px 0;background:#fff;padding:8px;box-shadow:0 6px 14px rgba(60,40,20,.16);transform:rotate(-1deg)}
+.shot .row{display:flex;align-items:center;gap:6px}
+.shot .row img{flex:1;min-width:0;max-height:300px;object-fit:contain;background:#fff}
+.shot .row img[src*="/16."],.shot .row img[src*="/17."]{max-height:220px}
+.shot .row i{flex:none;font-style:normal;font-size:26px;color:var(--ok)}
+.shot.one .row img{max-height:340px}
+.tipn{margin:10px 4px 0;font-size:13px;color:var(--muted);text-align:center}
+/* 숨 참기 */
+.hold{display:grid;place-items:center;margin:12px auto 0;width:110px;height:110px;border-radius:50%;background:var(--paper);border:3px solid var(--ac);font:800 44px var(--fb);color:var(--ac)}
+/* 기록하기 */
+.rec{position:relative;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:14px 12px;margin:16px 4px 0}
+.rec h3{margin:0 0 4px;font:var(--hw) 22px var(--fh)}
+.rec p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fields label{display:flex;flex-direction:column;gap:4px;font:700 14px var(--fb)}
+.fields input{width:100%;height:52px;text-align:center;font:700 24px var(--fm);color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:12px}
+.fields input:focus{outline:none;border-color:var(--ac)}
+.two-ch{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.two-ch button{padding:10px 4px;border-radius:10px;border:2px solid var(--line);background:#fff;font:700 14px var(--fb)}
+.two-ch button.on{border-color:var(--ok);background:#eef4e4;color:var(--ok)}
+/* 결과 */
+.res{position:relative;background:var(--paper);border:1px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:22px 14px 16px;margin:24px 2px 0}
+.res h2{font:var(--lw) 25px/1.3 var(--fl);letter-spacing:-.04em;margin:0}
+.res .date{font-size:12px;color:var(--muted);margin:4px 0 0}
+.res .stamp{font-size:16px;background:var(--ok)}
+.ol{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.ol li{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:8px;padding:8px 10px;box-shadow:0 2px 6px rgba(60,40,20,.1)}
+.ol li>b{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font:700 14px var(--fb)}
+.ol li>span{flex:1}
+.ol li strong{display:block;font:var(--hw) 20px var(--fh)}
+.ol li small{display:block;font-size:13px;color:var(--muted);line-height:1.6}
+.ol li small em{font-style:normal;font-weight:700;color:var(--ink)}
+@media print{body{background:#fff}.hbar,.acts,.dku,dialog{display:none!important}.app{box-shadow:none;background:#fff}.res{box-shadow:none;border:0;margin:0}}
+</style>
+</head>
+<body>
+<div class="stage"><main class="app" id="app"></main></div>
+<dialog id="help" aria-labelledby="ht"><h2 id="ht">이렇게 해요!</h2><ol><li>건강검진 카드 4장을 순서대로 눌러 순서를 만들어요.</li><li>그림을 보며 검사를 하나씩 연습해요. 다 했으면 ‘했어요’를 눌러요.</li><li>키·몸무게, 시력, 청력, 혈압은 적어 두어도 되고, 건너뛰어도 돼요.</li><li>마지막에 [나만의 건강검진 순서]가 완성돼요.</li></ol><p>내 속도로, 하나씩 연습해요. 🔊를 누르면 다시 들을 수 있어요.</p><button onclick="this.closest('dialog').close()">알겠어요</button></dialog>
+<script src="../common/game.js"></script>
+<script>
+const BRAND={mark:'✚',html:'건강검진 <b>연습실</b>'};
+const STEPS=['순서 만들기','그림으로 연습','완성'];
+// 사진 = data/건강검진게임_삽입이미지(웹앱 「나만의 건강검진 순서」의 그림, tools/gen_m_check.py). 번호.jpg = 개별이미지 번호.
+// 문구 = 같은 폴더 원본/workbook-38~40(교재 38~40쪽) 그대로. 진행(순서 만들기 → 그림으로 연습 → 완성)은 웹앱 첫 화면을 따랐다.
+// 임시: 문진표·결과 확인 단계 안내와 결과 화면 문구는 교재에 없어 지었다.
+const ORDER=[{t:'문진표 작성'},{t:'기본 검사'},{t:'혈액·소변 검사'},{t:'결과 확인'}];
+// 검사(스테이션). steps의 img가 여럿이면 '→'로 이어 보여 준다. rec: 적어 두는 칸
+const ST=[
+  {g:0,k:'paper',name:'문진표를 써요',steps:[{t:'문진표에 내 몸 상태를 적어요',img:['q2'],note:'교재 「건강검진 문진표」를 써 봐요.'}]},
+  {g:1,k:'body',name:'나의 키와 몸무게',steps:[{t:'신발을 벗어요',img:['01']},{t:'바르게 서요',img:['02']},{t:'숫자를 확인해요',img:['03']}],
+   rec:{type:'num',title:'나의 키와 몸무게는?',f:[['h','나의 키는?','cm'],['w','나의 몸무게는?','kg']]}},
+  {g:1,k:'eye',name:'나의 시력은?',steps:[{t:'오른쪽 눈을 가려요',img:['04']},{t:'보이는 것을 말해요',img:['05']},{t:'왼쪽 눈도 해요',img:['06']}],
+   rec:{type:'num',title:'나의 시력은?',f:[['el','왼쪽 시력',''],['er','오른쪽 시력','']]}},
+  {g:1,k:'ear',name:'나의 청력은?',steps:[{t:'소리를 들어요',img:['07']},{t:'들리는 쪽 손 들어요',img:['08']},{t:'반대쪽 귀도 확인해요',img:['09']}],
+   rec:{type:'ear',title:'나의 청력은?',f:[['al','왼쪽'],['ar','오른쪽']]}},
+  {g:1,k:'bp',name:'나의 혈압은?',steps:[{t:'팔을 혈압계에 넣어요',img:['10']},{t:'움직이지 않아요',img:['11']},{t:'숫자를 확인해요',img:['12']}],
+   rec:{type:'num',title:'나의 혈압은?',f:[['bh','높은 혈압(최고혈압)',''],['bl','낮은 혈압(최저혈압)','']]}},
+  {g:2,k:'blood',name:'피를 뽑아요',steps:[{t:'팔을 걷어요 → 팔을 놓아요',img:['13']},{t:'고무줄로 팔을 묶어요 → 움직이지 않아요',img:['14']},{t:'솜으로 눌러요',img:['15']}]},
+  {g:2,k:'urine',name:'소변을 받아요',steps:[{t:'컵을 받아요 → 표시 정도까지 받아요',img:['16','17']},{t:'뚜껑을 닫아요 → 제출해요',img:['18'],note:'물과 연습용 컵으로 체험해요.'}]},
+  {g:2,k:'xray',name:'X-ray를 찍어요',steps:[{t:'바르게 서요 → 숨을 들이마셔요',img:['19','20']},{t:'잠깐 숨을 참아요',img:['21'],hold:true,note:'함께 3~5초 연습해요.'},{t:'안내를 듣고 다시 숨 쉬어요',img:['22']}]},
+  {g:3,k:'result',name:'결과를 확인해요',steps:[{t:'의사 선생님께 검사 결과를 들어요',img:[],note:'궁금한 것은 물어봐요.'}]}
+];
+const GN=ORDER.map(o=>o.t);
+const img=k=>`img/${k}.jpg`;
+const plain=t=>t.replace(/→/g,', 그리고').replace(/[()]/g,' ');
+
+const root=document.getElementById('app');
+let timers=[],rec={};
+const clear=()=>{timers.forEach(clearTimeout);timers=[];try{speechSynthesis.cancel()}catch(e){}};
+const later=(f,ms)=>timers.push(setTimeout(f,ms));
+const today=()=>{const d=new Date();return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`};
+
+function home(){
+  clear();rec={};
+  const intro='나만의 건강검진 순서. 병원에 갔어요. 건강검진 순서를 만들고, 그림을 보며 하나씩 연습해요. 내 속도로, 하나씩 연습해요.';
+  DK.mount(root,`${DK.hbar(BRAND)}
+  <section class="hero"><span class="eb">Health check-up</span><h1 class="h1">나만의<br><em>건강검진 순서</em></h1><p>병원에 갔어요. 건강검진 순서를 만들고, 그림을 보며 하나씩 연습해요.</p></section>
+  ${DK.steps(STEPS,0)}
+  <div class="qgrid">${['아프지 않아도 건강검진이 필요할까요?','건강검진은 어떤 것을 확인할까요?','우리 몸이 건강한지 확인하는 검사예요.'].map((t,i)=>`<figure><img src="img/q${i+1}.jpg" alt=""><figcaption>${t}</figcaption></figure>`).join('')}</div>
+  <p class="pace">내 속도로, 하나씩 연습해요.</p>
+  <div class="acts"><button class="btn pri" data-act="start">시작하기</button><button class="btn sec" data-say="${intro}">🔊 듣기</button></div>
+  <p class="src">교재 「정기 건강검진 연습하기」 38–40쪽 활용</p>${DK.DKU}`,{start:order});
+}
+
+// 1단계: 카드 4장을 차례로 눌러 순서 만들기
+function order(){
+  clear();
+  let n=0,miss=0;
+  const deck=DK.shuffle(ORDER.map((o,i)=>({...o,i})));
+  const say='건강검진 순서를 만들어 볼까요? 맨 먼저 하는 것부터 차례대로 눌러요.';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,0)}
+  <div class="qrow" style="display:flex;gap:10px;align-items:flex-start"><p class="q" style="flex:1">건강검진 순서를 만들어 볼까요?</p><button class="spk" data-say="${say}" aria-label="질문 듣기" style="margin-top:20px">${DK.SPK}</button></div>
+  <p class="qs">맨 먼저 하는 것부터 차례대로 눌러요.</p>
+  <div class="slots">${ORDER.map((o,i)=>`<div class="slot${i?'':' next'}" id="s${i}"><b>${i+1}</b></div>`).join('')}</div>
+  <div class="cards">${deck.map(o=>`<button class="card" data-act="pick" data-i="${o.i}">${o.t}</button>`).join('')}</div>
+  <p class="fb no" id="fb" hidden></p>
+  <div class="acts" id="nx" hidden><button class="btn pri" data-act="next">그림으로 연습하기 ›</button></div>${DK.DKU}`,{
+    home,next:()=>station(0,0),
+    pick:b=>{
+      const i=+b.dataset.i,fb=root.querySelector('#fb');
+      if(i!==n){
+        miss++;b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');
+        fb.hidden=false;fb.textContent=`${n+1}번째는 「${ORDER[i].t}」가 아니에요. 다시 골라 봐요.`;
+        DK.speak(`${ORDER[i].t}는 ${n+1}번째가 아니에요. 다시 골라 봐요.`);
+        if(miss>=2)root.querySelector(`.card[data-i="${n}"]`).classList.add('hint');
+        return;
+      }
+      miss=0;fb.hidden=true;b.classList.add('used');
+      const s=root.querySelector('#s'+n);s.classList.remove('next');s.classList.add('on');
+      s.insertAdjacentHTML('beforeend',`<span>${ORDER[n].t}</span>`);
+      DK.speak(`${n+1}번, ${ORDER[n].t}.`);
+      n++;
+      if(n<ORDER.length){root.querySelector('#s'+n).classList.add('next');return}
+      root.querySelector('.cards').hidden=true;root.querySelector('#nx').hidden=false;
+      later(()=>DK.speak('순서를 다 만들었어요! 문진표 작성, 기본 검사, 혈액 소변 검사, 결과 확인. 이제 그림으로 연습해 봐요.'),900);
+    }
+  });
+  DK.speak(say);
+}
+
+// 2단계: 검사마다 단계 그림을 하나씩 따라 하기
+function station(si,i){
+  clear();
+  const s=ST[si],t=s.steps[i],last=i===s.steps.length-1;
+  const say=`${s.steps.length>1?`${['일','이','삼','사'][i]}단계. `:''}${plain(t.t)}.`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(ST.length,si)}
+  <span class="grp">${s.g+1}. ${GN[s.g]}</span>
+  <p class="stn">${s.name}</p>
+  ${s.steps.length>1?`<div class="dots" aria-label="${i+1}단계, 모두 ${s.steps.length}단계">${s.steps.map((x,k)=>`<i class="${k<i?'d':k===i?'c':''}">${k<i?'✓':k+1}</i>`).join('')}</div>`:''}
+  ${t.img.length?`<div class="shot${t.img.length>1?'':' one'}"><div class="row">${t.img.map(k=>`<img src="${img(k)}" alt="">`).join('<i aria-hidden="true">➜</i>')}</div></div>`:''}
+  ${DK.sayBig(t.t)}
+  ${t.hold?'<div class="hold" id="hold" aria-live="polite">3</div><div class="acts" style="margin-top:10px"><button class="btn sec" data-act="hold">⏱ 같이 숨 참기</button></div>':''}
+  ${t.note?`<p class="tipn">${t.note}</p>`:''}
+  <div class="acts two"><button class="btn sec" data-act="prev">‹ 이전</button><button class="btn pri" data-act="next">했어요 ✓</button></div>${DK.DKU}`,{
+    home,
+    prev:()=>i?station(si,i-1):si?station(si-1,ST[si-1].steps.length-1):order(),
+    next:()=>last?(s.rec?record(si):go(si)):station(si,i+1),
+    hold:b=>{
+      clear();b.disabled=true;let c=3;const h=root.querySelector('#hold');h.textContent=c;DK.speak('숨을 들이마시고, 참아요.');
+      const tick=()=>{later(()=>{c--;if(c>0){h.textContent=c;DK.speak(String(['','하나','둘','셋'][c]||c));tick()}else{h.textContent='후~';DK.speak('잘했어요. 다시 숨 쉬어요.');b.disabled=false}},1300)};
+      later(tick,1500);
+    }
+  });
+  const sb=root.querySelector('.saybig [data-say]');sb.dataset.say=say;sb.onclick=()=>DK.speak(say);
+  later(()=>DK.speak(i===0?`${s.name}. ${say}`:say),250);
+}
+const go=si=>si<ST.length-1?station(si+1,0):finish();
+
+// 기록하기(건너뛰어도 된다). 화면 글은 관리자에게 보내지 않는다(data-private)
+function record(si){
+  clear();
+  const s=ST[si],r=s.rec,v=rec[s.k]||{};
+  const body=r.type==='num'
+    ?`<div class="fields">${r.f.map(([k,l,u])=>`<label>${l}<input id="${k}" type="text" inputmode="decimal" maxlength="7" value="${DK.esc(v[k]||'')}" placeholder="${u}" aria-label="${l}"></label>`).join('')}</div>`
+    :`<div class="fields">${r.f.map(([k,l])=>`<label>${l}<span class="two-ch" data-k="${k}">${['잘 들려요','잘 안 들려요'].map(x=>`<button type="button" class="${v[k]===x?'on':''}" data-v="${x}">${x}</button>`).join('')}</span></label>`).join('')}</div>`;
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.seg(ST.length,si)}
+  <span class="grp">${s.g+1}. ${GN[s.g]}</span>
+  <div class="rec" data-private><h3>${r.title}</h3><p>적어 두면 마지막 기록에 나와요. 몰라도 괜찮아요.</p>${body}</div>
+  <p class="tipn">적은 내용은 이 화면에만 보이고, 어디에도 보내지 않아요.</p>
+  <div class="acts two"><button class="btn sec" data-act="skip">건너뛰기</button><button class="btn pri" data-act="save">적었어요 ✓</button></div>${DK.DKU}`,{
+    home,skip:()=>go(si),
+    save:()=>{const o={};r.f.forEach(([k])=>{const e=root.querySelector('#'+k);if(e)o[k]=e.value.trim().slice(0,7)});root.querySelectorAll('.two-ch').forEach(c=>{const on=c.querySelector('.on');if(on)o[c.dataset.k]=on.dataset.v});rec[s.k]=o;go(si)}
+  });
+  root.querySelectorAll('.two-ch button').forEach(b=>b.onclick=()=>{b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));DK.speak(b.parentElement.closest('label').firstChild.textContent+', '+b.dataset.v)});
+  DK.speak(r.title);
+}
+
+function finish(){
+  clear();
+  const val=(k,f,l,u)=>{const x=(rec[k]||{})[f];return x?`${l} <em>${DK.esc(x)}${u}</em>`:''};
+  const extra={body:[val('body','h','키','cm'),val('body','w','몸무게','kg')],eye:[val('eye','el','왼쪽',''),val('eye','er','오른쪽','')],
+    ear:[val('ear','al','왼쪽',''),val('ear','ar','오른쪽','')],bp:[val('bp','bh','최고',''),val('bp','bl','최저','')]};
+  const head='나만의 건강검진 순서가 완성됐어요!';
+  DK.mount(root,`${DK.hbar(BRAND,true)}
+  ${DK.steps(STEPS,2)}
+  <div class="res"><i class="stamp">연습<br>완료</i><span class="eb">My check-up</span><h2>[나만의 건강검진 순서]</h2><p class="date">${today()}</p>
+    <ol class="ol">${ORDER.map((o,g)=>`<li><b>${g+1}</b><span><strong>${o.t}</strong><small>${ST.filter(s=>s.g===g).map(s=>{const e=(extra[s.k]||[]).filter(Boolean);return `✓ ${s.name.replace(/^나의 |은\?$|는\?$/g,'')}${e.length?` <span data-private>· ${e.join(' · ')}</span>`:''}`}).join('<br>')}</small></span></li>`).join('')}</ol>
+  </div>
+  <div class="acts two"><button class="btn sec" data-act="print">🖨 인쇄하기</button><button class="btn pri" data-act="again">↻ 다시 연습하기</button></div>${DK.DKU}`,{
+    home,again:()=>{rec={};order()},print:()=>{try{speechSynthesis.cancel()}catch(e){}window.print()}
+  });
+  DK.done({stations:ST.length});
+  later(()=>DK.speak(head+' 문진표 작성, 기본 검사, 혈액 소변 검사, 결과 확인 순서로 해요.'),300);
+}
+
+home();
+</script>
+</body>
+</html>
